@@ -1,0 +1,190 @@
+---
+title: "taxUMAP"
+subtitle: "Taxonomy-Aware UMAP Visualization for Microbiome Data"
+---
+
+## What is taxUMAP?
+
+**taxUMAP** is a Python tool that extends the popular UMAP dimensionality reduction algorithm to incorporate microbial taxonomy, enabling intuitive and biologically meaningful visualizations of large microbiome datasets. By weighting distances between samples according to the taxonomic hierarchy of their community members, taxUMAP produces embeddings that reflect the biological structure of the microbiome — not just statistical distances.
+
+taxUMAP answers the question: **"How do microbiome community compositions cluster across samples, displayed in a way that respects microbial evolutionary relationships?"**
+
+- 📄 [GitHub](https://github.com/jsevo/taxumap)
+- 🗞️ [Paper: Schluter et al. 2023, *Cell Host & Microbe*](https://doi.org/10.1016/j.chom.2023.05.027)
+
+---
+
+## When to Use taxUMAP
+
+Use taxUMAP when you want to:
+
+- Visualise and explore microbiome composition across many samples
+- Identify community clusters or gradients in a biologically interpretable way
+- Analyse longitudinal or clinical microbiome cohorts
+- Compare community-level structure across treatment groups, time points, or body sites
+
+::: {.callout-note}
+Standard UMAP applied to relative abundances treats all taxa as independent dimensions. taxUMAP aggregates abundances up the taxonomic tree, so communities with similar higher-level structure (e.g. same dominant phyla) are placed closer together even if their species composition differs. This is especially useful for large, clinically complex datasets.
+:::
+
+---
+
+## Installation
+
+### pip (from GitHub)
+
+```bash
+git clone https://github.com/jsevo/taxumap.git
+cd taxumap
+pip install -e .
+```
+
+### conda environment (recommended for reproducibility)
+
+```bash
+conda create -n taxumap python=3.9
+conda activate taxumap
+git clone https://github.com/jsevo/taxumap.git
+cd taxumap
+pip install -e .
+```
+
+---
+
+## Input Files
+
+taxUMAP requires two CSV files:
+
+| File | Description |
+|------|-------------|
+| **Microbiota table** | Rows = samples, columns = ASVs/OTUs; must include an `index_column` column for sample IDs |
+| **Taxonomy table** | Rows = ASVs/OTUs, columns = taxonomic ranks (Kingdom, Phylum, Class, Order, Family, Genus, Species) |
+
+**Microbiota table example** (`microbiota_table.csv`):
+
+```
+index_column,ASV1,ASV2,ASV3
+sample1,0.50,0.30,0.20
+sample2,0.10,0.70,0.20
+sample3,0.60,0.05,0.35
+```
+
+**Taxonomy table example** (`taxonomy.csv`):
+
+```
+ASV,Kingdom,Phylum,Class,Order,Family,Genus,Species
+ASV1,Bacteria,Firmicutes,Bacilli,Lactobacillales,Lactobacillaceae,Lactobacillus,acidophilus
+ASV2,Bacteria,Bacteroidota,Bacteroidia,Bacteroidales,Bacteroidaceae,Bacteroides,fragilis
+ASV3,Bacteria,Proteobacteria,Gammaproteobacteria,Enterobacterales,Enterobacteriaceae,Escherichia,coli
+```
+
+::: {.callout-tip}
+Unknown taxonomic levels should be represented as `nan`. Do not leave them blank, as blank values can break the aggregation logic.
+:::
+
+---
+
+## Basic Usage
+
+### Command-line
+
+```bash
+python run_taxumap.py \
+  -t taxonomy.csv \
+  -m microbiota_table.csv
+```
+
+This produces a `taxumap_embedding.csv` file with the 2D coordinates for each sample.
+
+### Python API
+
+```python
+from taxumap.taxumap_base import TaxUMAP
+
+# Initialise
+tu = TaxUMAP(
+    microbiota="microbiota_table.csv",
+    taxonomy="taxonomy.csv"
+)
+
+# Fit and transform
+tu.fit_transform()
+
+# Access embedding
+embedding_df = tu.embedding_  # pandas DataFrame with columns X and Y
+
+# Plot
+tu.scatter()
+```
+
+### Adjusting aggregation weights
+
+taxUMAP weights aggregated profiles at each taxonomic level. You can adjust those weights to emphasise or de-emphasise higher-level taxonomy:
+
+```python
+tu = TaxUMAP(
+    microbiota="microbiota_table.csv",
+    taxonomy="taxonomy.csv",
+    agg_levels=["Genus", "Family", "Order"],   # levels to aggregate at
+    weights=[1.0, 0.5, 0.25]                   # relative weight per level
+)
+tu.fit_transform()
+```
+
+---
+
+## Output
+
+| Output | Description |
+|--------|-------------|
+| `taxumap_embedding.csv` | 2D UMAP coordinates for each sample |
+| Scatter plot | Interactive or static visualisation (via built-in `.scatter()`) |
+
+### Downstream analysis
+
+```python
+import pandas as pd
+import matplotlib.pyplot as plt
+
+embedding = pd.read_csv("taxumap_embedding.csv", index_col=0)
+metadata  = pd.read_csv("metadata.csv", index_col=0)
+
+merged = embedding.join(metadata[["group"]])
+
+fig, ax = plt.subplots()
+for grp, sub in merged.groupby("group"):
+    ax.scatter(sub["X"], sub["Y"], label=grp, alpha=0.7)
+ax.legend()
+ax.set_title("taxUMAP — coloured by group")
+plt.tight_layout()
+plt.savefig("taxumap_coloured.png", dpi=150)
+```
+
+---
+
+## Tips & Gotchas
+
+::: {.callout-warning}
+**Compositionality** — Normalise your microbiota table to relative abundances (rows sum to 1) before running taxUMAP. Raw read counts will produce misleading results because UMAP distances are not sequencing-depth-aware.
+:::
+
+::: {.callout-warning}
+**Taxonomy completeness** — Incomplete taxonomy tables (many `nan` values at lower ranks) reduce the benefit of the taxonomy-aware weighting. Use a classifier such as QIIME2/DADA2 + SILVA to maximise taxonomic resolution before running taxUMAP.
+:::
+
+::: {.callout-tip}
+**UMAP parameters** — taxUMAP passes `n_neighbors` and `min_dist` directly to the underlying UMAP call. Start with `n_neighbors=15` and `min_dist=0.1`, then tune based on the cohort size and desired cluster tightness.
+:::
+
+::: {.callout-tip}
+**Large cohorts** — taxUMAP was specifically designed for large clinical datasets (thousands of samples). The aggregation step is the main computational cost; for very large tables, reduce the number of aggregation levels.
+:::
+
+---
+
+## Further Reading
+
+- [taxUMAP GitHub README](https://github.com/jsevo/taxumap)
+- [Schluter et al. 2023, *Cell Host & Microbe* — original taxUMAP paper](https://doi.org/10.1016/j.chom.2023.05.027)
+- [UMAP documentation](https://umap-learn.readthedocs.io/en/latest/)
+- [Example Jupyter notebooks](https://github.com/jsevo/taxumap/tree/master/examples)

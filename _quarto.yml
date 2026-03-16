@@ -37,6 +37,12 @@ website:
             href: tools/anpan.qmd
           - text: "CCREPE"
             href: tools/ccrepe.qmd
+          - text: "taxUMAP"
+            href: tools/taxumap.qmd
+          - text: "PolyPanner"
+            href: tools/polypanner.qmd
+          - text: "QIIME 2"
+            href: tools/qiime2.qmd
     right:
       - icon: github
         href: https://github.com/JacobKMcPherson/Microbiome_Tools_for_Dummies
@@ -62,6 +68,9 @@ website:
           - tools/maaslin2.qmd
           - tools/anpan.qmd
           - tools/ccrepe.qmd
+          - tools/taxumap.qmd
+          - tools/polypanner.qmd
+          - tools/qiime2.qmd
   page-footer:
     center: "Microbiome Tools for Dummies | Built with [Quarto](https://quarto.org)"
 
