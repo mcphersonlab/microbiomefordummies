@@ -1,0 +1,133 @@
+---
+title: "anpan"
+subtitle: "Statistical Models for Microbial Pan-genome Analysis"
+---
+
+## What is anpan?
+
+**anpan** is an R package providing statistical models for studying the association between microbial pan-genome features (gene presence/absence, structural variants, SNPs) and host phenotypes. It extends microbiome association analysis beyond community composition to the within-species genetic level.
+
+anpan answers the question: **"Are specific genes or genetic variants within a microbial species associated with a host phenotype?"**
+
+- 📄 [GitHub](https://github.com/biobakery/anpan)
+- 📖 [Documentation](https://github.com/biobakery/anpan)
+- 🗞️ [Paper: Emelie Ahles et al.](https://github.com/biobakery/anpan)
+
+---
+
+## When to Use anpan
+
+Use anpan when you have **species-level genomic features** from metagenomes (from tools like StrainPhlAn, Panphlan, or MIDAS) and want to:
+
+- Test whether specific microbial genes are associated with a phenotype
+- Account for phylogenetic structure when testing gene-phenotype associations
+- Analyze pan-genome variation within a single species across samples
+
+---
+
+## Installation
+
+### R (from GitHub)
+
+```r
+devtools::install_github("biobakery/anpan")
+```
+
+### Dependencies
+
+```r
+install.packages(c(
+  "tidyverse",
+  "cmdstanr",   # for Bayesian models
+  "lme4",       # for mixed models
+  "broom"
+))
+```
+
+---
+
+## Basic Usage
+
+```r
+library(anpan)
+
+# Load gene presence/absence data
+gene_table <- read.csv("gene_table.csv", row.names = 1)
+# Rows = samples, columns = genes
+
+# Load metadata
+metadata <- read.csv("metadata.csv", row.names = 1)
+
+# Run pan-genome association
+results <- anpan_batch(
+  gene_table    = gene_table,
+  metadata      = metadata,
+  outcome       = "disease_status",
+  covariates    = c("age", "sex", "BMI")
+)
+```
+
+### Phylogenetic correction
+
+```r
+# Load phylogenetic tree (from StrainPhlAn)
+library(ape)
+tree <- read.tree("strainphlan_output.tre")
+
+# Run with phylogenetic mixed model
+results_phylo <- anpan_batch(
+  gene_table  = gene_table,
+  metadata    = metadata,
+  outcome     = "disease_status",
+  tree        = tree,
+  model       = "phylo_lm"
+)
+```
+
+---
+
+## Models Available
+
+| Model | Code | Description |
+|-------|------|-------------|
+| Linear mixed model | `"lm"` | Standard association, no phylogeny |
+| Phylogenetic LM | `"phylo_lm"` | Accounts for phylogenetic relatedness |
+| Logistic regression | `"glm"` | Binary outcomes |
+| Bayesian model | `"bayes"` | Fully Bayesian estimation via Stan |
+
+---
+
+## Output
+
+anpan returns a tidy data frame with one row per gene-phenotype association:
+
+| Column | Description |
+|--------|-------------|
+| `gene` | Gene or feature name |
+| `estimate` | Effect size (log-odds or coefficient) |
+| `std.error` | Standard error |
+| `p.value` | Raw p-value |
+| `q.value` | FDR-adjusted p-value |
+
+---
+
+## Tips & Gotchas
+
+::: {.callout-tip}
+**Phylogenetic correction is important** — Closely related strains share many genes. Without phylogenetic correction, you may detect associations that are purely due to population structure, not true phenotypic effects.
+:::
+
+::: {.callout-warning}
+**Minimum prevalence filtering** — Rare genes (present in <10% of samples) have low power. Filter low-prevalence genes before running to reduce multiple testing burden.
+:::
+
+::: {.callout-tip}
+**Integrate with StrainPhlAn** — Use [StrainPhlAn](strainphlan.qmd) to get within-species phylogenetic trees, which anpan can use for phylogenetic correction.
+:::
+
+---
+
+## Further Reading
+
+- [anpan GitHub](https://github.com/biobakery/anpan)
+- [Biobakery tools overview](https://huttenhower.sph.harvard.edu/tools/)

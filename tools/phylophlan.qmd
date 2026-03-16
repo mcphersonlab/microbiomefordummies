@@ -1,0 +1,140 @@
+---
+title: "PhyloPhlAn"
+subtitle: "High-resolution Microbial Phylogenetics"
+---
+
+## What is PhyloPhlAn?
+
+**PhyloPhlAn** is a tool for high-resolution microbial phylogeny reconstruction, genome characterization, and taxonomic assignment of microbial genomes. It uses a large database of universal single-copy marker proteins to build comprehensive and accurate phylogenetic trees from whole genomes or metagenome-assembled genomes (MAGs).
+
+PhyloPhlAn answers the question: **"Where does this genome fit on the tree of life?"**
+
+Current version: **PhyloPhlAn 3**
+
+- 📄 [GitHub](https://github.com/biobakery/phylophlan)
+- 📖 [Documentation](https://github.com/biobakery/phylophlan/wiki)
+- 🗞️ [Paper: Asnicar et al. 2020, *Nature Communications*](https://www.nature.com/articles/s41467-020-16366-7)
+
+---
+
+## When to Use PhyloPhlAn
+
+Use PhyloPhlAn when you want to:
+
+- Place new genomes or MAGs on a reference phylogenetic tree
+- Characterize the taxonomy of novel organisms
+- Build high-quality, large-scale phylogenetic trees
+- Assign taxonomy to unannotated genomes
+
+---
+
+## Installation
+
+### Via conda (recommended)
+
+```bash
+conda create -n phylophlan -c bioconda -c conda-forge phylophlan
+conda activate phylophlan
+```
+
+### Via pip
+
+```bash
+pip install phylophlan
+```
+
+### External dependencies
+
+PhyloPhlAn requires:
+- `mash` — for initial genome sketching and clustering
+- `muscle` or `mafft` — for multiple sequence alignment
+- `trimal` — for alignment trimming
+- `raxml` or `iqtree` — for phylogenetic tree inference
+
+Install all at once via conda:
+```bash
+conda install -c bioconda mash muscle mafft trimal raxml iqtree
+```
+
+---
+
+## Basic Usage
+
+### Database setup
+
+```bash
+# List available databases
+phylophlan_databases --help
+
+# Download a database (e.g., for genome phylogeny)
+phylophlan_setup_database \
+  -d phylophlan \
+  --database_folder databases/
+```
+
+### Phylogenetic tree construction
+
+```bash
+phylophlan \
+  -i genome_folder/ \
+  -d phylophlan \
+  --databases_folder databases/ \
+  -o output_tree/ \
+  --diversity medium \
+  --nproc 8 \
+  -f supermatrix_aa.cfg
+```
+
+### Metagenomic strain tracking
+
+```bash
+phylophlan_metagenomic \
+  -i mag_folder/ \
+  -d SGB.Jan19 \
+  --databases_folder databases/ \
+  -o output_sgbs/ \
+  --nproc 8
+```
+
+---
+
+## Key Modes
+
+| Mode | Command | Use case |
+|------|---------|----------|
+| Genome phylogeny | `phylophlan` | Build trees from genomes |
+| MAG classification | `phylophlan_metagenomic` | Assign MAGs to SGBs |
+| Database creation | `phylophlan_setup_database` | Build custom databases |
+
+---
+
+## Output Files
+
+| File | Contents |
+|------|----------|
+| `*.tre` | Newick-format phylogenetic tree |
+| `*.xml` | PhyloXML-format tree |
+| `*_refined.tre` | Tree after outlier removal |
+
+---
+
+## Tips & Gotchas
+
+::: {.callout-tip}
+**Choose the right diversity setting** — Use `--diversity low` for closely related strains, `medium` for species-level analyses, and `high` for genus/family-level trees.
+:::
+
+::: {.callout-warning}
+**Input genome quality matters** — Highly fragmented or low-quality genomes (e.g., MAGs with <50% completeness) may produce poorly placed branches. Filter by completeness using CheckM first.
+:::
+
+::: {.callout-tip}
+**PhyloPhlAn integrates with MetaPhlAn** — MetaPhlAn's SGB (Species-level Genome Bins) taxonomy is based on PhyloPhlAn trees.
+:::
+
+---
+
+## Further Reading
+
+- [PhyloPhlAn3 tutorial](https://github.com/biobakery/biobakery/wiki/phylophlan)
+- [Asnicar et al. 2020, *Nature Communications*](https://www.nature.com/articles/s41467-020-16366-7)

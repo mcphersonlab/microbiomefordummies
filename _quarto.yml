@@ -1,0 +1,74 @@
+project:
+  type: website
+  output-dir: _site
+
+website:
+  title: "Microbiome Tools for Dummies"
+  description: "A beginner-friendly guide to microbiome bioinformatic tools, focusing on the Huttenhower/Segata Biobakery suite."
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - text: "Biobakery Tools"
+        menu:
+          - text: "HUMAnN"
+            href: tools/humann.qmd
+          - text: "MetaPhlAn"
+            href: tools/metaphlan.qmd
+          - text: "PICRUSt2"
+            href: tools/picrust2.qmd
+          - text: "PhyloPhlAn"
+            href: tools/phylophlan.qmd
+          - text: "StrainPhlAn"
+            href: tools/strainphlan.qmd
+          - text: "ShortBRED"
+            href: tools/shortbred.qmd
+          - text: "WAAFLE"
+            href: tools/waafle.qmd
+          - text: "MACARRoN"
+            href: tools/macarron.qmd
+          - text: "metawibele"
+            href: tools/metawibele.qmd
+          - text: "baqlava"
+            href: tools/baqlava.qmd
+          - text: "MaAsLin2"
+            href: tools/maaslin2.qmd
+          - text: "anpan"
+            href: tools/anpan.qmd
+          - text: "CCREPE"
+            href: tools/ccrepe.qmd
+    right:
+      - icon: github
+        href: https://github.com/JacobKMcPherson/Microbiome_Tools_for_Dummies
+  sidebar:
+    style: "docked"
+    search: true
+    contents:
+      - section: "Getting Started"
+        contents:
+          - index.qmd
+      - section: "Biobakery Tools"
+        contents:
+          - tools/humann.qmd
+          - tools/metaphlan.qmd
+          - tools/picrust2.qmd
+          - tools/phylophlan.qmd
+          - tools/strainphlan.qmd
+          - tools/shortbred.qmd
+          - tools/waafle.qmd
+          - tools/macarron.qmd
+          - tools/metawibele.qmd
+          - tools/baqlava.qmd
+          - tools/maaslin2.qmd
+          - tools/anpan.qmd
+          - tools/ccrepe.qmd
+  page-footer:
+    center: "Microbiome Tools for Dummies | Built with [Quarto](https://quarto.org)"
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    code-tools: true

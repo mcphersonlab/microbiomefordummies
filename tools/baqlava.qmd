@@ -1,0 +1,123 @@
+---
+title: "baqlava"
+subtitle: "Bacteriophage and vIral Analysis of Large-scale metAgenomic data"
+---
+
+## What is baqlava?
+
+**baqlava** (Bacteriophage and vIral Analysis of Large-scale metAgenomic data) is a computational pipeline for identifying and profiling viruses — particularly bacteriophages — from shotgun metagenomic data. It uses a database of viral marker genes to accurately detect and quantify viral populations in complex microbial communities.
+
+baqlava answers the question: **"Which viruses (especially bacteriophages) are present in this metagenome, and at what abundance?"**
+
+- 📄 [GitHub](https://github.com/biobakery/baqlava)
+- 📖 [Documentation](https://github.com/biobakery/baqlava/wiki)
+
+---
+
+## When to Use baqlava
+
+Use baqlava when you want to:
+
+- Profile the virome (viral community) from metagenomic data
+- Detect bacteriophages alongside bacteria in the same dataset
+- Study phage-bacteria interaction dynamics
+- Integrate viral profiling with HUMAnN/MetaPhlAn results
+
+::: {.callout-note}
+baqlava is complementary to MetaPhlAn. While MetaPhlAn focuses on bacteria, archaea, and microbial eukaryotes, baqlava targets viruses and phages.
+:::
+
+---
+
+## Installation
+
+### Via conda
+
+```bash
+conda create -n baqlava -c biobakery baqlava
+conda activate baqlava
+```
+
+### Via pip
+
+```bash
+pip install baqlava
+```
+
+### Database setup
+
+```bash
+# Download viral marker database
+baqlava_databases --download all /path/to/databases/
+```
+
+---
+
+## Basic Usage
+
+```bash
+baqlava \
+  --input sample.fastq.gz \
+  --output output_directory/ \
+  --threads 8
+```
+
+### Key options
+
+| Option | Description |
+|--------|-------------|
+| `--input` | Input FASTQ file(s) |
+| `--output` | Output directory |
+| `--threads` | Number of CPU threads |
+| `--bypass-host-removal` | Skip host read removal (if already done) |
+
+---
+
+## Output Files
+
+| File | Contents |
+|------|----------|
+| `*_viral_abundance.tsv` | Viral species/family abundances (RPK) |
+| `*_viral_profile.tsv` | Presence/absence profile of viral taxa |
+
+---
+
+## Integration with MetaPhlAn
+
+baqlava was designed to complement MetaPhlAn. When using MetaPhlAn with the `--add_viruses` flag, a subset of viruses can be profiled. baqlava provides more comprehensive viral profiling:
+
+```bash
+# MetaPhlAn with basic viral support
+metaphlan sample.fastq.gz \
+  --add_viruses \
+  --input_type fastq \
+  -o sample_profile.txt
+
+# baqlava for comprehensive viral profiling
+baqlava \
+  --input sample.fastq.gz \
+  --output baqlava_output/
+```
+
+---
+
+## Tips & Gotchas
+
+::: {.callout-tip}
+**Host removal first** — Remove human (or other host) reads before running baqlava. Use KneadData for this.
+:::
+
+::: {.callout-warning}
+**Virome enrichment vs. total metagenomics** — baqlava works on standard shotgun metagenomics, but viral sequences are often at low abundance. Virome-enriched protocols (e.g., VLP extraction) will give better sensitivity.
+:::
+
+::: {.callout-tip}
+**Combine with MetaPhlAn results** — Join baqlava viral abundances with MetaPhlAn bacterial abundances for a comprehensive community profile.
+:::
+
+---
+
+## Further Reading
+
+- [baqlava GitHub](https://github.com/biobakery/baqlava)
+- [Biobakery tools overview](https://huttenhower.sph.harvard.edu/tools/)

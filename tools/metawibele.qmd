@@ -1,0 +1,137 @@
+---
+title: "metawibele"
+subtitle: "Metagenomic-based Microbial Bioactive Elements"
+---
+
+## What is metawibele?
+
+**metawibele** (Metagenomic-based Microbial Bioactive Elements) is a pipeline for characterizing and prioritizing novel protein families from metagenomes. It processes metagenomic assemblies, predicts open reading frames (ORFs), clusters them into protein families, and then annotates them against multiple functional databases to identify candidate bioactive proteins.
+
+metawibele answers the question: **"What novel or understudied microbial proteins are present in this metagenome, and which ones are worth investigating further?"**
+
+- 📄 [GitHub](https://github.com/biobakery/metawibele)
+- 📖 [Documentation](https://github.com/biobakery/metawibele/wiki)
+- 🗞️ [Paper: Ma et al. 2021, *Nature Methods*](https://www.nature.com/articles/s41592-021-01233-2)
+
+---
+
+## When to Use metawibele
+
+Use metawibele when you want to:
+
+- Characterize microbial proteins from metagenomic assemblies
+- Identify novel proteins with unknown functions
+- Prioritize proteins for experimental follow-up
+- Annotate protein families against multiple databases simultaneously
+
+---
+
+## Installation
+
+### Via conda (recommended)
+
+```bash
+conda create -n metawibele -c biobakery metawibele
+conda activate metawibele
+```
+
+### From source
+
+```bash
+git clone https://github.com/biobakery/metawibele.git
+cd metawibele
+pip install .
+```
+
+---
+
+## Workflow Overview
+
+metawibele has three main stages:
+
+```
+Metagenomic assemblies (contigs)
+        │
+        ▼
+  1. Preprocessing
+     (ORF prediction, protein clustering)
+        │
+        ▼
+  2. Characterization
+     (multi-database annotation)
+        │
+        ▼
+  3. Prioritization
+     (scoring and ranking)
+```
+
+### Running the full pipeline
+
+```bash
+metawibele \
+  --input-sequence contigs.fasta \
+  --input-count counts.tsv \
+  --output-folder metawibele_output/ \
+  --threads 8
+```
+
+---
+
+## Annotation Databases
+
+metawibele integrates annotation from multiple sources:
+
+| Database | Information |
+|----------|-------------|
+| UniRef90 | Protein family membership |
+| Pfam | Protein domain content |
+| KEGG | Metabolic pathway annotations |
+| eggNOG | Orthologous group annotations |
+| PSORTb | Protein subcellular localization |
+| SignalP | Signal peptide prediction |
+| TMHMM | Transmembrane domain prediction |
+| MaAsLin2 | Association with metadata |
+
+---
+
+## Output Files
+
+| File | Contents |
+|------|----------|
+| `*_proteinfamilies.tsv` | Protein family abundance table |
+| `*_characterization.tsv` | Multi-database annotations |
+| `*_prioritization.tsv` | Ranked prioritization scores |
+
+---
+
+## Prioritization Score
+
+metawibele computes a composite prioritization score based on:
+
+- **Prevalence** — How common is this protein family across samples?
+- **Abundance** — How highly abundant is it?
+- **Annotation novelty** — Is it unannotated or poorly characterized?
+- **Differential abundance** — Is it associated with a phenotype of interest?
+
+---
+
+## Tips & Gotchas
+
+::: {.callout-warning}
+**Compute requirements** — The characterization step involves running BLAST against several large databases. This can require significant disk space (>100 GB) and compute time.
+:::
+
+::: {.callout-tip}
+**Start with the demo dataset** to understand the expected input/output formats before running on your own data.
+:::
+
+::: {.callout-tip}
+**metawibele integrates with MaAsLin2** for differential abundance testing as part of the prioritization step. Make sure your metadata file is formatted correctly.
+:::
+
+---
+
+## Further Reading
+
+- [metawibele tutorial](https://github.com/biobakery/metawibele/wiki/metawibele-tutorial)
+- [Ma et al. 2021, *Nature Methods*](https://www.nature.com/articles/s41592-021-01233-2)

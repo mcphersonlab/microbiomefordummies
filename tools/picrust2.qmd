@@ -1,0 +1,125 @@
+---
+title: "PICRUSt2"
+subtitle: "Phylogenetic Investigation of Communities by Reconstruction of Unobserved States"
+---
+
+## What is PICRUSt2?
+
+**PICRUSt2** (Phylogenetic Investigation of Communities by Reconstruction of Unobserved States 2) predicts the functional composition of a metagenome using 16S rRNA amplicon data. It places your 16S sequences on a reference phylogenetic tree and then predicts gene family and pathway abundances based on characterized genomes.
+
+PICRUSt2 answers the question: **"What metabolic functions might this community be performing?"** — from 16S amplicon data alone.
+
+- 📄 [GitHub](https://github.com/picrust/picrust2)
+- 📖 [Documentation](https://github.com/picrust/picrust2/wiki)
+- 🗞️ [Paper: Douglas et al. 2020, *Nature Biotechnology*](https://www.nature.com/articles/s41587-020-0548-6)
+
+---
+
+## When to Use PICRUSt2
+
+Use PICRUSt2 when you have **16S rRNA amplicon data** (not shotgun metagenomics) and want functional predictions:
+
+- You don't have shotgun metagenomic data
+- You want a quick functional annotation from existing 16S surveys
+- Budget or compute constraints prevent shotgun sequencing
+
+::: {.callout-warning}
+PICRUSt2 predictions are **inferred, not measured**. For accurate functional profiling, use [HUMAnN](humann.qmd) with actual shotgun metagenomics data.
+:::
+
+---
+
+## Installation
+
+### Via conda (recommended)
+
+```bash
+conda create -n picrust2 -c bioconda -c conda-forge picrust2
+conda activate picrust2
+```
+
+### Via pip
+
+```bash
+pip install picrust2
+```
+
+---
+
+## Basic Usage
+
+PICRUSt2 requires as input:
+1. A table of representative 16S sequences (FASTA)
+2. An ASV/OTU abundance table (biom format)
+
+```bash
+picrust2_pipeline.py \
+  -s seqs.fna \
+  -i feature-table.biom \
+  -o picrust2_out_pipeline \
+  -p 4
+```
+
+### Step-by-step workflow
+
+```bash
+# Step 1: Place sequences on reference tree
+place_seqs.py \
+  -s seqs.fna \
+  -o out.tre \
+  -p 4
+
+# Step 2: Predict hidden state (gene family copy numbers)
+hsp.py -i 16S -t out.tre -o 16S_predicted.tsv.gz -p 4
+hsp.py -i EC -t out.tre -o EC_predicted.tsv.gz -p 4
+
+# Step 3: Compute metagenome abundances
+metagenome_pipeline.py \
+  -i feature-table.biom \
+  -m 16S_predicted.tsv.gz \
+  -f EC_predicted.tsv.gz \
+  -o EC_metagenome_out
+
+# Step 4: Predict pathway abundances
+pathway_pipeline.py \
+  -i EC_metagenome_out/pred_metagenome_contrib.tsv.gz \
+  -o pathways_out \
+  -p 4
+```
+
+---
+
+## Output Files
+
+| File | Contents |
+|------|----------|
+| `EC_predicted.tsv.gz` | Predicted EC (enzyme) copy numbers per ASV |
+| `EC_metagenome_out/pred_metagenome_unstrat.tsv.gz` | Community-level EC abundances |
+| `pathways_out/path_abun_unstrat.tsv.gz` | MetaCyc pathway abundances |
+| `pathways_out/path_abun_strat.tsv.gz` | Pathway abundances stratified by contributing taxon |
+
+---
+
+## Tips & Gotchas
+
+::: {.callout-warning}
+**NSTI scores** — PICRUSt2 reports the Nearest Sequenced Taxon Index (NSTI) for each ASV. High NSTI values (>2) indicate your sequences are phylogenetically distant from reference genomes, making predictions less reliable. Filter out high-NSTI ASVs for better results.
+:::
+
+::: {.callout-tip}
+**Use DADA2 or DEBLUR** output as input to PICRUSt2 — exact sequence variants work better than OTUs clustered at 97% similarity.
+:::
+
+::: {.callout-tip}
+**Add descriptions** to output files using `add_descriptions.py`:
+```bash
+add_descriptions.py -i pathways_out/path_abun_unstrat.tsv.gz -m METACYC -o path_abun_unstrat_descrip.tsv.gz
+```
+:::
+
+---
+
+## Further Reading
+
+- [PICRUSt2 tutorial](https://github.com/picrust/picrust2/wiki/PICRUSt2-Tutorial-(v2.5.2))
+- [Douglas et al. 2020, *Nature Biotechnology*](https://www.nature.com/articles/s41587-020-0548-6)

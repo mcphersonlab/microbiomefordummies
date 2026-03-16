@@ -1,0 +1,24 @@
+# Quarto build outputs
+/_site/
+/.quarto/
+*_cache/
+*_files/
+
+# R / Rscript artifacts
+.Rhistory
+.Rdata
+.Renviron
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+env/
+
+# macOS
+.DS_Store
+
+# Editor files
+.vscode/
+*.swp

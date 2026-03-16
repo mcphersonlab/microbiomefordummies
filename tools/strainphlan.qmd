@@ -1,0 +1,124 @@
+---
+title: "StrainPhlAn"
+subtitle: "Strain-level Metagenomic Profiling"
+---
+
+## What is StrainPhlAn?
+
+**StrainPhlAn** is a tool for strain-level profiling and tracking of specific microbial species across metagenomic samples. It reconstructs strain-level sequences directly from shotgun metagenomic data and uses phylogenetic analysis to track strains across individuals, time points, or conditions.
+
+StrainPhlAn answers the question: **"Are the same strains present across these samples?"**
+
+StrainPhlAn is distributed as part of the **MetaPhlAn** package.
+
+- 📄 [GitHub](https://github.com/biobakery/MetaPhlAn)
+- 📖 [Wiki](https://github.com/biobakery/MetaPhlAn/wiki/StrainPhlAn-4)
+- 🗞️ [Paper: Truong et al. 2017, *Nature Genetics*](https://www.nature.com/articles/ng.3802)
+
+---
+
+## When to Use StrainPhlAn
+
+Use StrainPhlAn when you want to:
+
+- Track whether the same microbial **strain** is shared between individuals (e.g., mother-infant transmission)
+- Monitor strain dynamics over time in longitudinal studies
+- Investigate within-species genetic variation
+- Identify the source of a specific strain
+
+---
+
+## Installation
+
+StrainPhlAn is bundled with MetaPhlAn:
+
+```bash
+conda create -n metaphlan -c biobakery metaphlan
+conda activate metaphlan
+```
+
+---
+
+## Workflow
+
+StrainPhlAn runs in two main steps after MetaPhlAn profiling:
+
+### Step 1: Sample-to-marker extraction
+
+Extract consensus marker sequences from each sample's MetaPhlAn alignment:
+
+```bash
+# Run MetaPhlAn saving the SAM alignment
+metaphlan sample.fastq.gz \
+  --input_type fastq \
+  -s sample.sam.bz2 \
+  -o sample_profile.txt \
+  --nproc 8
+
+# Extract sample markers
+sample2markers.py \
+  -i sample.sam.bz2 \
+  -r marker_db/ \
+  -o sample_markers/ \
+  -n 8
+```
+
+### Step 2: StrainPhlAn tree construction
+
+```bash
+# Get species-specific markers
+extract_markers.py \
+  -c s__Eggerthella_lenta \
+  -o marker_dir/
+
+# Build the phylogenetic tree
+strainphlan \
+  -s sample_markers/*.pkl \
+  -m marker_dir/s__Eggerthella_lenta.fna \
+  -o strainphlan_output/ \
+  -n 8 \
+  -c s__Eggerthella_lenta
+```
+
+---
+
+## Output Files
+
+| File | Contents |
+|------|----------|
+| `*.tre` | Phylogenetic tree of strain relationships |
+| `*.aln` | Aligned marker sequences |
+| `*.info` | Run statistics and sample information |
+
+---
+
+## Tips & Gotchas
+
+::: {.callout-warning}
+**Minimum coverage** — StrainPhlAn requires sufficient coverage of the target species in each sample. Samples with very low abundance of the target species will be excluded. The default minimum coverage is 20%.
+:::
+
+::: {.callout-tip}
+**Save SAM files** from MetaPhlAn by always using the `-s` flag. Once deleted, you cannot re-extract strain markers without re-running MetaPhlAn.
+:::
+
+::: {.callout-tip}
+**Add reference genomes** to the tree using the `--references` option. This allows you to place metagenomic strains relative to known isolates.
+
+```bash
+strainphlan \
+  -s sample_markers/*.pkl \
+  -m marker_dir/s__Lactobacillus_reuteri.fna \
+  -r reference_genomes/*.fna \
+  -o strainphlan_output/ \
+  -c s__Lactobacillus_reuteri
+```
+:::
+
+---
+
+## Further Reading
+
+- [StrainPhlAn4 tutorial](https://github.com/biobakery/biobakery/wiki/strainphlan4)
+- [Truong et al. 2017, *Nature Genetics*](https://www.nature.com/articles/ng.3802)
+- [Pasolli et al. 2019, *Cell*](https://www.cell.com/cell/fulltext/S0092-8674(19)30001-7)

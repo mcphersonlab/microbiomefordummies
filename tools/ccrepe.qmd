@@ -1,0 +1,166 @@
+---
+title: "CCREPE"
+subtitle: "Compositionality Corrected by REnormalization and PErmutation"
+---
+
+## What is CCREPE?
+
+**CCREPE** (Compositionality Corrected by REnormalization and PErmutation) is an R package for measuring and assessing the statistical significance of correlations in compositional microbiome data. Standard correlation methods (Pearson, Spearman) produce biased results with compositional data because the values sum to a constant. CCREPE corrects for this bias.
+
+CCREPE answers the question: **"Which pairs of microbial features are truly correlated with each other, accounting for the compositional nature of microbiome data?"**
+
+- 📄 [GitHub](https://github.com/biobakery/ccrepe)
+- 📖 [Bioconductor](https://www.bioconductor.org/packages/release/bioc/html/ccrepe.html)
+- 🗞️ [Paper: Faust et al. 2012, *PLOS Computational Biology*](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1002687)
+
+---
+
+## When to Use CCREPE
+
+Use CCREPE when you want to:
+
+- Identify positively or negatively co-occurring microbial taxa
+- Build microbial co-occurrence networks
+- Correlate microbial features with each other or with metabolites
+- Correct for compositional bias in standard correlation analyses
+
+::: {.callout-note}
+Other tools for microbiome correlation analysis include SpiecEasi and flashWeave. CCREPE's approach is based on NC (North Carolina) renormalization, which is especially suited to relative abundance data.
+:::
+
+---
+
+## Installation
+
+### R / Bioconductor (recommended)
+
+```r
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("ccrepe")
+```
+
+### From GitHub
+
+```r
+devtools::install_github("biobakery/ccrepe")
+```
+
+---
+
+## Basic Usage
+
+```r
+library(ccrepe)
+
+# Load species abundance table
+# Rows = samples, columns = species
+abundance <- read.table("species_abundance.tsv",
+                         sep = "\t",
+                         header = TRUE,
+                         row.names = 1)
+
+# Run CCREPE with default settings (Spearman correlation)
+ccrepe_results <- ccrepe(
+  x     = abundance,
+  sim.score = cor,          # similarity function
+  iterations = 1000,        # number of permutations
+  min.subj = 10             # minimum samples for inclusion
+)
+```
+
+### Cross-dataset correlation
+
+```r
+# Correlate species abundance with metabolite abundance
+metabolites <- read.table("metabolites.tsv",
+                           sep = "\t",
+                           header = TRUE,
+                           row.names = 1)
+
+ccrepe_cross <- ccrepe(
+  x = abundance,
+  y = metabolites,          # second dataset
+  sim.score = cor,
+  iterations = 1000
+)
+```
+
+---
+
+## Output
+
+CCREPE returns a list of matrices:
+
+| Output | Description |
+|--------|-------------|
+| `sim.score` | Correlation coefficient matrix |
+| `p.values` | Raw p-values for each correlation |
+| `q.values` | FDR-adjusted p-values (Benjamini-Hochberg) |
+| `z.stat` | Z-statistics |
+
+### Accessing results
+
+```r
+# Get significant correlations (q < 0.05)
+sig_pairs <- which(ccrepe_results$q.values < 0.05, arr.ind = TRUE)
+
+# Build a table of significant correlations
+library(tibble)
+sig_table <- tibble(
+  feature1 = rownames(ccrepe_results$q.values)[sig_pairs[, 1]],
+  feature2 = colnames(ccrepe_results$q.values)[sig_pairs[, 2]],
+  correlation = ccrepe_results$sim.score[sig_pairs],
+  q_value = ccrepe_results$q.values[sig_pairs]
+)
+```
+
+---
+
+## Custom Similarity Functions
+
+CCREPE supports any custom similarity or distance function:
+
+```r
+# Use a custom similarity metric (e.g., Mutual Information)
+library(infotheo)
+
+mi_score <- function(x, y) {
+  mutinformation(discretize(x), discretize(y))
+}
+
+ccrepe_mi <- ccrepe(
+  x         = abundance,
+  sim.score = mi_score,
+  iterations = 1000
+)
+```
+
+---
+
+## Tips & Gotchas
+
+::: {.callout-warning}
+**Compositionality** — Never use standard Pearson or Spearman correlations directly on relative abundance data. The compositional constraint (all features sum to 1) creates spurious negative correlations. CCREPE corrects for this.
+:::
+
+::: {.callout-tip}
+**More iterations = more accurate p-values** — The default 1000 iterations is a minimum. Use 10,000+ for publication-quality results, at the cost of longer computation time.
+:::
+
+::: {.callout-tip}
+**Filter rare features** — Remove taxa present in fewer than 10% of samples before running CCREPE to reduce multiple testing burden and improve statistical power.
+:::
+
+::: {.callout-tip}
+**Visualize results as a network** — Use the `igraph` or `ggraph` R packages to visualize significant CCREPE correlations as a co-occurrence network.
+:::
+
+---
+
+## Further Reading
+
+- [CCREPE Bioconductor vignette](https://www.bioconductor.org/packages/release/bioc/vignettes/ccrepe/inst/doc/ccrepe.pdf)
+- [Faust et al. 2012, *PLOS Computational Biology*](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1002687)
+- [Faust & Raes 2012, *Nature Reviews Microbiology*](https://www.nature.com/articles/nrmicro2832) (review of microbial co-occurrence networks)
