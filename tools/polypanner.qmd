@@ -10,7 +10,7 @@ subtitle: "Dynamic Variant Detection in Metagenomes via Temporal Sampling"
 PolyPanner answers the question: **"Which specific nucleotide variants within microbial genomes change in frequency across a time-series metagenome, indicating evolutionary selection or strain replacement?"**
 
 - 📄 [GitHub](https://github.com/eitanyaffe/PolyPanner)
-- 🗞️ [Paper: Yaffe et al. 2025, *Cell Host & Microbe*](https://doi.org/10.1016/j.chom.2025.03.016)
+- 🗞️ [Paper: Yaffe et al. 2025, *Nature*](https://doi.org/10.1038/s41586-025-08781-x)
 
 ---
 
@@ -157,6 +157,6 @@ plt.savefig("top_sweep.png", dpi=150)
 ## Further Reading
 
 - [PolyPanner GitHub](https://github.com/eitanyaffe/PolyPanner)
-- [Yaffe et al. 2025, *Cell Host & Microbe* — original PolyPanner paper](https://doi.org/10.1016/j.chom.2025.03.016)
+- [Yaffe et al. 2025, *Nature* — original PolyPanner paper](https://doi.org/10.1038/s41586-025-08781-x)
 - [PolyPanner Zenodo archive (v1.0.2)](https://zenodo.org/records/14775630)
 - [inStrain — complementary per-sample variant profiling tool](https://instrain.readthedocs.io/)
