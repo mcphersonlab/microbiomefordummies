@@ -1,0 +1,122 @@
+---
+title: "ShortBRED"
+subtitle: "Short Better Representative Extract Dataset"
+---
+
+## What is ShortBRED?
+
+**ShortBRED** (Short Better Representative Extract Dataset) is a pipeline for identifying and quantifying protein families of interest in metagenomic data. It first builds a set of short, highly specific marker sequences (ShortBRED-markers) for your proteins of interest, then uses those markers to rapidly quantify those protein families in large metagenomic datasets.
+
+ShortBRED answers the question: **"How abundant are these specific proteins or protein families in my metagenome?"**
+
+- 📄 [GitHub](https://github.com/biobakery/shortbred)
+- 📖 [Documentation](https://huttenhower.sph.harvard.edu/shortbred)
+- 🗞️ [Paper: Kaminski et al. 2015, *PLOS Computational Biology*](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1004557)
+
+---
+
+## When to Use ShortBRED
+
+Use ShortBRED when you want to:
+
+- Profile the abundance of **specific protein families** in metagenomes (e.g., antibiotic resistance genes, virulence factors)
+- Quickly screen large datasets for proteins of interest
+- Analyze proteins not well covered by general metabolic databases
+
+::: {.callout-note}
+ShortBRED is particularly useful for **antimicrobial resistance (AMR) profiling** and quantifying specific gene categories across large cohorts.
+:::
+
+---
+
+## Installation
+
+### Via conda
+
+```bash
+conda create -n shortbred -c biobakery shortbred
+conda activate shortbred
+```
+
+### From source
+
+```bash
+git clone https://github.com/biobakery/shortbred.git
+cd shortbred
+pip install .
+```
+
+### Dependencies
+
+- `usearch` — for clustering
+- `MUSCLE` — for multiple sequence alignment
+- `BLAST+` — for marker generation
+
+---
+
+## Workflow
+
+ShortBRED has two main steps:
+
+### Step 1: Build markers (ShortBRED-Identify)
+
+Build compact marker sequences from your target protein sequences:
+
+```bash
+shortbred_identify.py \
+  --goi target_proteins.faa \
+  --ref uniref90.fasta \
+  --markers output_markers.faa \
+  --tmp tmp/
+```
+
+| Option | Description |
+|--------|-------------|
+| `--goi` | Genes of interest (target proteins, FASTA) |
+| `--ref` | Reference protein database (e.g., UniRef90) |
+| `--markers` | Output marker file |
+| `--tmp` | Temporary directory |
+
+### Step 2: Quantify in metagenomes (ShortBRED-Quantify)
+
+Use the markers to quantify target proteins in metagenomic samples:
+
+```bash
+shortbred_quantify.py \
+  --markers output_markers.faa \
+  --wgs sample.fastq.gz \
+  --results sample_shortbred_results.txt \
+  --tmp tmp/
+```
+
+---
+
+## Output Files
+
+| File | Contents |
+|------|----------|
+| `output_markers.faa` | Compact marker sequences |
+| `*_results.txt` | RPKM-normalized abundance of each protein family per sample |
+
+---
+
+## Tips & Gotchas
+
+::: {.callout-tip}
+**Pre-built markers** are available for common gene sets (e.g., ARGs, virulence factors) on the Biobakery website, saving you the identify step.
+:::
+
+::: {.callout-warning}
+**usearch licensing** — `usearch` requires a free license for 32-bit use and a commercial license for 64-bit. Alternatively, use `vsearch` as a drop-in open-source replacement.
+:::
+
+::: {.callout-tip}
+**Batch processing** — Run `shortbred_quantify.py` separately on each sample, then join results with standard table-joining tools.
+:::
+
+---
+
+## Further Reading
+
+- [ShortBRED tutorial](https://huttenhower.sph.harvard.edu/shortbred)
+- [Kaminski et al. 2015, *PLOS Computational Biology*](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1004557)

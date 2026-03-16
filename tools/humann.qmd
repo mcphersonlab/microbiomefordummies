@@ -1,0 +1,135 @@
+---
+title: "HUMAnN"
+subtitle: "The HMP Unified Metabolic Analysis Network"
+---
+
+## What is HUMAnN?
+
+**HUMAnN** (HMP Unified Metabolic Analysis Network) is a pipeline for efficiently and accurately profiling the presence/absence and abundance of microbial pathways in a community from metagenomic or metatranscriptomic sequencing data.
+
+HUMAnN answers the question: **"What metabolic functions is the microbial community performing?"**
+
+Current version: **HUMAnN 3** (also called HUMAnN3)
+
+- 📄 [GitHub](https://github.com/biobakery/humann)
+- 📖 [Documentation](https://huttenhower.sph.harvard.edu/humann)
+- 🗞️ [Paper: Beghini et al. 2021, *eLife*](https://elifesciences.org/articles/65088)
+
+---
+
+## When to Use HUMAnN
+
+Use HUMAnN when you have **shotgun metagenomic** (or metatranscriptomic) data and you want to quantify:
+
+- **Gene families** — individual protein-coding genes, grouped by UniRef clusters
+- **Metabolic pathways** — metabolic pathways from the MetaCyc database
+- **Pathway coverage** — how completely a pathway is present
+
+::: {.callout-note}
+For 16S amplicon data, use [PICRUSt2](picrust2.qmd) instead for functional prediction.
+:::
+
+---
+
+## Installation
+
+### Via conda (recommended)
+
+```bash
+conda create -n humann -c biobakery humann
+conda activate humann
+```
+
+### Via pip
+
+```bash
+pip install humann
+```
+
+### Databases
+
+HUMAnN requires reference databases (ChocoPhlAn and UniRef). Download them after installation:
+
+```bash
+humann_databases --download chocophlan full /path/to/databases
+humann_databases --download uniref uniref90_diamond /path/to/databases
+```
+
+---
+
+## Basic Usage
+
+```bash
+humann \
+  --input sample.fastq.gz \
+  --output output_directory/ \
+  --threads 8
+```
+
+### Key options
+
+| Option | Description |
+|--------|-------------|
+| `--input` | Input FASTQ file (can be gzipped) |
+| `--output` | Output directory |
+| `--threads` | Number of CPU threads |
+| `--taxonomic-profile` | Pre-computed MetaPhlAn profile (speeds up run) |
+| `--protein-database` | Path to UniRef database |
+| `--nucleotide-database` | Path to ChocoPhlAn database |
+
+---
+
+## Output Files
+
+HUMAnN produces three main output tables:
+
+| File | Contents |
+|------|----------|
+| `*_genefamilies.tsv` | Abundance of UniRef90 gene families |
+| `*_pathabundance.tsv` | Abundance of metabolic pathways |
+| `*_pathcoverage.tsv` | Fraction of each pathway covered |
+
+Each table reports **both community-level totals and per-species contributions** (stratified output).
+
+### Renormalizing output
+
+```bash
+# Normalize to copies per million (CPM)
+humann_renorm_table \
+  --input sample_genefamilies.tsv \
+  --output sample_genefamilies_cpm.tsv \
+  --units cpm
+```
+
+### Joining multiple samples
+
+```bash
+humann_join_tables \
+  --input output_directory/ \
+  --output all_samples_pathabundance.tsv \
+  --file_name pathabundance
+```
+
+---
+
+## Tips & Gotchas
+
+::: {.callout-tip}
+**Speed up runs** by providing a pre-computed MetaPhlAn profile with `--taxonomic-profile`. This skips the MetaPhlAn step.
+:::
+
+::: {.callout-warning}
+**Memory requirements** — The UniRef90 database can require 40+ GB RAM for DIAMOND alignment. Consider using UniRef50 (`uniref50_diamond`) on smaller machines.
+:::
+
+::: {.callout-tip}
+**Low-depth samples** may produce uninformative results. HUMAnN works best with at least 10 million reads.
+:::
+
+---
+
+## Further Reading
+
+- [HUMAnN3 tutorial](https://github.com/biobakery/biobakery/wiki/humann3)
+- [Franzosa et al. 2018, *Nature Methods*](https://www.nature.com/articles/s41592-018-0176-y) (HUMAnN2)
+- [Beghini et al. 2021, *eLife*](https://elifesciences.org/articles/65088) (integrated pipeline)

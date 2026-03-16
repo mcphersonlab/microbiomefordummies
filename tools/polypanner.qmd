@@ -1,0 +1,162 @@
+---
+title: "PolyPanner"
+subtitle: "Dynamic Variant Detection in Metagenomes via Temporal Sampling"
+---
+
+## What is PolyPanner?
+
+**PolyPanner** is a Python tool for detecting *dynamic polymorphic variants* in complex microbial communities by leveraging dense longitudinal (temporal or spatial) metagenome sampling. It co-assembles genomes across all time points to maximise assembly completeness, then identifies variant sites whose allele frequencies change significantly over time — filtering out noise from sequencing errors, mapping artefacts, paralogs, and homologous genes.
+
+PolyPanner answers the question: **"Which specific nucleotide variants within microbial genomes change in frequency across a time-series metagenome, indicating evolutionary selection or strain replacement?"**
+
+- 📄 [GitHub](https://github.com/eitanyaffe/PolyPanner)
+- 🗞️ [Paper: Yaffe et al. 2025, *Nature*](https://doi.org/10.1038/s41586-025-08781-x)
+
+---
+
+## When to Use PolyPanner
+
+Use PolyPanner when you have:
+
+- **Longitudinal metagenomes** from the same subject or environment (≥ 3 time points recommended)
+- A question about **within-species evolution**: selective sweeps, de novo resistance mutations, allele frequency shifts
+- Data from an **intervention study** (e.g. antibiotics, diet, probiotics) where microbial populations may evolve rapidly
+
+::: {.callout-note}
+PolyPanner is distinct from strain-tracking tools like StrainPhlAn, which follow discrete strains across hosts. PolyPanner works *within* a single host's time-series to identify genetic changes that happened during the study period — including de novo mutations that arose and swept to high frequency.
+:::
+
+::: {.callout-tip}
+**Compared with inStrain** — inStrain profiles diversity at variant sites per sample independently. PolyPanner instead leverages temporal co-assembly to improve call accuracy and explicitly tests for frequency *change* across time points, making it more powerful for detecting dynamic evolutionary events in longitudinal data.
+:::
+
+---
+
+## Installation
+
+### From GitHub (recommended)
+
+```bash
+git clone https://github.com/eitanyaffe/PolyPanner.git
+cd PolyPanner
+pip install -r requirements.txt
+```
+
+### Conda environment
+
+```bash
+conda create -n polypanner python=3.10
+conda activate polypanner
+git clone https://github.com/eitanyaffe/PolyPanner.git
+cd PolyPanner
+pip install -r requirements.txt
+```
+
+---
+
+## Input Files
+
+| Input | Description |
+|-------|-------------|
+| Co-assembled FASTA | Contigs assembled across *all* time-point samples together |
+| Per-sample FASTQ pairs | Paired-end shotgun metagenomic reads for each time point |
+| Sample manifest | Tab-separated file listing sample IDs, FASTQ paths, and time points |
+
+::: {.callout-warning}
+**Co-assembly is required** — PolyPanner is designed to work with a single co-assembly built from all time points (e.g. using MEGAHIT or metaSPAdes with all reads). Do *not* provide separate per-sample assemblies; this will produce inaccurate variant calls.
+:::
+
+---
+
+## Basic Usage
+
+```bash
+# Step 1: Map reads from each time point to the co-assembly
+polypanner map \
+  --assembly co_assembly.fasta \
+  --manifest sample_manifest.tsv \
+  --outdir mapping_output/
+
+# Step 2: Call and filter dynamic variants
+polypanner call \
+  --mapping mapping_output/ \
+  --assembly co_assembly.fasta \
+  --outdir variant_calls/
+
+# Step 3: Summarise evolutionary events
+polypanner summarise \
+  --calls variant_calls/ \
+  --outdir summary/
+```
+
+**Sample manifest format** (`sample_manifest.tsv`):
+
+```
+sample_id   timepoint   r1                      r2
+T0_S1       0           T0_S1_R1.fastq.gz       T0_S1_R2.fastq.gz
+T7_S1       7           T7_S1_R1.fastq.gz       T7_S1_R2.fastq.gz
+T14_S1      14          T14_S1_R1.fastq.gz      T14_S1_R2.fastq.gz
+T28_S1      28          T28_S1_R1.fastq.gz      T28_S1_R2.fastq.gz
+```
+
+---
+
+## Output
+
+| Output file | Description |
+|-------------|-------------|
+| `dynamic_variants.tsv` | Variant sites with significant frequency change (position, alleles, p-value, effect size per time point) |
+| `allele_frequencies.tsv` | Full allele frequency table across all time points for all called variant sites |
+| `sweep_events.tsv` | Summary of detected selective sweep events per genomic region |
+| `assembly_contigs_annotated.gff` | Annotation of contigs with variant-dense regions flagged |
+
+### Examining sweep events
+
+```python
+import pandas as pd
+import matplotlib.pyplot as plt
+
+sweeps = pd.read_csv("summary/sweep_events.tsv", sep="\t")
+freqs  = pd.read_csv("variant_calls/allele_frequencies.tsv", sep="\t")
+
+# Plot allele frequency trajectory for top sweep
+top = sweeps.sort_values("effect_size", ascending=False).iloc[0]
+site = freqs[freqs["variant_id"] == top["variant_id"]]
+
+plt.plot(site["timepoint"], site["alt_freq"], marker="o")
+plt.axhline(0.5, color="grey", linestyle="--", alpha=0.5)
+plt.xlabel("Day")
+plt.ylabel("Alt allele frequency")
+plt.title(f"Sweep at {top['contig']}:{top['position']}")
+plt.tight_layout()
+plt.savefig("top_sweep.png", dpi=150)
+```
+
+---
+
+## Tips & Gotchas
+
+::: {.callout-warning}
+**Minimum sampling density** — PolyPanner requires at least 3–4 time points to reliably model frequency trajectories. With only 2 time points, the statistical test for frequency change is underpowered and false discovery rates increase substantially.
+:::
+
+::: {.callout-warning}
+**Sequencing depth** — Accurate allele frequency estimation requires ≥ 20× mean coverage per contig per time point. Contigs with lower coverage are automatically flagged and excluded from variant calling.
+:::
+
+::: {.callout-tip}
+**Co-assembly strategy** — Use all time-point reads together in a single MEGAHIT or metaSPAdes run. Pooling reads improves contig length and completeness, which directly increases the number of callable variant sites.
+:::
+
+::: {.callout-tip}
+**Interpreting sweeps** — A detected sweep does not necessarily mean antibiotic resistance. Cross-reference `sweep_events.tsv` with functional annotation (e.g. prokka, eggNOG) to assess whether swept variants are in genes of known biological relevance.
+:::
+
+---
+
+## Further Reading
+
+- [PolyPanner GitHub](https://github.com/eitanyaffe/PolyPanner)
+- [Yaffe et al. 2025, *Nature* — original PolyPanner paper](https://doi.org/10.1038/s41586-025-08781-x)
+- [PolyPanner Zenodo archive (v1.0.2)](https://zenodo.org/records/14775630)
+- [inStrain — complementary per-sample variant profiling tool](https://instrain.readthedocs.io/)

@@ -1,0 +1,202 @@
+---
+title: "QIIME 2"
+subtitle: "Reproducible, Interactive, and Extensible Microbiome Data Science"
+---
+
+## What is QIIME 2?
+
+**QIIME 2** (Quantitative Insights Into Microbial Ecology 2) is a comprehensive, open-source platform for microbiome data science. It is the gold standard for amplicon (marker gene) analysis — providing end-to-end workflows from raw reads to publication-ready statistics and visualisations — built around full reproducibility via automatic data provenance tracking.
+
+QIIME 2 answers the question: **"What microorganisms are present in my samples, in what proportions, and how does community composition vary with my metadata?"**
+
+- 📄 [Website](https://qiime2.org/)
+- 📖 [Amplicon documentation](https://amplicon-docs.qiime2.org/en/stable/)
+- 🗞️ [Paper: Bolyen et al. 2019, *Nature Biotechnology*](https://doi.org/10.1038/s41587-019-0209-9)
+
+---
+
+## When to Use QIIME 2
+
+Use QIIME 2 when you have:
+
+- **16S rRNA, ITS, or other amplicon data** from Illumina (single-end or paired-end)
+- A need for a **reproducible, auditable** analysis pipeline with full provenance
+- Goals that include taxonomy assignment, alpha/beta diversity, ordination, or differential abundance
+
+::: {.callout-note}
+QIIME 2 can also handle whole-genome shotgun data via third-party plugins (e.g. the `q2-shotgun` ecosystem), but its core strength is amplicon analysis. For shotgun metagenomics, consider pairing QIIME 2 diversity analyses with MetaPhlAn + HUMAnN profiles.
+:::
+
+::: {.callout-tip}
+**QIIME 2 vs. mothur** — Both are widely-used amplicon platforms. QIIME 2's plugin architecture, Python API, provenance system, and large community make it the preferred choice for new projects. mothur remains an alternative for users who prefer an all-in-one binary approach.
+:::
+
+---
+
+## Installation
+
+### conda (recommended)
+
+```bash
+# Create a dedicated environment (replace 2024.10 with the current release)
+conda env create \
+  -n qiime2-amplicon-2024.10 \
+  --file https://data.qiime2.org/distro/amplicon/qiime2-amplicon-2024.10-py310-linux-conda.yml
+
+conda activate qiime2-amplicon-2024.10
+
+# Verify
+qiime info
+```
+
+::: {.callout-tip}
+Always create a fresh conda environment per QIIME 2 version. Mixing packages from other environments is the most common source of installation problems.
+:::
+
+### Docker (alternative)
+
+```bash
+docker pull quay.io/qiime2/amplicon:2024.10
+docker run -t -i -v $(pwd):/data quay.io/qiime2/amplicon:2024.10 qiime info
+```
+
+---
+
+## Core Concepts
+
+| Concept | Description |
+|---------|-------------|
+| **Artifact** (`.qza`) | A QIIME 2 data object — contains data plus full provenance metadata |
+| **Visualisation** (`.qzv`) | An interactive HTML report viewable at [view.qiime2.org](https://view.qiime2.org) |
+| **Plugin** | A module that provides specific methods (e.g. `q2-dada2`, `q2-diversity`) |
+| **Semantic type** | A typed label on each artifact (e.g. `SampleData[PairedEndSequencesWithQuality]`) that enforces correct pipeline ordering |
+
+---
+
+## Minimal Paired-End Amplicon Workflow
+
+### 1. Import raw reads
+
+```bash
+qiime tools import \
+  --type 'SampleData[PairedEndSequencesWithQuality]' \
+  --input-path manifest.tsv \
+  --input-format PairedEndFastqManifestPhred33V2 \
+  --output-path demux-paired-end.qza
+```
+
+**Manifest file format** (`manifest.tsv`):
+
+```
+sample-id   forward-absolute-filepath           reverse-absolute-filepath
+sample1     /data/sample1_R1.fastq.gz           /data/sample1_R2.fastq.gz
+sample2     /data/sample2_R1.fastq.gz           /data/sample2_R2.fastq.gz
+```
+
+### 2. Quality control and denoising with DADA2
+
+```bash
+qiime dada2 denoise-paired \
+  --i-demultiplexed-seqs demux-paired-end.qza \
+  --p-trim-left-f 13 \
+  --p-trim-left-r 13 \
+  --p-trunc-len-f 250 \
+  --p-trunc-len-r 250 \
+  --o-table feature-table.qza \
+  --o-representative-sequences rep-seqs.qza \
+  --o-denoising-stats denoising-stats.qza
+```
+
+::: {.callout-tip}
+Use `qiime demux summarize` to generate quality plots before choosing `--p-trunc-len` values. Truncate where median quality drops below Q25.
+:::
+
+### 3. Taxonomic classification
+
+```bash
+# Download a pre-trained classifier (SILVA 138, 515F/806R region)
+wget https://data.qiime2.org/2024.10/common/silva-138-99-seqs-515-806.qza \
+  -O silva-138-99-seqs-515-806.qza
+
+qiime feature-classifier classify-sklearn \
+  --i-classifier silva-138-99-seqs-515-806.qza \
+  --i-reads rep-seqs.qza \
+  --o-classification taxonomy.qza
+
+qiime metadata tabulate \
+  --m-input-file taxonomy.qza \
+  --o-visualization taxonomy.qzv
+```
+
+### 4. Diversity analysis
+
+```bash
+# Compute a phylogenetic tree for UniFrac distances
+qiime phylogeny align-to-tree-mafft-fasttree \
+  --i-sequences rep-seqs.qza \
+  --o-alignment aligned-rep-seqs.qza \
+  --o-masked-alignment masked-aligned-rep-seqs.qza \
+  --o-tree unrooted-tree.qza \
+  --o-rooted-tree rooted-tree.qza
+
+# Core diversity metrics (adjust --p-sampling-depth to your rarefaction depth)
+qiime diversity core-metrics-phylogenetic \
+  --i-phylogeny rooted-tree.qza \
+  --i-table feature-table.qza \
+  --p-sampling-depth 1000 \
+  --m-metadata-file metadata.tsv \
+  --output-dir core-metrics-results/
+```
+
+### 5. Differential abundance (ANCOM-BC)
+
+```bash
+qiime composition ancombc \
+  --i-table feature-table.qza \
+  --m-metadata-file metadata.tsv \
+  --p-formula "group" \
+  --o-differentials ancombc-results.qza
+```
+
+---
+
+## Key Output Files
+
+| Artifact / Visualisation | Contents |
+|--------------------------|----------|
+| `feature-table.qza` | ASV × sample count table |
+| `rep-seqs.qza` | Representative sequences for each ASV |
+| `taxonomy.qza` | Taxonomic classification for each ASV |
+| `rooted-tree.qza` | Phylogenetic tree for UniFrac calculations |
+| `core-metrics-results/` | Alpha + beta diversity metrics and plots |
+| `*.qzv` | Interactive HTML visualisations (drag to [view.qiime2.org](https://view.qiime2.org)) |
+
+---
+
+## Tips & Gotchas
+
+::: {.callout-warning}
+**Rarefaction depth** — Rarefying to an equal depth per sample (`--p-sampling-depth`) is required for UniFrac-based beta diversity. Choose a depth that retains the majority of samples while discarding as few reads as possible. Visualise the rarefaction curve with `qiime diversity alpha-rarefaction`.
+:::
+
+::: {.callout-warning}
+**Classifier region matching** — The pre-trained SILVA classifier must match the amplicon primer region used in your experiment (e.g. V4 region → 515F/806R classifier). Using a full-length 16S classifier on V4 data will produce inaccurate taxonomic assignments.
+:::
+
+::: {.callout-tip}
+**Provenance** — Every `.qza` and `.qzv` file embeds the complete history of commands used to produce it. Drag any file to [view.qiime2.org](https://view.qiime2.org) and click the **Provenance** tab to see the full audit trail.
+:::
+
+::: {.callout-tip}
+**QIIME 2 Studio** — For users who prefer a graphical interface, QIIME 2 Studio (q2studio) provides a browser-based GUI over the same plugin ecosystem.
+:::
+
+---
+
+## Further Reading
+
+- [QIIME 2 homepage and documentation](https://qiime2.org/)
+- [Amplicon analysis tutorials](https://amplicon-docs.qiime2.org/en/stable/)
+- [Bolyen et al. 2019, *Nature Biotechnology* — original QIIME 2 paper](https://doi.org/10.1038/s41587-019-0209-9)
+- [QIIME 2 Forum](https://forum.qiime2.org/) — active community for support and plugins
+- [view.qiime2.org](https://view.qiime2.org) — drag-and-drop visualiser for `.qzv` files

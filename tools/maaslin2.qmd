@@ -1,0 +1,173 @@
+---
+title: "MaAsLin2"
+subtitle: "Multivariable Association Discovery in Population-scale Meta-omics Studies"
+---
+
+## What is MaAsLin2?
+
+**MaAsLin2** (Multivariable Association Discovery in Population-scale Meta-omics Studies) is a statistical tool for identifying associations between multi-omics features (e.g., microbial taxa, metabolites, gene families) and sample metadata. It handles the challenges specific to microbiome data: compositionality, sparsity, overdispersion, and confounding variables.
+
+MaAsLin2 answers the question: **"Which microbial features are significantly associated with my variable of interest, accounting for potential confounders?"**
+
+- 📄 [GitHub](https://github.com/biobakery/maaslin2)
+- 📖 [Bioconductor](https://www.bioconductor.org/packages/release/bioc/html/Maaslin2.html)
+- 🗞️ [Paper: Mallick et al. 2021, *PLOS Computational Biology*](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1009442)
+
+---
+
+## When to Use MaAsLin2
+
+Use MaAsLin2 when you want to:
+
+- Find microbiome features associated with a disease, treatment, or other phenotype
+- Account for covariates (age, sex, BMI, batch effects) in association testing
+- Analyze any type of multi-omics data: metagenomics, metabolomics, proteomics
+- Run multivariable (not just univariate) association tests
+
+---
+
+## Installation
+
+### R / Bioconductor (recommended)
+
+```r
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("Maaslin2")
+```
+
+### From GitHub
+
+```r
+devtools::install_github("biobakery/maaslin2")
+```
+
+### Command-line version
+
+```bash
+conda install -c biobakery maaslin2
+```
+
+---
+
+## Basic Usage
+
+### In R
+
+```r
+library(Maaslin2)
+
+# Load data
+features <- read.table("species_abundance.tsv",
+                        sep = "\t",
+                        header = TRUE,
+                        row.names = 1)
+
+metadata <- read.table("metadata.tsv",
+                        sep = "\t",
+                        header = TRUE,
+                        row.names = 1)
+
+# Run MaAsLin2
+fit_data <- Maaslin2(
+  input_data     = features,
+  input_metadata = metadata,
+  output         = "maaslin2_output/",
+  fixed_effects  = c("diagnosis"),
+  random_effects = c("subject")
+)
+```
+
+### Command-line
+
+```bash
+Maaslin2.R \
+  species_abundance.tsv \
+  metadata.tsv \
+  maaslin2_output/ \
+  --fixed_effects "diagnosis" \
+  --random_effects "subject"
+```
+
+---
+
+## Key Parameters
+
+| Parameter | Description |
+|-----------|-------------|
+| `fixed_effects` | Variables to test for association |
+| `random_effects` | Random effects to account for repeated measures |
+| `normalization` | Normalization method: `"TSS"`, `"CLR"`, `"CSS"`, `"NONE"` |
+| `transform` | Data transformation: `"LOG"`, `"LOGIT"`, `"AST"`, `"NONE"` |
+| `analysis_method` | Statistical model: `"LM"`, `"CPLM"`, `"ZICP"`, `"NEGBIN"`, `"ZINB"` |
+| `min_abundance` | Minimum abundance threshold for filtering |
+| `min_prevalence` | Minimum prevalence threshold for filtering |
+
+---
+
+## Output Files
+
+| File | Contents |
+|------|----------|
+| `all_results.tsv` | Full results for all features and associations |
+| `significant_results.tsv` | Filtered results (q-value < 0.25 by default) |
+| `figures/` | Visualizations of significant associations |
+
+### Understanding results
+
+```r
+# Read significant results
+results <- read.table("maaslin2_output/significant_results.tsv",
+                       sep = "\t",
+                       header = TRUE)
+
+# Key columns:
+# feature     - the microbiome feature (taxon, gene family, etc.)
+# metadata    - the metadata variable
+# coef        - regression coefficient (log fold-change)
+# stderr      - standard error
+# pval        - raw p-value
+# qval        - FDR-corrected p-value (Benjamini-Hochberg)
+```
+
+---
+
+## Statistical Models
+
+MaAsLin2 supports multiple statistical models suited to different data types:
+
+| Model | Code | Best for |
+|-------|------|----------|
+| Linear model | `"LM"` | Log-transformed continuous data |
+| Compound Poisson | `"CPLM"` | Zero-inflated, non-negative data |
+| Zero-inflated CP | `"ZICP"` | Highly sparse data |
+| Negative Binomial | `"NEGBIN"` | Count data |
+| Zero-inflated NB | `"ZINB"` | Sparse count data |
+
+---
+
+## Tips & Gotchas
+
+::: {.callout-tip}
+**Default settings work well for most microbiome data** — The defaults (TSS normalization + log transform + linear model) are appropriate for most 16S or metagenomic relative abundance data.
+:::
+
+::: {.callout-warning}
+**Compositional data** — Microbial relative abundance data is compositional (sums to 1). CLR transformation (`normalization = "CLR"`) is more appropriate for compositional data than simple log-transform.
+:::
+
+::: {.callout-tip}
+**Multiple covariates** — Always include relevant covariates (age, sex, BMI, batch) in `fixed_effects`. Not doing so can produce spurious associations.
+:::
+
+::: {.callout-warning}
+**Interpret q-values, not p-values** — With hundreds of features tested, always use the FDR-corrected `qval` column. The default significance threshold is `q < 0.25`.
+:::
+
+---
+
+## Further Reading
+
+- [MaAsLin2 tutorial](https://github.com/biobakery/biobakery/wiki/maaslin2)
+- [Mallick et al. 2021, *PLOS Computational Biology*](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1009442)

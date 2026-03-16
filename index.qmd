@@ -1,0 +1,126 @@
+---
+title: "Microbiome Tools for Dummies"
+subtitle: "A beginner-friendly guide to microbiome bioinformatic tools"
+---
+
+## Welcome
+
+This website is a beginner-friendly reference guide for the most commonly used microbiome bioinformatics tools, with a focus on the [Biobakery](https://huttenhower.sph.harvard.edu/tools/) suite developed by the Huttenhower and Segata labs.
+
+Whether you're new to microbiome research or just need a quick reference, this site walks you through what each tool does, how to install it, and how to run it.
+
+---
+
+## What is the Microbiome?
+
+The **microbiome** is the collection of all microorganisms (bacteria, fungi, viruses, archaea) living in a particular environment. In human health research, the gut microbiome has attracted enormous attention due to its role in immunity, metabolism, and disease.
+
+Studying the microbiome relies on sequencing DNA (or RNA) from environmental samples and then using computational tools to answer questions like:
+
+- **Who is there?** (taxonomic profiling)
+- **What are they doing?** (functional profiling)
+- **Are community shifts associated with disease?** (statistical analysis)
+
+---
+
+## The Biobakery Suite
+
+The [Biobakery](https://huttenhower.sph.harvard.edu/tools/) suite is a collection of tools for end-to-end microbiome analysis maintained by the Huttenhower Lab (Harvard) and the Segata Lab (University of Trento). These tools cover the major analysis steps from raw sequence data to biological interpretation.
+
+::: {.grid}
+
+::: {.g-col-6}
+### Functional & Taxonomic Profiling
+- [**HUMAnN**](tools/humann.qmd) — Functional profiling of metagenomes
+- [**MetaPhlAn**](tools/metaphlan.qmd) — Taxonomic profiling from shotgun metagenomics
+- [**PICRUSt2**](tools/picrust2.qmd) — Predict metagenome function from 16S data
+- [**PhyloPhlAn**](tools/phylophlan.qmd) — Phylogenetic placement and genome characterization
+- [**StrainPhlAn**](tools/strainphlan.qmd) — Strain-level metagenomic profiling
+:::
+
+::: {.g-col-6}
+### Advanced Analysis
+- [**ShortBRED**](tools/shortbred.qmd) — Identify and quantify protein families in metagenomes
+- [**WAAFLE**](tools/waafle.qmd) — Detect horizontal gene transfer events
+- [**MACARRoN**](tools/macarron.qmd) — Metabolome prioritization
+- [**metawibele**](tools/metawibele.qmd) — Microbial protein function characterization
+- [**baqlava**](tools/baqlava.qmd) — Viral profiling from metagenomes
+- [**MaAsLin2**](tools/maaslin2.qmd) — Multivariable association discovery
+- [**anpan**](tools/anpan.qmd) — Microbial pan-genome statistical models
+- [**CCREPE**](tools/ccrepe.qmd) — Compositional data correlation
+:::
+
+:::
+
+---
+
+## Tool Summary Table
+
+The table below gives a quick at-a-glance comparison of every tool covered on this site — what it does, why you would reach for it, what data it accepts, and a prominent publication that used (or introduced) the tool.
+
+| Tool | Category | Input data | Purpose | Why use it | Prominent Use Case |
+|------|----------|-----------|---------|------------|--------------------|
+| [**HUMAnN**](tools/humann.qmd) | Functional profiling | Shotgun metagenomics / metatranscriptomics | Profiles microbial gene family and metabolic pathway abundances | Gold-standard for measuring *what the community is doing* at the metabolic level; stratified output links functions back to specific species | Franzosa EA et al. *Nature Methods* 2018 — original HUMAnN2 method paper characterising functional profiles across thousands of metagenomes |
+| [**MetaPhlAn**](tools/metaphlan.qmd) | Taxonomic profiling | Shotgun metagenomics | Determines which species/strains are present and at what relative abundance | Fast, reference-based, and highly accurate; produces profiles usable by HUMAnN, StrainPhlAn, and many downstream tools | Blanco-Míguez A et al. *Nature Biotechnology* 2023 — MetaPhlAn 4 extending profiling to uncharacterised species genome bins |
+| [**PICRUSt2**](tools/picrust2.qmd) | Functional prediction (16S) | 16S rRNA amplicon ASVs | Predicts functional gene and pathway content from 16S data | Extracts functional information from 16S surveys without shotgun sequencing; best option when only amplicon data are available | Douglas GM et al. *Nature Biotechnology* 2020 — original PICRUSt2 paper benchmarking functional inference across diverse 16S datasets |
+| [**PhyloPhlAn**](tools/phylophlan.qmd) | Phylogenetics | Whole genomes / MAGs | Places new genomes on a reference tree and assigns taxonomy | Resolves the evolutionary position of novel or draft genomes using universal marker genes; backbone of MetaPhlAn's SGB taxonomy | Asnicar F et al. *Nature Communications* 2020 — PhyloPhlAn 3.0 enabling high-resolution placement of MAGs and isolates on a global microbial tree |
+| [**StrainPhlAn**](tools/strainphlan.qmd) | Strain-level tracking | Shotgun metagenomics | Tracks specific microbial strains across samples via phylogenetic trees | Answers whether the *same strain* is shared between individuals (e.g. mother-infant transmission) or persists across time points | Truong DT et al. *Genome Research* 2017 — foundational paper resolving strain-level diversity across >3,500 human metagenomes |
+| [**ShortBRED**](tools/shortbred.qmd) | Targeted gene profiling | Shotgun metagenomics | Builds compact marker sequences for target proteins then quantifies them in metagenomes | Efficiently screens large cohorts for any protein of interest (e.g. antimicrobial resistance genes) without full-database alignment | Lloyd-Price J et al. *Nature* 2019 — iHMP/IBDMDB multi-omics study used ShortBRED to quantify AMR gene carriage across longitudinal IBD cohorts |
+| [**WAAFLE**](tools/waafle.qmd) | Horizontal gene transfer | Metagenomic assemblies (contigs) | Detects lateral gene transfer events in assembled metagenomes | Identifies genes that appear to have moved between phylogenetically distant lineages, revealing mobile genetic elements in communities | Hsu TY et al. *Nature Microbiology* 2025 — original WAAFLE paper profiling lateral gene transfer across >2,000 human metagenomes |
+| [**MACARRoN**](tools/macarron.qmd) | Metabolomics prioritization | Untargeted LC-MS metabolomics | Ranks metabolites by biological relevance and microbiome association | Cuts through thousands of unannotated metabolite features to surface the ones most worth experimental follow-up | Bhosle A et al. *Molecular Systems Biology* 2024 — MACARRoN applied to IBD metabolomes to prioritise unannotated bioactive small molecules |
+| [**metawibele**](tools/metawibele.qmd) | Protein characterization | Metagenomic assemblies | Annotates and prioritizes novel microbial protein families | Multi-database annotation pipeline that highlights unannotated or poorly characterized proteins likely to have biological significance | Zhang Y et al. *Nature* 2022 — discovery of bioactive microbial gene products in IBD using the MetaWIBELE pipeline |
+| [**baqlava**](tools/baqlava.qmd) | Viral profiling | Shotgun metagenomics | Identifies and quantifies viruses (especially bacteriophages) alongside bacteria | Adds the viral dimension to standard metagenomics; designed to complement MetaPhlAn for a complete community profile | Jensen JSL et al. *bioRxiv* 2026 — original BAQLaVa preprint demonstrating enhanced viral profiling from HMP2 metagenomes (peer review pending) |
+| [**MaAsLin2**](tools/maaslin2.qmd) | Statistical association | Any multi-omics table + metadata | Finds microbial features significantly associated with host/environmental variables | Handles compositionality, sparsity, and confounders in a single multivariable model; the go-to tool for differential abundance analysis | Mallick H et al. *PLOS Computational Biology* 2021 — original MaAsLin2 paper demonstrating robust multivariable associations across population-scale meta-omics datasets |
+| [**anpan**](tools/anpan.qmd) | Pan-genome statistics | Gene presence/absence or SNP tables (per species) + metadata | Tests associations between within-species genetic variation and phenotypes | Goes beyond community-level analyses to ask whether *specific microbial genes* within a species drive a phenotype, with built-in phylogenetic correction | Ghazi AR et al. *bioRxiv* 2025 — original anpan preprint quantifying metagenomic strain associations across large human cohorts (peer review pending) |
+| [**CCREPE**](tools/ccrepe.qmd) | Co-occurrence / correlation | Any compositional abundance table | Computes statistically corrected correlations between microbial features | Solves the compositional bias problem in microbiome correlations; essential for building reliable co-occurrence networks | HMP Consortium *Nature* 2012 — foundational Human Microbiome Project paper employed CCREPE to characterise inter-species co-occurrence networks across body sites |
+| [**taxUMAP**](tools/taxumap.qmd) | Visualisation | Any species/ASV relative abundance table + taxonomy | Produces taxonomy-aware UMAP embeddings of microbiome community composition | Captures biologically meaningful community structure that standard UMAP misses by aggregating abundances up the taxonomic tree before computing distances | Schluter J et al. *Cell Host & Microbe* 2023 — original taxUMAP paper mapping large clinical microbiome cohorts to reveal ecological competition protecting against bacteremia |
+| [**PolyPanner**](tools/polypanner.qmd) | Intra-species evolution | Longitudinal metagenomic reads + co-assembly | Detects dynamic polymorphic variants whose allele frequencies change across a time-series of metagenomes | Specifically designed for longitudinal cohorts: leverages co-assembly to improve accuracy and tests for frequency *change*, enabling detection of de novo selective sweeps that cross-sectional tools miss | Yaffe E et al. *Nature* 2025 — showed brief ciprofloxacin courses drive de novo resistance sweeps in >10% of gut bacterial populations, discovered using PolyPanner |
+| [**QIIME 2**](tools/qiime2.qmd) | Amplicon analysis platform | 16S / ITS amplicon reads (FASTQ) | End-to-end amplicon microbiome analysis: denoising, taxonomy, diversity, ordination, and differential abundance | Gold-standard reproducible platform with full data provenance, an extensive plugin ecosystem, and the largest user community in amplicon-based microbiome research | Bolyen E et al. *Nature Biotechnology* 2019 — original QIIME 2 paper introducing the artifact/provenance model; cited in tens of thousands of microbiome studies |
+
+---
+
+## How to Use This Site
+
+Each tool page provides:
+
+1. **What it does** — Plain-language description of the tool's purpose
+2. **When to use it** — Where it fits in a typical microbiome workflow
+3. **Installation** — How to install the tool (conda, pip, Docker)
+4. **Basic usage** — Example command-line invocation
+5. **Output** — Description of key output files
+6. **Tips & Gotchas** — Common pitfalls for beginners
+7. **Further reading** — Links to documentation and key papers
+
+---
+
+## A Typical Microbiome Workflow
+
+```
+Raw sequencing reads (.fastq)
+        │
+        ▼
+  Quality control (KneadData)
+        │
+        ├──────────────────────────────────────────┐
+        ▼                                          ▼
+Taxonomic profiling                     Functional profiling
+  (MetaPhlAn)                              (HUMAnN)
+        │                                          │
+        ▼                                          ▼
+  Strain tracking                       Pathway/gene abundance
+  (StrainPhlAn)                              tables
+        │                                          │
+        └──────────────────┬───────────────────────┘
+                           ▼
+              Statistical association testing
+                      (MaAsLin2)
+```
+
+---
+
+## Getting Help
+
+- 🌐 [Biobakery Wiki](https://github.com/biobakery/biobakery/wiki)
+- 💬 [Biobakery Forum](https://forum.biobakery.org/)
+- 📖 [Huttenhower Lab](https://huttenhower.sph.harvard.edu/)
+- 📖 [Segata Lab](https://segatalab.cibio.unitn.it/)

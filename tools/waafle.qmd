@@ -1,0 +1,116 @@
+---
+title: "WAAFLE"
+subtitle: "Workflow to Annotate Assemblies and Find LGT Events"
+---
+
+## What is WAAFLE?
+
+**WAAFLE** (Workflow to Annotate Assemblies and Find LGT Events) is a tool for detecting potential horizontal gene transfer (HGT) events, specifically lateral gene transfer (LGT), from metagenomic assemblies. It analyzes contigs from metagenomes and identifies genes or gene segments that appear to originate from a different lineage than the surrounding genomic context.
+
+WAAFLE answers the question: **"Which genes in this metagenome may have been transferred between different microbial lineages?"**
+
+- 📄 [GitHub](https://github.com/biobakery/waafle)
+- 📖 [Documentation](https://github.com/biobakery/waafle/wiki)
+- 🗞️ [Paper: Schönfeld et al. 2021, *Cell Host & Microbe*](https://www.cell.com/cell-host-microbe/fulltext/S1931-3128(21)00338-X)
+
+---
+
+## When to Use WAAFLE
+
+Use WAAFLE when you want to:
+
+- Detect lateral gene transfer (LGT) events in metagenome-assembled contigs
+- Identify genes that appear to have been transferred across kingdoms or phyla
+- Characterize mobile genetic elements in microbiome data
+
+---
+
+## Installation
+
+### Via conda
+
+```bash
+conda create -n waafle -c biobakery waafle
+conda activate waafle
+```
+
+### Via pip
+
+```bash
+pip install waafle
+```
+
+### Dependencies
+
+- `BLAST+` — for gene annotation
+- `bowtie2` — for read-level analysis
+
+---
+
+## Basic Usage
+
+WAAFLE takes assembled metagenomic contigs as input.
+
+### Step 1: Gene annotation with BLAST
+
+```bash
+waafle_search \
+  contigs.fna \
+  /path/to/waafle_db/waafledb \
+  --out contigs.bls
+```
+
+### Step 2: Find LGT events
+
+```bash
+waafle_orgscorer \
+  contigs.fna \
+  contigs.bls \
+  /path/to/waafle_db/waafle_taxonomy.tsv \
+  --out-lgt contigs_lgt.tsv \
+  --out-no-lgt contigs_no_lgt.tsv \
+  --out-unclassified contigs_unclassified.tsv
+```
+
+---
+
+## Output Files
+
+| File | Contents |
+|------|----------|
+| `*_lgt.tsv` | Contigs with detected LGT events |
+| `*_no_lgt.tsv` | Contigs with no LGT detected (single-clade) |
+| `*_unclassified.tsv` | Contigs that could not be classified |
+
+### LGT output columns
+
+| Column | Description |
+|--------|-------------|
+| `CONTIG_NAME` | Name of the contig |
+| `LENGTH` | Contig length (bp) |
+| `CLADE_A` | Donor clade assignment |
+| `CLADE_B` | Recipient clade assignment |
+| `LGT_REGIONS` | Genomic coordinates of transfer |
+
+---
+
+## Tips & Gotchas
+
+::: {.callout-tip}
+**Assembly quality matters** — WAAFLE works best with longer, high-quality contigs (>1000 bp). Short contigs may not have enough context for reliable LGT detection.
+:::
+
+::: {.callout-warning}
+**False positives** — Chimeric assemblies (assembly errors that join sequences from different organisms) can be misidentified as LGT. Validate candidates with additional methods.
+:::
+
+::: {.callout-tip}
+**Taxonomic resolution** — WAAFLE works at various taxonomic levels. Inter-kingdom transfers (e.g., bacteria → archaea) are more reliable signals than intra-genus transfers.
+:::
+
+---
+
+## Further Reading
+
+- [WAAFLE tutorial](https://github.com/biobakery/waafle/wiki/waafle-tutorial)
+- [Schönfeld et al. 2021, *Cell Host & Microbe*](https://www.cell.com/cell-host-microbe/fulltext/S1931-3128(21)00338-X)

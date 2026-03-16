@@ -1,0 +1,119 @@
+---
+title: "MACARRoN"
+subtitle: "Metabolome Analysis and Compound Annotation with Ranked Relevance on Networks"
+---
+
+## What is MACARRoN?
+
+**MACARRoN** (Metabolome Analysis and Compound Annotation with Ranked Relevance on Networks) is a workflow for systematic prioritization of metabolites from untargeted metabolomics studies. It integrates metabolomics data with microbial community profiles (e.g., from MetaPhlAn or HUMAnN) to identify metabolites that are:
+
+1. Chemically distinct (novel or understudied)
+2. Differentially abundant between groups
+3. Microbiome-associated
+
+MACARRoN answers the question: **"Which metabolites in this dataset are the most biologically relevant and worth following up on?"**
+
+- 📄 [GitHub](https://github.com/biobakery/macarron)
+- 📖 [Bioconductor](https://www.bioconductor.org/packages/release/bioc/html/MACARRoN.html)
+- 🗞️ [Paper: Bhosle et al. 2022, *Nature Communications*](https://www.nature.com/articles/s41467-022-32147-6)
+
+---
+
+## When to Use MACARRoN
+
+Use MACARRoN when you have **untargeted metabolomics data** (LC-MS) and you want to:
+
+- Identify novel microbiome-linked metabolites
+- Prioritize metabolites for follow-up biochemical characterization
+- Integrate metabolomics with metagenomics data
+- Reduce the "unknown compound" problem in metabolomics
+
+---
+
+## Installation
+
+### R / Bioconductor
+
+```r
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("MACARRoN")
+```
+
+### From GitHub
+
+```r
+devtools::install_github("biobakery/macarron")
+```
+
+---
+
+## Basic Usage
+
+MACARRoN is an R package. A typical workflow:
+
+```r
+library(MACARRoN)
+
+# Load input data
+metabolomics_data <- read.csv("metabolomics.csv", row.names = 1)
+metadata          <- read.csv("metadata.csv", row.names = 1)
+annotations       <- read.csv("annotations.csv", row.names = 1)
+
+# Run full MACARRoN pipeline
+mac_output <- MACARRoN::MACARRoN(
+  met_dat  = metabolomics_data,
+  metadata = metadata,
+  annotation_table = annotations,
+  output   = "macarron_output/"
+)
+```
+
+---
+
+## Input Requirements
+
+| Input | Format | Description |
+|-------|--------|-------------|
+| Metabolomics data | CSV/TSV | Feature × sample abundance matrix |
+| Sample metadata | CSV/TSV | Sample covariates and group labels |
+| Annotation table | CSV/TSV | Chemical annotations (from MS libraries) |
+
+---
+
+## Output
+
+MACARRoN outputs a ranked table of metabolite features with the following scores:
+
+| Column | Description |
+|--------|-------------|
+| `MAC_score` | Composite prioritization score |
+| `Avg_Abundance` | Mean abundance across samples |
+| `Prevalence` | Fraction of samples with detection |
+| `Qval` | Adjusted p-value from MaAsLin2 |
+| `Effect_size` | Effect size of differential abundance |
+| `Annotation_cluster` | Chemical cluster identity |
+
+---
+
+## Tips & Gotchas
+
+::: {.callout-tip}
+**Pair with MaAsLin2** — MACARRoN internally calls [MaAsLin2](maaslin2.qmd) for the differential abundance step. Ensure MaAsLin2 is installed.
+:::
+
+::: {.callout-warning}
+**Missing annotations** — Many features in untargeted metabolomics are unannotated. MACARRoN can still prioritize these based on abundance and association patterns.
+:::
+
+::: {.callout-tip}
+**Hierarchical clustering** of metabolite features is a key MACARRoN step. Features that cluster together chemically are scored together.
+:::
+
+---
+
+## Further Reading
+
+- [MACARRoN vignette](https://www.bioconductor.org/packages/release/bioc/vignettes/MACARRoN/inst/doc/MACARRoN.html)
+- [Bhosle et al. 2022, *Nature Communications*](https://www.nature.com/articles/s41467-022-32147-6)

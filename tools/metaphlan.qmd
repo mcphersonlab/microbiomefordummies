@@ -1,0 +1,152 @@
+---
+title: "MetaPhlAn"
+subtitle: "Metagenomic Phylogenetic Analysis"
+---
+
+## What is MetaPhlAn?
+
+**MetaPhlAn** (Metagenomic Phylogenetic Analysis) is a tool for profiling the composition of microbial communities from metagenomic shotgun sequencing data. It uses a database of clade-specific marker genes to rapidly and accurately determine the taxonomic composition of a metagenome.
+
+MetaPhlAn answers the question: **"Who is in this community and at what abundance?"**
+
+Current version: **MetaPhlAn 4**
+
+- 📄 [GitHub](https://github.com/biobakery/MetaPhlAn)
+- 📖 [Documentation](https://github.com/biobakery/MetaPhlAn/wiki)
+- 🗞️ [Paper: Blanco-Miguez et al. 2023, *Nature Methods*](https://www.nature.com/articles/s41592-022-01716-4)
+
+---
+
+## When to Use MetaPhlAn
+
+Use MetaPhlAn when you have **shotgun metagenomic** reads and you want to:
+
+- Determine which species/strains are present
+- Get relative abundance estimates at multiple taxonomic levels
+- Detect novel or uncharacterized species
+- Feed taxonomic profiles downstream into HUMAnN or StrainPhlAn
+
+::: {.callout-note}
+MetaPhlAn works only with shotgun metagenomics data. For 16S amplicon data, use QIIME2 or DADA2 for taxonomic profiling.
+:::
+
+---
+
+## Installation
+
+### Via conda (recommended)
+
+```bash
+conda create -n metaphlan -c biobakery metaphlan
+conda activate metaphlan
+```
+
+### Via pip
+
+```bash
+pip install metaphlan
+```
+
+### Database
+
+Download the marker gene database:
+
+```bash
+metaphlan --install --index mpa_vOct22_CHOCOPhlAnSGB_202212
+```
+
+---
+
+## Basic Usage
+
+```bash
+metaphlan sample.fastq.gz \
+  --input_type fastq \
+  --nproc 8 \
+  -o sample_profile.txt
+```
+
+### Paired-end reads
+
+```bash
+metaphlan sample_R1.fastq.gz,sample_R2.fastq.gz \
+  --input_type fastq \
+  --nproc 8 \
+  -o sample_profile.txt
+```
+
+### Key options
+
+| Option | Description |
+|--------|-------------|
+| `--input_type` | Input type: `fastq`, `fasta`, `bowtie2out`, `sam` |
+| `--nproc` | Number of CPU threads |
+| `-o` | Output profile file |
+| `--bowtie2out` | Save Bowtie2 output for reuse |
+| `--tax_lev` | Taxonomic level to profile (`a`=all, `k`=kingdom, `p`=phylum, ...) |
+| `--add_viruses` | Include viral organisms |
+| `--unknown_estimation` | Estimate fraction of unknown organisms |
+
+---
+
+## Output Files
+
+The main output is a tab-separated profile file with columns:
+
+| Column | Description |
+|--------|-------------|
+| `#clade_name` | Full taxonomic lineage string |
+| `NCBI_tax_id` | NCBI taxonomy identifier |
+| `relative_abundance` | Relative abundance (0–100%) |
+| `additional_species` | Species grouped under this clade |
+
+### Merging multiple samples
+
+```bash
+merge_metaphlan_tables.py \
+  sample1_profile.txt \
+  sample2_profile.txt \
+  sample3_profile.txt \
+  -o merged_profiles.txt
+```
+
+---
+
+## Taxonomic Levels
+
+MetaPhlAn profiles at all standard taxonomic levels:
+
+| Prefix | Level |
+|--------|-------|
+| `k__` | Kingdom |
+| `p__` | Phylum |
+| `c__` | Class |
+| `o__` | Order |
+| `f__` | Family |
+| `g__` | Genus |
+| `s__` | Species |
+| `t__` | Strain/SGB |
+
+---
+
+## Tips & Gotchas
+
+::: {.callout-tip}
+**Reuse Bowtie2 alignments** — Save the `--bowtie2out` file and reuse it with `--input_type bowtie2out` if you need to re-profile without re-aligning.
+:::
+
+::: {.callout-warning}
+**Human/host reads** should be removed before running MetaPhlAn. Use KneadData (also from Biobakery) for host decontamination.
+:::
+
+::: {.callout-tip}
+**MetaPhlAn4 introduced SGBs** (Species-level Genome Bins), which allows profiling of novel uncharacterized species not in reference databases.
+:::
+
+---
+
+## Further Reading
+
+- [MetaPhlAn4 tutorial](https://github.com/biobakery/biobakery/wiki/metaphlan4)
+- [Blanco-Miguez et al. 2023, *Nature Methods*](https://www.nature.com/articles/s41592-022-01716-4)
+- [Truong et al. 2015, *Nature Methods*](https://www.nature.com/articles/nmeth.3589) (MetaPhlAn2)
