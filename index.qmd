@@ -60,7 +60,7 @@ Which path you take depends heavily on whether you start with **16S/amplicon rea
 
 ::: {.grid}
 
-::: {.g-col-12 .g-col-lg-6}
+::: {.g-col-12}
 ### 16S / amplicon workflow
 
 ```{mermaid}
@@ -80,7 +80,7 @@ flowchart TD
 **Best for:** community composition, diversity, and low-cost functional hypotheses when you only have amplicon data.
 :::
 
-::: {.g-col-12 .g-col-lg-6}
+::: {.g-col-12}
 ### Shotgun metagenome workflow
 
 ```{mermaid}
@@ -105,38 +105,11 @@ flowchart TD
 
 :::
 
-### Where each tool starts and stops
-
-The diagrams above show the flow visually. The tables below make the hand-off points explicit: what each tool starts with, what it produces, and when its use case typically ends before the next tool takes over.
-
-#### 16S / amplicon workflow hand-offs
-
-| Workflow step | Tool(s) | Start of use case | Stop / hand-off point | What the tool is doing |
-|---|---|---|---|---|
-| Import, denoise, assign taxonomy | [**QIIME 2**](tools/qiime2.qmd) | Raw 16S / ITS FASTQ files from the sequencer | ASV table, taxonomy assignments, diversity metrics, and ordinations are ready for downstream interpretation | Provides the core amplicon analysis environment: demultiplexing, denoising, taxonomy, diversity, and provenance tracking |
-| Predict functional potential | [**PICRUSt2**](tools/picrust2.qmd) | ASV / feature tables produced after QIIME 2-style denoising and taxonomic processing | Predicted EC, KO, and pathway abundance tables are produced | Extends a 16S workflow into functional hypothesis generation when you do not have shotgun reads |
-| Visualise community structure | [**taxUMAP**](tools/taxumap.qmd) | ASV or species abundance table plus taxonomy | Embeddings and figures are ready for interpretation or reporting | Summarises overall microbiome structure in a taxonomy-aware low-dimensional embedding |
-| Test co-occurrence patterns | [**CCREPE**](tools/ccrepe.qmd) | Normalised compositional abundance table | Correlation / co-occurrence output is produced for network interpretation | Estimates associations between microbial features while correcting for compositional bias |
-| Test associations with metadata or paired omics | [**MaAsLin2**](tools/maaslin2.qmd) | Taxonomic or PICRUSt2-derived functional tables plus sample metadata, with optional paired metabolomics | Effect sizes, q-values, and model summaries are produced | Quantifies which taxa or predicted functions are associated with disease, diet, treatment, or metabolite measurements |
-
-#### Shotgun / SGS workflow hand-offs
-
-| Workflow step | Tool(s) | Start of use case | Stop / hand-off point | What the tool is doing |
-|---|---|---|---|---|
-| Clean raw reads | KneadData *(pre-processing step; no dedicated page yet)* | Raw shotgun FASTQ files | Host-depleted, quality-controlled reads are ready for profiling and assembly | Removes low-quality sequence and contaminating host reads before downstream microbiome analysis |
-| Taxonomic profiling | [**MetaPhlAn**](tools/metaphlan.qmd) | Cleaned shotgun reads | Species abundance profiles are ready for strain tracking, ordination, association testing, or paired multi-omics analysis | Identifies which microbes are present and their relative abundances using clade-specific markers |
-| Strain-level follow-up | [**StrainPhlAn**](tools/strainphlan.qmd), [**PolyPanner**](tools/polypanner.qmd) | Marker-containing reads or longitudinal metagenomic reads after taxonomic profiling | Strain phylogenies or time-series variant dynamics are produced | Refines species-level results into strain sharing, persistence, and within-host evolutionary change |
-| Functional profiling | [**HUMAnN**](tools/humann.qmd) | Cleaned shotgun reads, often alongside MetaPhlAn output | Gene family and pathway abundance tables are ready for association testing or metabolomics integration | Measures what the community can do by quantifying pathways and gene families directly from shotgun data |
-| Target protein family quantification | [**ShortBRED**](tools/shortbred.qmd) | Cleaned shotgun reads plus target marker families | Protein family abundance tables are produced for focused follow-up | Quantifies targeted proteins such as AMR genes or enzyme families when a hypothesis is already defined |
-| Viral profiling | [**baqlava**](tools/baqlava.qmd) | Cleaned shotgun reads | Viral abundance profiles are ready for downstream comparison with bacterial or host features | Adds bacteriophages and other viruses to an otherwise bacteria-centric metagenomics workflow |
-| Assembly-driven discovery | [**metawibele**](tools/metawibele.qmd), [**WAAFLE**](tools/waafle.qmd), [**PhyloPhlAn**](tools/phylophlan.qmd), [**anpan**](tools/anpan.qmd) | Assemblies, MAGs, or species-level genomic feature tables derived from shotgun data | Novel proteins, HGT calls, phylogenies, or within-species association results are produced | Pushes beyond abundance profiling into novel protein families, gene transfer, phylogeny, and pangenome biology |
-| Integrate with downstream statistics and metabolomics | [**MaAsLin2**](tools/maaslin2.qmd), [**MACARRoN**](tools/macarron.qmd), [**taxUMAP**](tools/taxumap.qmd), [**CCREPE**](tools/ccrepe.qmd) | Taxonomic, pathway, protein-family, viral, or metabolite tables plus metadata | Association results, metabolite prioritisation, embeddings, and networks are ready for biological interpretation | Converts shotgun outputs into interpretable host-microbe and microbe-metabolite hypotheses |
-
----
-
 ## Tool Summary Table
 
-The table below gives a quick at-a-glance comparison of every tool covered on this site — what it does, why you would reach for it, what data it accepts, and whether it is most relevant to a **16S/amplicon** or **shotgun sequencing (SGS)** workflow. Use the buttons to toggle between the two sequencing modes; tools tagged **Both / downstream** remain visible in either view because they are commonly used after either type of profiling.
+The table below gives a quick at-a-glance comparison of every tool covered on this site — what it does, why you would reach for it, what data it accepts, where it typically sits in the workflow, and whether it is most relevant to a **16S/amplicon** or **shotgun sequencing (SGS)** workflow. Use the buttons to toggle between the two sequencing modes; tools tagged **Both / downstream** remain visible in either view because they are commonly used after either type of profiling.
+
+For shotgun studies, most analyses listed here assume you have already done read cleaning with a preprocessing step such as **KneadData**, leaving host-depleted reads ready for profiling, assembly, or strain analysis.
 
 <div class="workflow-filter-controls" role="group" aria-label="Filter tools by sequencing workflow">
   <button type="button" class="workflow-filter-button is-active" data-filter="all" aria-pressed="true">Show all tools</button>
@@ -151,6 +124,7 @@ The table below gives a quick at-a-glance comparison of every tool covered on th
       <th scope="col">Best fit workflow</th>
       <th scope="col">Category</th>
       <th scope="col">Input data</th>
+      <th scope="col">Workflow role &amp; hand-off</th>
       <th scope="col">Purpose &amp; Why use it</th>
       <th scope="col">Prominent Use Case</th>
     </tr>
@@ -161,6 +135,7 @@ The table below gives a quick at-a-glance comparison of every tool covered on th
       <td><span class="workflow-badge workflow-badge-shotgun">Shotgun</span></td>
       <td>Functional profiling</td>
       <td>Shotgun metagenomics / metatranscriptomics (.fastq / .fastq.gz)</td>
+      <td>Starts once cleaned reads are ready, often after or alongside MetaPhlAn; hands off gene family and pathway tables to association testing, metabolomics integration, or biological interpretation.</td>
       <td>Profiles microbial gene family and metabolic pathway abundances. Gold-standard for measuring <em>what the community is doing</em> at the metabolic level; stratified output links functions back to specific species.</td>
       <td><a href="https://www.nature.com/articles/s41592-018-0176-y">Franzosa EA et al. <em>Nature Methods</em> 2018</a></td>
     </tr>
@@ -169,6 +144,7 @@ The table below gives a quick at-a-glance comparison of every tool covered on th
       <td><span class="workflow-badge workflow-badge-shotgun">Shotgun</span></td>
       <td>Taxonomic profiling</td>
       <td>Shotgun metagenomics (.fastq / .fastq.gz)</td>
+      <td>Usually the first analytical step after KneadData-style read cleaning; hands off species profiles to HUMAnN, StrainPhlAn, taxUMAP, MaAsLin2, or other downstream follow-up.</td>
       <td>Determines which species/strains are present and at what relative abundance. Fast, reference-based, and highly accurate; produces profiles usable by HUMAnN, StrainPhlAn, and many downstream tools.</td>
       <td><a href="https://www.nature.com/articles/s41587-023-01688-w">Blanco-Míguez A et al. <em>Nature Biotechnology</em> 2023</a></td>
     </tr>
@@ -177,6 +153,7 @@ The table below gives a quick at-a-glance comparison of every tool covered on th
       <td><span class="workflow-badge workflow-badge-16s">16S / amplicon</span></td>
       <td>Functional prediction (16S)</td>
       <td>16S rRNA amplicon ASVs (.biom / .tsv)</td>
+      <td>Starts after denoising and taxonomy assignment in a QIIME 2-style workflow; hands off predicted EC, KO, and pathway tables to MaAsLin2 or pathway-focused interpretation.</td>
       <td>Predicts functional gene and pathway content from 16S data. Extracts functional information from 16S surveys without shotgun sequencing; best option when only amplicon data are available.</td>
       <td><a href="https://www.nature.com/articles/s41587-020-0548-6">Douglas GM et al. <em>Nature Biotechnology</em> 2020</a></td>
     </tr>
@@ -185,6 +162,7 @@ The table below gives a quick at-a-glance comparison of every tool covered on th
       <td><span class="workflow-badge workflow-badge-shotgun">Shotgun</span></td>
       <td>Phylogenetics</td>
       <td>Whole genomes / MAGs (.fasta / .fna)</td>
+      <td>Starts once genomes or MAGs have been assembled; hands off placements and reference trees to taxonomic interpretation, comparative genomics, or genome-centered follow-up.</td>
       <td>Places new genomes on a reference tree and assigns taxonomy. Resolves the evolutionary position of novel or draft genomes using universal marker genes; backbone of MetaPhlAn's SGB taxonomy.</td>
       <td><a href="https://www.nature.com/articles/s41467-020-16366-7">Asnicar F et al. <em>Nature Communications</em> 2020</a></td>
     </tr>
@@ -193,6 +171,7 @@ The table below gives a quick at-a-glance comparison of every tool covered on th
       <td><span class="workflow-badge workflow-badge-shotgun">Shotgun</span></td>
       <td>Strain-level tracking</td>
       <td>Shotgun metagenomics (.fastq / .fastq.gz)</td>
+      <td>Starts after MetaPhlAn and marker extraction identify a species with sufficient coverage; hands off strain trees to transmission, persistence, or within-host evolution analyses.</td>
       <td>Tracks specific microbial strains across samples via phylogenetic trees. Answers whether the <em>same strain</em> is shared between individuals (e.g. mother-infant transmission) or persists across time points.</td>
       <td><a href="https://genome.cshlp.org/content/27/4/626">Truong DT et al. <em>Genome Research</em> 2017</a></td>
     </tr>
@@ -201,6 +180,7 @@ The table below gives a quick at-a-glance comparison of every tool covered on th
       <td><span class="workflow-badge workflow-badge-shotgun">Shotgun</span></td>
       <td>Targeted gene profiling</td>
       <td>Shotgun metagenomics (.fastq / .fastq.gz)</td>
+      <td>Starts with cleaned reads plus a predefined marker set for the protein family of interest; hands off targeted abundance tables to focused statistical or mechanistic follow-up.</td>
       <td>Builds compact marker sequences for target proteins then quantifies them in metagenomes. Efficiently screens large cohorts for any protein of interest (e.g. antimicrobial resistance genes) without full-database alignment.</td>
       <td><a href="https://www.nature.com/articles/s41586-019-1237-9">Lloyd-Price J et al. <em>Nature</em> 2019</a></td>
     </tr>
@@ -209,6 +189,7 @@ The table below gives a quick at-a-glance comparison of every tool covered on th
       <td><span class="workflow-badge workflow-badge-shotgun">Shotgun</span></td>
       <td>Horizontal gene transfer</td>
       <td>Metagenomic assemblies — contigs (.fasta / .fna)</td>
+      <td>Starts after contigs are assembled from shotgun data; hands off candidate HGT events for genome-context inspection and mobile-element follow-up.</td>
       <td>Detects lateral gene transfer events in assembled metagenomes. Identifies genes that appear to have moved between phylogenetically distant lineages, revealing mobile genetic elements in communities.</td>
       <td><a href="https://doi.org/10.1038/s41564-024-01881-w">Hsu TY et al. <em>Nature Microbiology</em> 2025</a></td>
     </tr>
@@ -217,6 +198,7 @@ The table below gives a quick at-a-glance comparison of every tool covered on th
       <td><span class="workflow-badge workflow-badge-both">Both / downstream</span></td>
       <td>Metabolomics prioritization</td>
       <td>Untargeted LC-MS metabolomics (.csv / .tsv)</td>
+      <td>Starts once paired microbiome and metabolomics tables have been assembled; hands off ranked metabolite candidates to manual review, validation, and targeted experiments.</td>
       <td>Ranks metabolites by biological relevance and microbiome association. Cuts through thousands of unannotated metabolite features to surface the ones most worth experimental follow-up once you have paired microbiome and metabolomics data.</td>
       <td><a href="https://doi.org/10.1038/s44320-024-00027-8">Bhosle A et al. <em>Molecular Systems Biology</em> 2024</a></td>
     </tr>
@@ -225,6 +207,7 @@ The table below gives a quick at-a-glance comparison of every tool covered on th
       <td><span class="workflow-badge workflow-badge-shotgun">Shotgun</span></td>
       <td>Protein characterization</td>
       <td>Metagenomic assemblies (.fasta / .fna)</td>
+      <td>Starts after assembly or MAG recovery; hands off prioritized novel protein families to annotation curation, experimental follow-up, or comparative genomics.</td>
       <td>Annotates and prioritizes novel microbial protein families. Multi-database annotation pipeline that highlights unannotated or poorly characterized proteins likely to have biological significance.</td>
       <td><a href="https://doi.org/10.1038/s41586-022-04648-7">Zhang Y et al. <em>Nature</em> 2022</a></td>
     </tr>
@@ -233,6 +216,7 @@ The table below gives a quick at-a-glance comparison of every tool covered on th
       <td><span class="workflow-badge workflow-badge-shotgun">Shotgun</span></td>
       <td>Viral profiling</td>
       <td>Shotgun metagenomics (.fastq / .fastq.gz)</td>
+      <td>Starts with cleaned shotgun reads; hands off viral abundance profiles to comparison with bacterial taxa, host phenotypes, and multi-omics readouts.</td>
       <td>Identifies and quantifies viruses (especially bacteriophages) alongside bacteria. Adds the viral dimension to standard metagenomics; designed to complement MetaPhlAn for a complete community profile.</td>
       <td><a href="https://doi.org/10.64898/2026.02.11.705346">Jensen JSL et al. <em>bioRxiv</em> 2026</a></td>
     </tr>
@@ -241,6 +225,7 @@ The table below gives a quick at-a-glance comparison of every tool covered on th
       <td><span class="workflow-badge workflow-badge-both">Both / downstream</span></td>
       <td>Statistical association</td>
       <td>Any multi-omics table + metadata (.tsv / .csv)</td>
+      <td>Starts once feature tables and metadata are ready; hands off effect sizes, q-values, and model summaries to figures, interpretation, and reporting.</td>
       <td>Finds microbial features significantly associated with host/environmental variables. Handles compositionality, sparsity, and confounders in a single multivariable model; the go-to tool for differential abundance analysis.</td>
       <td><a href="https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1009442">Mallick H et al. <em>PLOS Computational Biology</em> 2021</a></td>
     </tr>
@@ -249,6 +234,7 @@ The table below gives a quick at-a-glance comparison of every tool covered on th
       <td><span class="workflow-badge workflow-badge-shotgun">Shotgun</span></td>
       <td>Pan-genome statistics</td>
       <td>Gene presence/absence or SNP tables (per species) + metadata (.tsv / .csv)</td>
+      <td>Starts after species-resolved gene or SNP tables have been derived from shotgun data; hands off within-species association hits to mechanistic follow-up and validation.</td>
       <td>Tests associations between within-species genetic variation and phenotypes. Goes beyond community-level analyses to ask whether <em>specific microbial genes</em> within a species drive a phenotype, with built-in phylogenetic correction.</td>
       <td><a href="https://www.biorxiv.org/content/10.1101/2025.01.06.631550v1">Ghazi AR et al. <em>bioRxiv</em> 2025</a></td>
     </tr>
@@ -257,6 +243,7 @@ The table below gives a quick at-a-glance comparison of every tool covered on th
       <td><span class="workflow-badge workflow-badge-both">Both / downstream</span></td>
       <td>Co-occurrence / correlation</td>
       <td>Any compositional abundance table (.tsv / .csv)</td>
+      <td>Starts with a normalized compositional abundance table; hands off corrected correlation results to co-occurrence networks and ecological interpretation.</td>
       <td>Computes statistically corrected correlations between microbial features. Solves the compositional bias problem in microbiome correlations; essential for building reliable co-occurrence networks.</td>
       <td><a href="https://www.nature.com/articles/nature11234">HMP Consortium <em>Nature</em> 2012</a></td>
     </tr>
@@ -265,6 +252,7 @@ The table below gives a quick at-a-glance comparison of every tool covered on th
       <td><span class="workflow-badge workflow-badge-both">Both / downstream</span></td>
       <td>Visualisation</td>
       <td>Any species/ASV relative abundance table + taxonomy (.tsv / .csv)</td>
+      <td>Starts with taxonomically annotated ASV or species tables from either workflow; hands off publication-ready embeddings and exploratory figures for interpretation and reporting.</td>
       <td>Produces taxonomy-aware UMAP embeddings of microbiome community composition. Captures biologically meaningful community structure that standard UMAP misses by aggregating abundances up the taxonomic tree before computing distances.</td>
       <td><a href="https://doi.org/10.1016/j.chom.2023.05.027">Schluter J et al. <em>Cell Host &amp; Microbe</em> 2023</a></td>
     </tr>
@@ -273,6 +261,7 @@ The table below gives a quick at-a-glance comparison of every tool covered on th
       <td><span class="workflow-badge workflow-badge-shotgun">Shotgun</span></td>
       <td>Intra-species evolution</td>
       <td>Longitudinal metagenomic reads + co-assembly (.fastq / .fasta)</td>
+      <td>Starts after a focal species has been defined in a longitudinal shotgun cohort and co-assembly is available; hands off variant-frequency trajectories to within-host evolution interpretation.</td>
       <td>Detects dynamic polymorphic variants whose allele frequencies change across a time-series of metagenomes. Specifically designed for longitudinal cohorts: leverages co-assembly to improve accuracy and tests for frequency <em>change</em>, enabling detection of de novo selective sweeps that cross-sectional tools miss.</td>
       <td><a href="https://doi.org/10.1038/s41586-025-08781-x">Yaffe E et al. <em>Nature</em> 2025</a></td>
     </tr>
@@ -281,6 +270,7 @@ The table below gives a quick at-a-glance comparison of every tool covered on th
       <td><span class="workflow-badge workflow-badge-16s">16S / amplicon</span></td>
       <td>Amplicon analysis platform</td>
       <td>16S / ITS amplicon reads (.fastq / .fastq.gz)</td>
+      <td>Usually the first major analytical step for raw amplicon reads; hands off ASV tables, taxonomy, diversity metrics, and ordinations to PICRUSt2, taxUMAP, MaAsLin2, or direct reporting.</td>
       <td>End-to-end amplicon microbiome analysis: denoising, taxonomy, diversity, ordination, and differential abundance. Gold-standard reproducible platform with full data provenance, an extensive plugin ecosystem, and the largest user community in amplicon-based microbiome research.</td>
       <td><a href="https://doi.org/10.1038/s41587-019-0209-9">Bolyen E et al. <em>Nature Biotechnology</em> 2019</a></td>
     </tr>

@@ -43,6 +43,12 @@ website:
             href: tools/polypanner.qmd
           - text: "QIIME 2"
             href: tools/qiime2.qmd
+      - text: "Microbiome Taxa"
+        menu:
+          - text: "Overview"
+            href: microbiome/index.qmd
+          - text: "Intestinal"
+            href: microbiome/intestinal.qmd
     right:
       - icon: github
         href: https://github.com/JacobKMcPherson/microbiometoolsfordummies
@@ -71,6 +77,10 @@ website:
           - tools/taxumap.qmd
           - tools/polypanner.qmd
           - tools/qiime2.qmd
+      - section: "Microbiome Taxa by Body Site"
+        contents:
+          - microbiome/index.qmd
+          - microbiome/intestinal.qmd
   page-footer:
     center: "Microbiome Tools for Dummies | Built with [Quarto](https://quarto.org)"
 
