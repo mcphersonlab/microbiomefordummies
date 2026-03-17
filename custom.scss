@@ -4,3 +4,60 @@
 // Setting a very large value causes it to fill all available space between
 // the left sidebar and right TOC panel (both kept at their default widths).
 $grid-body-width: 10000px;
+
+.workflow-filter-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 1rem 0 1.25rem;
+}
+
+.workflow-filter-button {
+  border: 1px solid #0d6efd;
+  border-radius: 999px;
+  background: #fff;
+  color: #0d6efd;
+  font-weight: 600;
+  padding: 0.45rem 0.9rem;
+}
+
+.workflow-filter-button.is-active,
+.workflow-filter-button:hover,
+.workflow-filter-button:focus {
+  background: #0d6efd;
+  color: #fff;
+}
+
+.sequencing-summary-table {
+  font-size: 0.95rem;
+}
+
+.sequencing-summary-table th,
+.sequencing-summary-table td {
+  vertical-align: top;
+}
+
+.workflow-badge {
+  display: inline-block;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.2;
+  padding: 0.2rem 0.6rem;
+  white-space: nowrap;
+}
+
+.workflow-badge-16s {
+  background: #d9ecff;
+  color: #0a58ca;
+}
+
+.workflow-badge-shotgun {
+  background: #dff6ea;
+  color: #146c43;
+}
+
+.workflow-badge-both {
+  background: #f3e8ff;
+  color: #6f42c1;
+}
