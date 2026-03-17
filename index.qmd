@@ -123,7 +123,7 @@ The diagrams above show the flow visually. The tables below make the hand-off po
 
 | Workflow step | Tool(s) | Start of use case | Stop / hand-off point | What the tool is doing |
 |---|---|---|---|---|
-| Clean raw reads | KneadData | Raw shotgun FASTQ files | Host-depleted, quality-controlled reads are ready for profiling and assembly | Removes low-quality sequence and contaminating host reads before downstream microbiome analysis |
+| Clean raw reads | KneadData *(pre-processing step; no dedicated page yet)* | Raw shotgun FASTQ files | Host-depleted, quality-controlled reads are ready for profiling and assembly | Removes low-quality sequence and contaminating host reads before downstream microbiome analysis |
 | Taxonomic profiling | [**MetaPhlAn**](tools/metaphlan.qmd) | Cleaned shotgun reads | Species abundance profiles are ready for strain tracking, ordination, association testing, or paired multi-omics analysis | Identifies which microbes are present and their relative abundances using clade-specific markers |
 | Strain-level follow-up | [**StrainPhlAn**](tools/strainphlan.qmd), [**PolyPanner**](tools/polypanner.qmd) | Marker-containing reads or longitudinal metagenomic reads after taxonomic profiling | Strain phylogenies or time-series variant dynamics are produced | Refines species-level results into strain sharing, persistence, and within-host evolutionary change |
 | Functional profiling | [**HUMAnN**](tools/humann.qmd) | Cleaned shotgun reads, often alongside MetaPhlAn output | Gene family and pathway abundance tables are ready for association testing or metabolomics integration | Measures what the community can do by quantifying pathways and gene families directly from shotgun data |
