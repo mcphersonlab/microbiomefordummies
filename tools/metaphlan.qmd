@@ -13,7 +13,7 @@ Current version: **MetaPhlAn 4**
 
 - 📄 [GitHub](https://github.com/biobakery/MetaPhlAn)
 - 📖 [Documentation](https://github.com/biobakery/MetaPhlAn/wiki)
-- 🗞️ [Paper: Blanco-Miguez et al. 2023, *Nature Methods*](https://www.nature.com/articles/s41592-022-01716-4)
+- 🗞️ [Paper: Blanco-Miguez et al. 2023, *Nature Biotechnology*](https://www.nature.com/articles/s41587-023-01688-w)
 
 ---
 
@@ -148,5 +148,5 @@ MetaPhlAn profiles at all standard taxonomic levels:
 ## Further Reading
 
 - [MetaPhlAn4 tutorial](https://github.com/biobakery/biobakery/wiki/metaphlan4)
-- [Blanco-Miguez et al. 2023, *Nature Methods*](https://www.nature.com/articles/s41592-022-01716-4)
+- [Blanco-Miguez et al. 2023, *Nature Biotechnology*](https://www.nature.com/articles/s41587-023-01688-w)
 - [Truong et al. 2015, *Nature Methods*](https://www.nature.com/articles/nmeth.3589) (MetaPhlAn2)
