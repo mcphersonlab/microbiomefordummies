@@ -22,3 +22,5 @@ env/
 # Editor files
 .vscode/
 *.swp
+
+**/*.quarto_ipynb
