@@ -1,0 +1,6 @@
+/*-- scss:defaults --*/
+
+// Quarto uses $grid-body-width as a max-width for the center content column.
+// Setting a very large value causes it to fill all available space between
+// the left sidebar and right TOC panel (both kept at their default widths).
+$grid-body-width: 10000px;

@@ -45,7 +45,7 @@ website:
             href: tools/qiime2.qmd
     right:
       - icon: github
-        href: https://github.com/JacobKMcPherson/Microbiome_Tools_for_Dummies
+        href: https://github.com/JacobKMcPherson/microbiometoolsfordummies
   sidebar:
     style: "docked"
     search: true
@@ -76,7 +76,9 @@ website:
 
 format:
   html:
-    theme: cosmo
+    theme:
+      - cosmo
+      - custom.scss
     toc: true
     toc-depth: 3
     code-fold: true
