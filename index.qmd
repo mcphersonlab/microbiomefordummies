@@ -56,7 +56,7 @@ The [Biobakery](https://huttenhower.sph.harvard.edu/tools/) suite is a collectio
 
 ## Tool Summary Table
 
-The table below gives a quick at-a-glance comparison of every tool covered on this site — what it does, why you would reach for it, what data it accepts, and whether it is most relevant to a **16S/amplicon** or **shotgun** workflow. Use the buttons to toggle between the two sequencing modes; tools tagged **Both / downstream** remain visible in either view because they are commonly used after either type of profiling.
+The table below gives a quick at-a-glance comparison of every tool covered on this site — what it does, why you would reach for it, what data it accepts, and whether it is most relevant to a **16S/amplicon** or **shotgun sequencing (SGS)** workflow. Use the buttons to toggle between the two sequencing modes; tools tagged **Both / downstream** remain visible in either view because they are commonly used after either type of profiling.
 
 <div class="workflow-filter-controls" role="group" aria-label="Filter tools by sequencing workflow">
   <button type="button" class="workflow-filter-button is-active" data-filter="all" aria-pressed="true">Show all tools</button>
