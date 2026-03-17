@@ -197,6 +197,33 @@ $grid-body-width: 10000px;
   text-align: left;
 }
 
+.taxa-node-row {
+  align-items: flex-start;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.taxa-node-link {
+  align-self: center;
+  background: #fff;
+  border: 1px solid #c6d3e0;
+  border-radius: 999px;
+  color: #0d6efd;
+  flex: 0 0 auto;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.45rem 0.6rem;
+  text-decoration: none;
+}
+
+.taxa-node-link:hover,
+.taxa-node-link:focus {
+  background: #0d6efd;
+  border-color: #0d6efd;
+  color: #fff;
+}
+
 .taxa-node-button:hover,
 .taxa-node-button:focus {
   filter: brightness(0.98);

@@ -60,37 +60,44 @@ document.addEventListener("DOMContentLoaded", function () {
       {
         name: "Actinomycetota",
         rank: "phylum",
+        taxId: 201174,
         phylum: "actinomycetota",
         description: "Usually a smaller but biologically important gut phylum, especially for bifidobacteria and saccharolytic carbohydrate metabolism.",
         children: [
           {
             name: "Actinomycetes",
             rank: "class",
+            taxId: 1760,
             description: "Core class containing bifidobacteria that often expand in infants and remain important in adults.",
             children: [
               {
                 name: "Bifidobacteriales",
                 rank: "order",
+                taxId: 85004,
                 description: "Order containing key mucin- and oligosaccharide-utilizing gut commensals.",
                 children: [
                   {
                     name: "Bifidobacteriaceae",
                     rank: "family",
+                    taxId: 31953,
                     description: "Family enriched for health-associated saccharolytic anaerobes.",
                     children: [
                       {
                         name: "Bifidobacterium",
                         rank: "genus",
+                        taxId: 1678,
                         description: "Major intestinal genus that produces acetate and other metabolites from complex carbohydrates.",
                         children: [
                           {
                             name: "Bifidobacterium adolescentis",
                             rank: "species",
+                            taxId: 1680,
                             description: "Common adult-associated bifidobacterial species linked to plant carbohydrate utilization."
                           },
                           {
                             name: "Bifidobacterium longum",
                             rank: "species",
+                            taxId: 1683,
                             description: "Widely studied intestinal species common across the lifespan and frequently used in probiotic formulations."
                           }
                         ]
@@ -106,37 +113,44 @@ document.addEventListener("DOMContentLoaded", function () {
       {
         name: "Bacteroidota",
         rank: "phylum",
+        taxId: 976,
         phylum: "bacteroidota",
         description: "One of the dominant gut phyla, especially rich in carbohydrate-degrading anaerobes that shape community metabolism.",
         children: [
           {
             name: "Bacteroidia",
             rank: "class",
+            taxId: 200643,
             description: "The major gut-associated class within Bacteroidota.",
             children: [
               {
                 name: "Bacteroidales",
                 rank: "order",
+                taxId: 171549,
                 description: "Order containing several of the most abundant and ecologically important intestinal families.",
                 children: [
                   {
                     name: "Bacteroidaceae",
                     rank: "family",
+                    taxId: 815,
                     description: "Family dominated by Bacteroides, a hallmark genus of many adult gut communities.",
                     children: [
                       {
                         name: "Bacteroides",
                         rank: "genus",
+                        taxId: 816,
                         description: "High-abundance anaerobic genus specialized in dietary and host-derived glycans.",
                         children: [
                           {
                             name: "Bacteroides vulgatus",
                             rank: "species",
+                            taxId: 821,
                             description: "Common intestinal species often abundant in adult gut metagenomes."
                           },
                           {
                             name: "Bacteroides uniformis",
                             rank: "species",
+                            taxId: 820,
                             description: "Frequent gut commensal associated with broad glycan-degradation capacity."
                           }
                         ]
@@ -146,16 +160,19 @@ document.addEventListener("DOMContentLoaded", function () {
                   {
                     name: "Prevotellaceae",
                     rank: "family",
+                    taxId: 171552,
                     description: "Family often enriched in fiber-associated enterotypes and non-Westernized diets.",
                     children: [
                       {
                         name: "Prevotella",
                         rank: "genus",
+                        taxId: 838,
                         description: "Genus associated with plant-rich diets and increased fermentation of complex polysaccharides.",
                         children: [
                           {
                             name: "Prevotella copri",
                             rank: "species",
+                            taxId: 165179,
                             description: "A frequently discussed intestinal species whose abundance varies strongly across diets and populations."
                           }
                         ]
@@ -165,16 +182,19 @@ document.addEventListener("DOMContentLoaded", function () {
                   {
                     name: "Rikenellaceae",
                     rank: "family",
+                    taxId: 171550,
                     description: "Important family of strictly anaerobic gut bacteria often represented by Alistipes.",
                     children: [
                       {
                         name: "Alistipes",
                         rank: "genus",
+                        taxId: 239759,
                         description: "Gut genus frequently tracked in host-phenotype association studies.",
                         children: [
                           {
                             name: "Alistipes putredinis",
                             rank: "species",
+                            taxId: 28116,
                             description: "Representative intestinal Alistipes species commonly detected in shotgun surveys."
                           }
                         ]
@@ -190,32 +210,38 @@ document.addEventListener("DOMContentLoaded", function () {
       {
         name: "Bacillota",
         rank: "phylum",
+        taxId: 186801,
         phylum: "bacillota",
         description: "Formerly grouped within Firmicutes, this large phylum contains many of the dominant butyrate-producing gut lineages.",
         children: [
           {
             name: "Clostridia",
             rank: "class",
+            taxId: 186802,
             description: "Large gut-associated class containing many obligate anaerobes central to short-chain fatty acid production.",
             children: [
               {
                 name: "Eubacteriales",
                 rank: "order",
+                taxId: 186803,
                 description: "Order with many important butyrate-producing intestinal families.",
                 children: [
                   {
                     name: "Lachnospiraceae",
                     rank: "family",
+                    taxId: 186806,
                     description: "Family rich in fermentative anaerobes that produce acetate and butyrate.",
                     children: [
                       {
                         name: "Roseburia",
                         rank: "genus",
+                        taxId: 48106,
                         description: "Genus of butyrate-producing commensals often considered beneficial in the colon.",
                         children: [
                           {
                             name: "Roseburia intestinalis",
                             rank: "species",
+                            taxId: 166486,
                             description: "Canonical butyrate-producing intestinal species linked to epithelial health."
                           }
                         ]
@@ -223,11 +249,13 @@ document.addEventListener("DOMContentLoaded", function () {
                       {
                         name: "Blautia",
                         rank: "genus",
+                        taxId: 572511,
                         description: "Common intestinal genus frequently detected in association studies and clinical cohorts.",
                         children: [
                           {
                             name: "Blautia obeum",
                             rank: "species",
+                            taxId: 40520,
                             description: "Representative Blautia species commonly recovered from adult intestinal microbiomes."
                           }
                         ]
@@ -237,16 +265,19 @@ document.addEventListener("DOMContentLoaded", function () {
                   {
                     name: "Ruminococcaceae",
                     rank: "family",
+                    taxId: 216572,
                     description: "Family containing major fiber-degrading intestinal anaerobes.",
                     children: [
                       {
                         name: "Faecalibacterium",
                         rank: "genus",
+                        taxId: 216816,
                         description: "Prominent anti-inflammatory genus frequently used as a marker of intestinal health.",
                         children: [
                           {
                             name: "Faecalibacterium prausnitzii",
                             rank: "species",
+                            taxId: 853,
                             description: "High-abundance, butyrate-producing intestinal species commonly depleted in inflammatory disease."
                           }
                         ]
@@ -260,26 +291,31 @@ document.addEventListener("DOMContentLoaded", function () {
           {
             name: "Bacilli",
             rank: "class",
+            taxId: 91061,
             description: "Less dominant than Clostridia in the colon but still relevant for enterococci and lactobacilli.",
             children: [
               {
                 name: "Lactobacillales",
                 rank: "order",
+                taxId: 186826,
                 description: "Order containing aerotolerant fermenters often highlighted in probiotics and dysbiosis contexts.",
                 children: [
                   {
                     name: "Enterococcaceae",
                     rank: "family",
+                    taxId: 81852,
                     description: "Family containing opportunistic intestinal members that can bloom under antibiotic pressure.",
                     children: [
                       {
                         name: "Enterococcus",
                         rank: "genus",
+                        taxId: 1350,
                         description: "Clinically important gut genus often monitored in perturbed microbiomes.",
                         children: [
                           {
                             name: "Enterococcus faecalis",
                             rank: "species",
+                            taxId: 1351,
                             description: "Representative intestinal species notable for opportunism and antimicrobial resistance potential."
                           }
                         ]
@@ -295,32 +331,38 @@ document.addEventListener("DOMContentLoaded", function () {
       {
         name: "Pseudomonadota",
         rank: "phylum",
+        taxId: 1224,
         phylum: "pseudomonadota",
         description: "Usually a minor component of healthy adult stool but an important marker of inflammation, oxygen exposure, or ecological disturbance when expanded.",
         children: [
           {
             name: "Gammaproteobacteria",
             rank: "class",
+            taxId: 1236,
             description: "Class that contains many facultative anaerobes and inflammation-associated gut blooms.",
             children: [
               {
                 name: "Enterobacterales",
                 rank: "order",
+                taxId: 91347,
                 description: "Order containing familiar intestinal facultative anaerobes.",
                 children: [
                   {
                     name: "Enterobacteriaceae",
                     rank: "family",
+                    taxId: 543,
                     description: "Family that often expands during dysbiosis or inflammatory states.",
                     children: [
                       {
                         name: "Escherichia",
                         rank: "genus",
+                        taxId: 561,
                         description: "Genus containing common gut commensals as well as opportunistic pathobionts.",
                         children: [
                           {
                             name: "Escherichia coli",
                             rank: "species",
+                            taxId: 562,
                             description: "Canonical intestinal species ranging from benign commensals to clinically important strains."
                           }
                         ]
@@ -332,21 +374,25 @@ document.addEventListener("DOMContentLoaded", function () {
               {
                 name: "Burkholderiales",
                 rank: "order",
+                taxId: 80840,
                 description: "Order that includes gut-associated lineages detected at low abundance in many cohorts.",
                 children: [
                   {
                     name: "Sutterellaceae",
                     rank: "family",
+                    taxId: 204455,
                     description: "Family frequently represented by Sutterella in mucosa-associated gut communities.",
                     children: [
                       {
                         name: "Sutterella",
                         rank: "genus",
+                        taxId: 40544,
                         description: "Genus often discussed in host-associated intestinal studies and mucosal niches.",
                         children: [
                           {
                             name: "Sutterella wadsworthensis",
                             rank: "species",
+                            taxId: 40545,
                             description: "Representative Sutterella species found in the human intestinal tract."
                           }
                         ]
@@ -368,6 +414,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const openNodeIds = new Set();
   const nodeIndex = new Map();
   let selectedNodeId = "root";
+  const ncbiBaseUrl = "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=";
 
   const assignIds = (node, parent = null, inheritedPhylum = "root", depth = -1, lineage = []) => {
     const nodeId = parent ? `${parent.id}-${(parent.children || []).indexOf(node)}` : "root";
@@ -402,6 +449,9 @@ document.addEventListener("DOMContentLoaded", function () {
   const renderDetail = () => {
     const node = nodeIndex.get(selectedNodeId) || treeData;
     const childNames = (node.children || []).map((child) => child.name);
+    const ncbiMarkup = node.taxId
+      ? `<dt>NCBI taxonomy</dt><dd><a href="${ncbiBaseUrl}${node.taxId}" target="_blank" rel="noopener noreferrer">txid${node.taxId}</a></dd>`
+      : "";
     detailMount.innerHTML = `
       <h3>${node.name}</h3>
       <p class="taxa-breadcrumbs">${node.lineage.join(" → ")}</p>
@@ -410,6 +460,7 @@ document.addEventListener("DOMContentLoaded", function () {
         <dd>${node.rank}</dd>
         <dt>Color family</dt>
         <dd>${node.phylum === "root" ? "overview" : node.phylum}</dd>
+        ${ncbiMarkup}
       </dl>
       <p>${node.description}</p>
       ${
@@ -424,7 +475,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const hasChildren = Boolean(node.children && node.children.length);
     const isOpen = openNodeIds.has(node.id);
     const li = document.createElement("li");
+    const row = document.createElement("div");
     const button = document.createElement("button");
+    const ncbiLink = node.taxId ? document.createElement("a") : null;
 
     button.type = "button";
     button.className = `taxa-node-button phylum-${node.phylum} depth-${node.depth}${selectedNodeId === node.id ? " is-selected" : ""}`;
@@ -442,7 +495,20 @@ document.addEventListener("DOMContentLoaded", function () {
       renderTree();
     });
 
-    li.appendChild(button);
+    row.className = "taxa-node-row";
+    row.appendChild(button);
+
+    if (ncbiLink) {
+      ncbiLink.className = "taxa-node-link";
+      ncbiLink.href = `${ncbiBaseUrl}${node.taxId}`;
+      ncbiLink.target = "_blank";
+      ncbiLink.rel = "noopener noreferrer";
+      ncbiLink.textContent = "NCBI";
+      ncbiLink.setAttribute("aria-label", `${node.name} in the NCBI Taxonomy Browser (txid${node.taxId})`);
+      row.appendChild(ncbiLink);
+    }
+
+    li.appendChild(row);
 
     if (hasChildren) {
       const childList = document.createElement("ul");

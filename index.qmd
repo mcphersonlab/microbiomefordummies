@@ -60,7 +60,7 @@ Which path you take depends heavily on whether you start with **16S/amplicon rea
 
 ::: {.grid}
 
-::: {.g-col-12 .g-col-lg-6}
+::: {.g-col-12}
 ### 16S / amplicon workflow
 
 ```{mermaid}
@@ -80,7 +80,7 @@ flowchart TD
 **Best for:** community composition, diversity, and low-cost functional hypotheses when you only have amplicon data.
 :::
 
-::: {.g-col-12 .g-col-lg-6}
+::: {.g-col-12}
 ### Shotgun metagenome workflow
 
 ```{mermaid}
