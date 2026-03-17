@@ -1,0 +1,488 @@
+---
+title: "Intestinal Microbiome Taxa"
+---
+
+The intestinal microbiome is dominated by a small number of bacterial phyla, but the ecology that matters in practice often appears one or two levels lower — at the level of **families**, **genera**, and representative **species**. The navigator below is designed to help you move through those levels without losing sight of the larger phylogenetic structure.
+
+::: {.taxa-note}
+Use the tree to click through the major intestinal lineages. Colors stay anchored to phylum-level identity throughout the tree: **Actinomycetota = purple**, **Bacteroidota = blue**, **Bacillota = green**, and **Pseudomonadota = red**. Sub-taxa use progressively lighter shades so you can keep track of which lower-level groups belong to the same higher-level branch.
+:::
+
+::: {.taxa-legend}
+### Color guide
+
+<div class="taxa-legend-items">
+  <span class="taxa-legend-chip phylum-chip-actinomycetota">Actinomycetota</span>
+  <span class="taxa-legend-chip phylum-chip-bacteroidota">Bacteroidota</span>
+  <span class="taxa-legend-chip phylum-chip-bacillota">Bacillota</span>
+  <span class="taxa-legend-chip phylum-chip-pseudomonadota">Pseudomonadota</span>
+</div>
+
+<div class="taxa-rank-legend">
+  <span><strong>Darker shades</strong> = higher taxonomic ranks (phylum, class)</span>
+  <span><strong>Lighter shades</strong> = deeper branches (order → family → genus → species)</span>
+</div>
+:::
+
+## Interactive intestinal phylogenetic tree
+
+<div class="taxa-tree-toolbar" role="group" aria-label="Tree navigation controls">
+  <button type="button" class="taxa-tree-button" data-tree-action="expand-all">Expand all</button>
+  <button type="button" class="taxa-tree-button" data-tree-action="collapse-all">Collapse to phylum</button>
+  <button type="button" class="taxa-tree-button" data-tree-action="reset-focus">Reset focus</button>
+</div>
+
+<div class="taxa-tree-layout">
+  <section class="taxa-tree-panel">
+    <h3>Tree navigator</h3>
+    <div id="intestinal-taxa-tree" aria-label="Interactive intestinal microbiome taxonomy tree"></div>
+  </section>
+
+  <aside class="taxa-detail-panel" id="intestinal-taxon-detail" aria-live="polite">
+    <h3>Selected taxon</h3>
+    <p>Select a node in the tree to see its lineage, taxonomic rank, and representative descendants.</p>
+  </aside>
+</div>
+
+## How to read this page
+
+- **Phylum-level patterns** are useful when comparing broad ecological states of the gut microbiome.
+- **Family- and genus-level patterns** are usually what you encounter in MetaPhlAn, QIIME 2, or downstream association tables.
+- **Species-level examples** help anchor the tree to well-known intestinal microbes without implying that these are the only important members of each branch.
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const intestinalTree = {
+    name: "Intestinal microbiome",
+    rank: "body site",
+    description: "Representative bacterial clades commonly discussed in healthy and perturbed human gut microbiome studies.",
+    children: [
+      {
+        name: "Actinomycetota",
+        rank: "phylum",
+        phylum: "actinomycetota",
+        description: "Usually a smaller but biologically important gut phylum, especially for bifidobacteria and saccharolytic carbohydrate metabolism.",
+        children: [
+          {
+            name: "Actinomycetes",
+            rank: "class",
+            description: "Core class containing bifidobacteria that often expand in infants and remain important in adults.",
+            children: [
+              {
+                name: "Bifidobacteriales",
+                rank: "order",
+                description: "Order containing key mucin- and oligosaccharide-utilizing gut commensals.",
+                children: [
+                  {
+                    name: "Bifidobacteriaceae",
+                    rank: "family",
+                    description: "Family enriched for health-associated saccharolytic anaerobes.",
+                    children: [
+                      {
+                        name: "Bifidobacterium",
+                        rank: "genus",
+                        description: "Major intestinal genus that produces acetate and other metabolites from complex carbohydrates.",
+                        children: [
+                          {
+                            name: "Bifidobacterium adolescentis",
+                            rank: "species",
+                            description: "Common adult-associated bifidobacterial species linked to plant carbohydrate utilization."
+                          },
+                          {
+                            name: "Bifidobacterium longum",
+                            rank: "species",
+                            description: "Widely studied intestinal species common across the lifespan and frequently used in probiotic formulations."
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        name: "Bacteroidota",
+        rank: "phylum",
+        phylum: "bacteroidota",
+        description: "One of the dominant gut phyla, especially rich in carbohydrate-degrading anaerobes that shape community metabolism.",
+        children: [
+          {
+            name: "Bacteroidia",
+            rank: "class",
+            description: "The major gut-associated class within Bacteroidota.",
+            children: [
+              {
+                name: "Bacteroidales",
+                rank: "order",
+                description: "Order containing several of the most abundant and ecologically important intestinal families.",
+                children: [
+                  {
+                    name: "Bacteroidaceae",
+                    rank: "family",
+                    description: "Family dominated by Bacteroides, a hallmark genus of many adult gut communities.",
+                    children: [
+                      {
+                        name: "Bacteroides",
+                        rank: "genus",
+                        description: "High-abundance anaerobic genus specialized in dietary and host-derived glycans.",
+                        children: [
+                          {
+                            name: "Bacteroides vulgatus",
+                            rank: "species",
+                            description: "Common intestinal species often abundant in adult gut metagenomes."
+                          },
+                          {
+                            name: "Bacteroides uniformis",
+                            rank: "species",
+                            description: "Frequent gut commensal associated with broad glycan-degradation capacity."
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    name: "Prevotellaceae",
+                    rank: "family",
+                    description: "Family often enriched in fiber-associated enterotypes and non-Westernized diets.",
+                    children: [
+                      {
+                        name: "Prevotella",
+                        rank: "genus",
+                        description: "Genus associated with plant-rich diets and increased fermentation of complex polysaccharides.",
+                        children: [
+                          {
+                            name: "Prevotella copri",
+                            rank: "species",
+                            description: "A frequently discussed intestinal species whose abundance varies strongly across diets and populations."
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    name: "Rikenellaceae",
+                    rank: "family",
+                    description: "Important family of strictly anaerobic gut bacteria often represented by Alistipes.",
+                    children: [
+                      {
+                        name: "Alistipes",
+                        rank: "genus",
+                        description: "Gut genus frequently tracked in host-phenotype association studies.",
+                        children: [
+                          {
+                            name: "Alistipes putredinis",
+                            rank: "species",
+                            description: "Representative intestinal Alistipes species commonly detected in shotgun surveys."
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        name: "Bacillota",
+        rank: "phylum",
+        phylum: "bacillota",
+        description: "Formerly grouped within Firmicutes, this large phylum contains many of the dominant butyrate-producing gut lineages.",
+        children: [
+          {
+            name: "Clostridia",
+            rank: "class",
+            description: "Large gut-associated class containing many obligate anaerobes central to short-chain fatty acid production.",
+            children: [
+              {
+                name: "Eubacteriales",
+                rank: "order",
+                description: "Order with many important butyrate-producing intestinal families.",
+                children: [
+                  {
+                    name: "Lachnospiraceae",
+                    rank: "family",
+                    description: "Family rich in fermentative anaerobes that produce acetate and butyrate.",
+                    children: [
+                      {
+                        name: "Roseburia",
+                        rank: "genus",
+                        description: "Genus of butyrate-producing commensals often considered beneficial in the colon.",
+                        children: [
+                          {
+                            name: "Roseburia intestinalis",
+                            rank: "species",
+                            description: "Canonical butyrate-producing intestinal species linked to epithelial health."
+                          }
+                        ]
+                      },
+                      {
+                        name: "Blautia",
+                        rank: "genus",
+                        description: "Common intestinal genus frequently detected in association studies and clinical cohorts.",
+                        children: [
+                          {
+                            name: "Blautia obeum",
+                            rank: "species",
+                            description: "Representative Blautia species commonly recovered from adult intestinal microbiomes."
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    name: "Ruminococcaceae",
+                    rank: "family",
+                    description: "Family containing major fiber-degrading intestinal anaerobes.",
+                    children: [
+                      {
+                        name: "Faecalibacterium",
+                        rank: "genus",
+                        description: "Prominent anti-inflammatory genus frequently used as a marker of intestinal health.",
+                        children: [
+                          {
+                            name: "Faecalibacterium prausnitzii",
+                            rank: "species",
+                            description: "High-abundance, butyrate-producing intestinal species commonly depleted in inflammatory disease."
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            name: "Bacilli",
+            rank: "class",
+            description: "Less dominant than Clostridia in the colon but still relevant for enterococci and lactobacilli.",
+            children: [
+              {
+                name: "Lactobacillales",
+                rank: "order",
+                description: "Order containing aerotolerant fermenters often highlighted in probiotics and dysbiosis contexts.",
+                children: [
+                  {
+                    name: "Enterococcaceae",
+                    rank: "family",
+                    description: "Family containing opportunistic intestinal members that can bloom under antibiotic pressure.",
+                    children: [
+                      {
+                        name: "Enterococcus",
+                        rank: "genus",
+                        description: "Clinically important gut genus often monitored in perturbed microbiomes.",
+                        children: [
+                          {
+                            name: "Enterococcus faecalis",
+                            rank: "species",
+                            description: "Representative intestinal species notable for opportunism and antimicrobial resistance potential."
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        name: "Pseudomonadota",
+        rank: "phylum",
+        phylum: "pseudomonadota",
+        description: "Usually a minor component of healthy adult stool but an important marker of inflammation, oxygen exposure, or ecological disturbance when expanded.",
+        children: [
+          {
+            name: "Gammaproteobacteria",
+            rank: "class",
+            description: "Class that contains many facultative anaerobes and inflammation-associated gut blooms.",
+            children: [
+              {
+                name: "Enterobacterales",
+                rank: "order",
+                description: "Order containing familiar intestinal facultative anaerobes.",
+                children: [
+                  {
+                    name: "Enterobacteriaceae",
+                    rank: "family",
+                    description: "Family that often expands during dysbiosis or inflammatory states.",
+                    children: [
+                      {
+                        name: "Escherichia",
+                        rank: "genus",
+                        description: "Genus containing common gut commensals as well as opportunistic pathobionts.",
+                        children: [
+                          {
+                            name: "Escherichia coli",
+                            rank: "species",
+                            description: "Canonical intestinal species ranging from benign commensals to clinically important strains."
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                name: "Burkholderiales",
+                rank: "order",
+                description: "Order that includes gut-associated lineages detected at low abundance in many cohorts.",
+                children: [
+                  {
+                    name: "Sutterellaceae",
+                    rank: "family",
+                    description: "Family frequently represented by Sutterella in mucosa-associated gut communities.",
+                    children: [
+                      {
+                        name: "Sutterella",
+                        rank: "genus",
+                        description: "Genus often discussed in host-associated intestinal studies and mucosal niches.",
+                        children: [
+                          {
+                            name: "Sutterella wadsworthensis",
+                            rank: "species",
+                            description: "Representative Sutterella species found in the human intestinal tract."
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  };
+
+  const treeMount = document.getElementById("intestinal-taxa-tree");
+  const detailMount = document.getElementById("intestinal-taxon-detail");
+  const toolbarButtons = document.querySelectorAll("[data-tree-action]");
+  const openNodeIds = new Set();
+  const nodeIndex = new Map();
+  let selectedNodeId = "root";
+
+  const assignIds = (node, parent = null, inheritedPhylum = "root", depth = -1, lineage = []) => {
+    const nodeId = parent ? `${parent.id}-${(parent.children || []).indexOf(node)}` : "root";
+    const phylum = node.phylum || inheritedPhylum;
+    const currentDepth = node.rank === "body site" ? -1 : depth + 1;
+    const lineageTrail = [...lineage, node.name];
+    const enriched = {
+      ...node,
+      id: nodeId,
+      phylum,
+      depth: Math.max(currentDepth, 0),
+      lineage: lineageTrail,
+      children: (node.children || []).map((child) => assignIds(child, { id: nodeId, children: node.children || [] }, phylum, currentDepth, lineageTrail))
+    };
+    nodeIndex.set(nodeId, enriched);
+    return enriched;
+  };
+
+  const treeData = assignIds(intestinalTree);
+
+  const openToPhylum = () => {
+    openNodeIds.clear();
+    openNodeIds.add("root");
+    treeData.children.forEach((child) => openNodeIds.add(child.id));
+  };
+
+  const expandAll = (node) => {
+    openNodeIds.add(node.id);
+    (node.children || []).forEach(expandAll);
+  };
+
+  const renderDetail = () => {
+    const node = nodeIndex.get(selectedNodeId) || treeData;
+    const childNames = (node.children || []).map((child) => child.name);
+    detailMount.innerHTML = `
+      <h3>${node.name}</h3>
+      <p class="taxa-breadcrumbs">${node.lineage.join(" → ")}</p>
+      <dl>
+        <dt>Rank</dt>
+        <dd>${node.rank}</dd>
+        <dt>Color family</dt>
+        <dd>${node.phylum === "root" ? "overview" : node.phylum}</dd>
+      </dl>
+      <p>${node.description}</p>
+      ${
+        childNames.length
+          ? `<h4>Immediate descendants</h4><ul>${childNames.map((name) => `<li>${name}</li>`).join("")}</ul>`
+          : "<p><strong>Leaf node:</strong> this species is shown as a representative endpoint for this branch.</p>"
+      }
+    `;
+  };
+
+  const renderNode = (node) => {
+    const hasChildren = Boolean(node.children && node.children.length);
+    const isOpen = openNodeIds.has(node.id);
+    const li = document.createElement("li");
+    const button = document.createElement("button");
+
+    button.type = "button";
+    button.className = `taxa-node-button phylum-${node.phylum} depth-${node.depth}${selectedNodeId === node.id ? " is-selected" : ""}`;
+    button.setAttribute("aria-expanded", hasChildren ? String(isOpen) : "false");
+    button.innerHTML = `<span>${hasChildren ? (isOpen ? "▾" : "▸") : "•"}</span><span><strong>${node.name}</strong><br><span class="taxa-node-rank">${node.rank}</span></span>`;
+    button.addEventListener("click", function () {
+      selectedNodeId = node.id;
+      if (hasChildren) {
+        if (openNodeIds.has(node.id)) {
+          openNodeIds.delete(node.id);
+        } else {
+          openNodeIds.add(node.id);
+        }
+      }
+      renderTree();
+    });
+
+    li.appendChild(button);
+
+    if (hasChildren) {
+      const childList = document.createElement("ul");
+      childList.className = "taxa-node-children";
+      childList.hidden = !isOpen;
+      node.children.forEach((child) => childList.appendChild(renderNode(child)));
+      li.appendChild(childList);
+    }
+
+    return li;
+  };
+
+  const renderTree = () => {
+    treeMount.innerHTML = "";
+    const rootList = document.createElement("ul");
+    rootList.className = "taxa-tree-root";
+    rootList.appendChild(renderNode(treeData));
+    treeMount.appendChild(rootList);
+    renderDetail();
+  };
+
+  toolbarButtons.forEach((button) => {
+    button.addEventListener("click", function () {
+      const action = button.dataset.treeAction;
+      if (action === "expand-all") {
+        openNodeIds.clear();
+        expandAll(treeData);
+      }
+      if (action === "collapse-all") {
+        openToPhylum();
+      }
+      if (action === "reset-focus") {
+        selectedNodeId = "root";
+        openToPhylum();
+      }
+      renderTree();
+    });
+  });
+
+  openToPhylum();
+  renderTree();
+});
+</script>

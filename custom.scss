@@ -61,3 +61,241 @@ $grid-body-width: 10000px;
   background: #f3e8ff;
   color: #6f42c1;
 }
+
+.microbiome-site-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  margin: 1.5rem 0;
+}
+
+.microbiome-site-card,
+.taxa-detail-panel,
+.taxa-tree-panel,
+.taxa-note,
+.taxa-legend {
+  background: #fff;
+  border: 1px solid #dfe6ee;
+  border-radius: 0.9rem;
+  box-shadow: 0 0.5rem 1.25rem rgba(15, 23, 42, 0.06);
+}
+
+.microbiome-site-card {
+  padding: 1.1rem 1.2rem;
+}
+
+.microbiome-site-card h3 {
+  margin-top: 0;
+}
+
+.taxa-note,
+.taxa-legend {
+  margin: 1rem 0;
+  padding: 1rem 1.1rem;
+}
+
+.taxa-legend-items,
+.taxa-rank-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+}
+
+.taxa-legend-chip {
+  border-radius: 999px;
+  color: #fff;
+  display: inline-flex;
+  font-size: 0.88rem;
+  font-weight: 700;
+  padding: 0.35rem 0.8rem;
+}
+
+.taxa-tree-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 1rem 0 1.25rem;
+}
+
+.taxa-tree-button {
+  background: #fff;
+  border: 1px solid #5c6ac4;
+  border-radius: 999px;
+  color: #4051b5;
+  font-weight: 600;
+  padding: 0.45rem 0.9rem;
+}
+
+.taxa-tree-button:hover,
+.taxa-tree-button:focus {
+  background: #4051b5;
+  color: #fff;
+}
+
+.taxa-tree-layout {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: minmax(0, 1.7fr) minmax(280px, 1fr);
+}
+
+.taxa-tree-panel,
+.taxa-detail-panel {
+  padding: 1.1rem 1.2rem;
+}
+
+.taxa-tree-panel h3,
+.taxa-detail-panel h3 {
+  margin-top: 0;
+}
+
+.taxa-tree-root,
+.taxa-tree-root ul {
+  list-style: none;
+  margin: 0;
+  padding-left: 1.15rem;
+  position: relative;
+}
+
+.taxa-tree-root {
+  padding-left: 0;
+}
+
+.taxa-tree-root ul::before {
+  border-left: 1px solid #c9d4e1;
+  content: "";
+  inset: 0 auto 0 0.35rem;
+  position: absolute;
+}
+
+.taxa-tree-root li {
+  margin: 0.35rem 0;
+  padding-left: 1rem;
+  position: relative;
+}
+
+.taxa-tree-root li::before {
+  border-top: 1px solid #c9d4e1;
+  content: "";
+  left: 0.35rem;
+  position: absolute;
+  top: 1rem;
+  width: 0.6rem;
+}
+
+.taxa-node-button {
+  border: 1px solid transparent;
+  border-radius: 0.85rem;
+  color: #102030;
+  cursor: pointer;
+  display: inline-flex;
+  gap: 0.6rem;
+  line-height: 1.25;
+  margin: 0;
+  max-width: 100%;
+  padding: 0.55rem 0.8rem;
+  text-align: left;
+}
+
+.taxa-node-button:hover,
+.taxa-node-button:focus {
+  filter: brightness(0.98);
+}
+
+.taxa-node-button.is-selected {
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.18);
+}
+
+.taxa-node-rank {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  opacity: 0.88;
+  text-transform: uppercase;
+}
+
+.taxa-node-children[hidden] {
+  display: none;
+}
+
+.taxa-breadcrumbs {
+  color: #415063;
+  font-size: 0.95rem;
+  margin-bottom: 0.85rem;
+}
+
+.taxa-detail-panel dl {
+  display: grid;
+  gap: 0.3rem 0.75rem;
+  grid-template-columns: max-content minmax(0, 1fr);
+}
+
+.taxa-detail-panel dt {
+  font-weight: 700;
+}
+
+.taxa-detail-panel dd {
+  margin: 0;
+}
+
+.taxa-detail-panel ul {
+  margin-bottom: 0;
+}
+
+.phylum-chip-actinomycetota,
+.taxa-node-button.phylum-actinomycetota.depth-0 {
+  background: #7e57c2;
+  color: #fff;
+}
+
+.taxa-node-button.phylum-actinomycetota.depth-1 { background: #9575cd; }
+.taxa-node-button.phylum-actinomycetota.depth-2 { background: #b39ddb; }
+.taxa-node-button.phylum-actinomycetota.depth-3 { background: #d1c4e9; }
+.taxa-node-button.phylum-actinomycetota.depth-4 { background: #ede7f6; }
+.taxa-node-button.phylum-actinomycetota.depth-5 { background: #f5f0fb; }
+
+.phylum-chip-bacteroidota,
+.taxa-node-button.phylum-bacteroidota.depth-0 {
+  background: #1976d2;
+  color: #fff;
+}
+
+.taxa-node-button.phylum-bacteroidota.depth-1 { background: #42a5f5; }
+.taxa-node-button.phylum-bacteroidota.depth-2 { background: #90caf9; }
+.taxa-node-button.phylum-bacteroidota.depth-3 { background: #bbdefb; }
+.taxa-node-button.phylum-bacteroidota.depth-4 { background: #e3f2fd; }
+.taxa-node-button.phylum-bacteroidota.depth-5 { background: #f2f8fe; }
+
+.phylum-chip-bacillota,
+.taxa-node-button.phylum-bacillota.depth-0 {
+  background: #2e7d32;
+  color: #fff;
+}
+
+.taxa-node-button.phylum-bacillota.depth-1 { background: #43a047; }
+.taxa-node-button.phylum-bacillota.depth-2 { background: #81c784; }
+.taxa-node-button.phylum-bacillota.depth-3 { background: #a5d6a7; }
+.taxa-node-button.phylum-bacillota.depth-4 { background: #dcedc8; }
+.taxa-node-button.phylum-bacillota.depth-5 { background: #f0f8e8; }
+
+.phylum-chip-pseudomonadota,
+.taxa-node-button.phylum-pseudomonadota.depth-0 {
+  background: #c62828;
+  color: #fff;
+}
+
+.taxa-node-button.phylum-pseudomonadota.depth-1 { background: #e53935; }
+.taxa-node-button.phylum-pseudomonadota.depth-2 { background: #ef9a9a; }
+.taxa-node-button.phylum-pseudomonadota.depth-3 { background: #ffcdd2; }
+.taxa-node-button.phylum-pseudomonadota.depth-4 { background: #ffebee; }
+.taxa-node-button.phylum-pseudomonadota.depth-5 { background: #fff5f6; }
+
+.taxa-node-button.phylum-root {
+  background: #edf2f7;
+}
+
+@media (max-width: 991.98px) {
+  .taxa-tree-layout {
+    grid-template-columns: 1fr;
+  }
+}

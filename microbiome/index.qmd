@@ -1,0 +1,26 @@
+---
+title: "Microbiome Taxa by Body Site"
+---
+
+This section complements the workflow pages by showing the dominant microbes that commonly appear at different human body sites. Each body-site page uses an interactive taxonomy navigator so you can move from **phylum** to **class**, **order**, **family**, **genus**, and representative **species**.
+
+For now, the site includes the **intestinal microbiome**, with colors anchored to the major gut phyla highlighted throughout the tree:
+
+- **Actinomycetota** — purple
+- **Bacteroidota** — blue
+- **Bacillota** — green
+- **Pseudomonadota** — red
+
+The goal is to make it easy to connect high-level ecological patterns ("Bacteroidota-rich community") to the lower-level taxa you often see in profiling tables or papers.
+
+## Available body-site pages
+
+::: {.microbiome-site-grid}
+::: {.microbiome-site-card}
+### [Intestinal microbiome](intestinal.qmd)
+
+Explore an interactive phylogenetic tree of representative gut taxa, including major clades within Actinomycetota, Bacteroidota, Bacillota, and Pseudomonadota.
+:::
+:::
+
+As additional body-site pages are added, this section can expand to oral, skin, vaginal, and respiratory microbiomes while keeping the same navigation pattern and color logic.
