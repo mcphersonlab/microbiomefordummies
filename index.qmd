@@ -54,6 +54,86 @@ The [Biobakery](https://huttenhower.sph.harvard.edu/tools/) suite is a collectio
 
 ---
 
+## A Typical Microbiome Workflow
+
+Which path you take depends heavily on whether you start with **16S/amplicon reads** or **shotgun metagenomes**. The two diagrams below split those cases apart and extend the downstream analyses to include predicted functions, protein family analysis, and microbiome-metabolome association testing.
+
+::: {.grid}
+
+::: {.g-col-12 .g-col-lg-6}
+### 16S / amplicon workflow
+
+```{mermaid}
+flowchart TD
+    A[Raw 16S / ITS reads] --> B[QIIME 2<br/>import, denoise, taxonomy]
+    B --> C[ASV table + taxonomy]
+    B --> D[Diversity metrics + ordination]
+    C --> E[PICRUSt2<br/>predict gene families + pathways]
+    C --> F[taxUMAP / CCREPE<br/>community structure and co-occurrence]
+    C --> G[MaAsLin2<br/>taxon-metadata associations]
+    E --> H[Predicted KO / EC / pathway tables]
+    H --> I[MaAsLin2<br/>predicted function associations]
+    H --> J[Paired metabolomics table]
+    J --> K[Microbe-function-metabolite hypotheses]
+```
+
+**Best for:** community composition, diversity, and low-cost functional hypotheses when you only have amplicon data.
+:::
+
+::: {.g-col-12 .g-col-lg-6}
+### Shotgun metagenome workflow
+
+```{mermaid}
+flowchart TD
+    A[Raw shotgun reads] --> B[KneadData<br/>quality control + host removal]
+    B --> C[MetaPhlAn<br/>species profile]
+    B --> D[HUMAnN<br/>gene families + pathways]
+    B --> E[ShortBRED<br/>target protein families]
+    B --> F[baqlava<br/>viral profile]
+    B --> G[Assembly / MAGs]
+    C --> H[StrainPhlAn / taxUMAP<br/>strain tracking and ordination]
+    C --> I[MaAsLin2<br/>taxon-metadata associations]
+    D --> J[Pathway association testing]
+    D --> K[MACARRoN + metabolomics<br/>microbe-metabolite prioritization]
+    E --> L[AMR / enzyme family abundance]
+    G --> M[metawibele / WAAFLE / PhyloPhlAn<br/>novel proteins, HGT, phylogeny]
+    D --> N[MaAsLin2<br/>functional associations]
+```
+
+**Best for:** direct measurement of taxonomy, pathways, protein families, viruses, strain variation, and metabolomics-linked functional readouts.
+:::
+
+:::
+
+### Where each tool starts and stops
+
+The diagrams above show the flow visually. The tables below make the hand-off points explicit: what each tool starts with, what it produces, and when its use case typically ends before the next tool takes over.
+
+#### 16S / amplicon workflow hand-offs
+
+| Workflow step | Tool(s) | Start of use case | Stop / hand-off point | What the tool is doing |
+|---|---|---|---|---|
+| Import, denoise, assign taxonomy | [**QIIME 2**](tools/qiime2.qmd) | Raw 16S / ITS FASTQ files from the sequencer | ASV table, taxonomy assignments, diversity metrics, and ordinations are ready for downstream interpretation | Provides the core amplicon analysis environment: demultiplexing, denoising, taxonomy, diversity, and provenance tracking |
+| Predict functional potential | [**PICRUSt2**](tools/picrust2.qmd) | ASV / feature tables produced after QIIME 2-style denoising and taxonomic processing | Predicted EC, KO, and pathway abundance tables are produced | Extends a 16S workflow into functional hypothesis generation when you do not have shotgun reads |
+| Visualise community structure | [**taxUMAP**](tools/taxumap.qmd) | ASV or species abundance table plus taxonomy | Embeddings and figures are ready for interpretation or reporting | Summarises overall microbiome structure in a taxonomy-aware low-dimensional embedding |
+| Test co-occurrence patterns | [**CCREPE**](tools/ccrepe.qmd) | Normalised compositional abundance table | Correlation / co-occurrence output is produced for network interpretation | Estimates associations between microbial features while correcting for compositional bias |
+| Test associations with metadata or paired omics | [**MaAsLin2**](tools/maaslin2.qmd) | Taxonomic or PICRUSt2-derived functional tables plus sample metadata, with optional paired metabolomics | Effect sizes, q-values, and model summaries are produced | Quantifies which taxa or predicted functions are associated with disease, diet, treatment, or metabolite measurements |
+
+#### Shotgun / SGS workflow hand-offs
+
+| Workflow step | Tool(s) | Start of use case | Stop / hand-off point | What the tool is doing |
+|---|---|---|---|---|
+| Clean raw reads | KneadData | Raw shotgun FASTQ files | Host-depleted, quality-controlled reads are ready for profiling and assembly | Removes low-quality sequence and contaminating host reads before downstream microbiome analysis |
+| Taxonomic profiling | [**MetaPhlAn**](tools/metaphlan.qmd) | Cleaned shotgun reads | Species abundance profiles are ready for strain tracking, ordination, association testing, or paired multi-omics analysis | Identifies which microbes are present and their relative abundances using clade-specific markers |
+| Strain-level follow-up | [**StrainPhlAn**](tools/strainphlan.qmd), [**PolyPanner**](tools/polypanner.qmd) | Marker-containing reads or longitudinal metagenomic reads after taxonomic profiling | Strain phylogenies or time-series variant dynamics are produced | Refines species-level results into strain sharing, persistence, and within-host evolutionary change |
+| Functional profiling | [**HUMAnN**](tools/humann.qmd) | Cleaned shotgun reads, often alongside MetaPhlAn output | Gene family and pathway abundance tables are ready for association testing or metabolomics integration | Measures what the community can do by quantifying pathways and gene families directly from shotgun data |
+| Target protein family quantification | [**ShortBRED**](tools/shortbred.qmd) | Cleaned shotgun reads plus target marker families | Protein family abundance tables are produced for focused follow-up | Quantifies targeted proteins such as AMR genes or enzyme families when a hypothesis is already defined |
+| Viral profiling | [**baqlava**](tools/baqlava.qmd) | Cleaned shotgun reads | Viral abundance profiles are ready for downstream comparison with bacterial or host features | Adds bacteriophages and other viruses to an otherwise bacteria-centric metagenomics workflow |
+| Assembly-driven discovery | [**metawibele**](tools/metawibele.qmd), [**WAAFLE**](tools/waafle.qmd), [**PhyloPhlAn**](tools/phylophlan.qmd), [**anpan**](tools/anpan.qmd) | Assemblies, MAGs, or species-level genomic feature tables derived from shotgun data | Novel proteins, HGT calls, phylogenies, or within-species association results are produced | Pushes beyond abundance profiling into novel protein families, gene transfer, phylogeny, and pangenome biology |
+| Integrate with downstream statistics and metabolomics | [**MaAsLin2**](tools/maaslin2.qmd), [**MACARRoN**](tools/macarron.qmd), [**taxUMAP**](tools/taxumap.qmd), [**CCREPE**](tools/ccrepe.qmd) | Taxonomic, pathway, protein-family, viral, or metabolite tables plus metadata | Association results, metabolite prioritisation, embeddings, and networks are ready for biological interpretation | Converts shotgun outputs into interpretable host-microbe and microbe-metabolite hypotheses |
+
+---
+
 ## Tool Summary Table
 
 The table below gives a quick at-a-glance comparison of every tool covered on this site — what it does, why you would reach for it, what data it accepts, and whether it is most relevant to a **16S/amplicon** or **shotgun sequencing (SGS)** workflow. Use the buttons to toggle between the two sequencing modes; tools tagged **Both / downstream** remain visible in either view because they are commonly used after either type of profiling.
@@ -251,59 +331,6 @@ Each tool page provides:
 5. **Output** — Description of key output files
 6. **Tips & Gotchas** — Common pitfalls for beginners
 7. **Further reading** — Links to documentation and key papers
-
----
-
-## A Typical Microbiome Workflow
-
-Which path you take depends heavily on whether you start with **16S/amplicon reads** or **shotgun metagenomes**. The two diagrams below split those cases apart and extend the downstream analyses to include predicted functions, protein family analysis, and microbiome-metabolome association testing.
-
-::: {.grid}
-
-::: {.g-col-12 .g-col-lg-6}
-### 16S / amplicon workflow
-
-```{mermaid}
-flowchart TD
-    A[Raw 16S / ITS reads] --> B[QIIME 2<br/>import, denoise, taxonomy]
-    B --> C[ASV table + taxonomy]
-    B --> D[Diversity metrics + ordination]
-    C --> E[PICRUSt2<br/>predict gene families + pathways]
-    C --> F[taxUMAP / CCREPE<br/>community structure and co-occurrence]
-    C --> G[MaAsLin2<br/>taxon-metadata associations]
-    E --> H[Predicted KO / EC / pathway tables]
-    H --> I[MaAsLin2<br/>predicted function associations]
-    H --> J[Paired metabolomics table]
-    J --> K[Microbe-function-metabolite hypotheses]
-```
-
-**Best for:** community composition, diversity, and low-cost functional hypotheses when you only have amplicon data.
-:::
-
-::: {.g-col-12 .g-col-lg-6}
-### Shotgun metagenome workflow
-
-```{mermaid}
-flowchart TD
-    A[Raw shotgun reads] --> B[KneadData<br/>quality control + host removal]
-    B --> C[MetaPhlAn<br/>species profile]
-    B --> D[HUMAnN<br/>gene families + pathways]
-    B --> E[ShortBRED<br/>target protein families]
-    B --> F[baqlava<br/>viral profile]
-    B --> G[Assembly / MAGs]
-    C --> H[StrainPhlAn / taxUMAP<br/>strain tracking and ordination]
-    C --> I[MaAsLin2<br/>taxon-metadata associations]
-    D --> J[Pathway association testing]
-    D --> K[MACARRoN + metabolomics<br/>microbe-metabolite prioritization]
-    E --> L[AMR / enzyme family abundance]
-    G --> M[metawibele / WAAFLE / PhyloPhlAn<br/>novel proteins, HGT, phylogeny]
-    D --> N[MaAsLin2<br/>functional associations]
-```
-
-**Best for:** direct measurement of taxonomy, pathways, protein families, viruses, strain variation, and metabolomics-linked functional readouts.
-:::
-
-:::
 
 ---
 
