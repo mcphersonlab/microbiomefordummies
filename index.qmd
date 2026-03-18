@@ -63,19 +63,21 @@ Which path you take depends heavily on whether you start with **16S/amplicon rea
 ::: {.g-col-12}
 ### 16S / amplicon workflow
 
+::: {.workflow-diagram}
 ```{mermaid}
 flowchart TD
-    A[Raw 16S / ITS reads] --> B[QIIME 2<br/>import, denoise, taxonomy]
+    A([Raw 16S / ITS reads]) --> B[QIIME 2\nimport, denoise, taxonomy]
     B --> C[ASV table + taxonomy]
     B --> D[Diversity metrics + ordination]
-    C --> E[PICRUSt2<br/>predict gene families + pathways]
-    C --> F[taxUMAP / CCREPE<br/>community structure and co-occurrence]
-    C --> G[MaAsLin2<br/>taxon-metadata associations]
+    C --> E[PICRUSt2\npredict gene families + pathways]
+    C --> F[taxUMAP / CCREPE\ncommunity structure and co-occurrence]
+    C --> G[MaAsLin2\ntaxon-metadata associations]
     E --> H[Predicted KO / EC / pathway tables]
-    H --> I[MaAsLin2<br/>predicted function associations]
+    H --> I[MaAsLin2\npredicted function associations]
     H --> J[Paired metabolomics table]
     J --> K[Microbe-function-metabolite hypotheses]
 ```
+:::
 
 **Best for:** community composition, diversity, and low-cost functional hypotheses when you only have amplicon data.
 :::
@@ -83,22 +85,24 @@ flowchart TD
 ::: {.g-col-12}
 ### Shotgun metagenome workflow
 
+::: {.workflow-diagram}
 ```{mermaid}
 flowchart TD
-    A[Raw shotgun reads] --> B[KneadData<br/>quality control + host removal]
-    B --> C[MetaPhlAn<br/>species profile]
-    B --> D[HUMAnN<br/>gene families + pathways]
-    B --> E[ShortBRED<br/>target protein families]
-    B --> F[baqlava<br/>viral profile]
-    B --> G[Assembly / MAGs]
-    C --> H[StrainPhlAn / taxUMAP<br/>strain tracking and ordination]
-    C --> I[MaAsLin2<br/>taxon-metadata associations]
-    D --> J[Pathway association testing]
-    D --> K[MACARRoN + metabolomics<br/>microbe-metabolite prioritization]
-    E --> L[AMR / enzyme family abundance]
-    G --> M[metawibele / WAAFLE / PhyloPhlAn<br/>novel proteins, HGT, phylogeny]
-    D --> N[MaAsLin2<br/>functional associations]
+    A([Raw shotgun reads]) --> B[KneadData\nquality control + host removal]
+    B --> C[MetaPhlAn\nspecies profile]
+    B --> D[HUMAnN\ngene families + pathways]
+    B --> E[ShortBRED\ntarget protein families]
+    B --> F[baqlava\nviral profile]
+    B --> G[Assembly / MAGs\ne.g., MEGAHIT · MetaBAT2]
+    C --> H[StrainPhlAn\nstrain tracking]
+    C --> I[taxUMAP\nordination]
+    C --> J[MaAsLin2\ntaxon-metadata associations]
+    D --> K[MaAsLin2\npathway + functional associations]
+    D --> L[MACARRoN + metabolomics\nmicrobe-metabolite prioritization]
+    E --> M[AMR / enzyme family abundance]
+    G --> N[metawibele / WAAFLE / PhyloPhlAn\nnovel proteins, HGT, phylogeny]
 ```
+:::
 
 **Best for:** direct measurement of taxonomy, pathways, protein families, viruses, strain variation, and metabolomics-linked functional readouts.
 :::

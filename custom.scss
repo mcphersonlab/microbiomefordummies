@@ -5,6 +5,16 @@
 // the left sidebar and right TOC panel (both kept at their default widths).
 $grid-body-width: 10000px;
 
+.workflow-diagram {
+  display: flex;
+  justify-content: center;
+}
+
+.workflow-diagram svg {
+  display: block;
+  margin: 0 auto;
+}
+
 .workflow-filter-controls {
   display: flex;
   flex-wrap: wrap;

@@ -37,6 +37,8 @@ website:
             href: tools/anpan.qmd
           - text: "CCREPE"
             href: tools/ccrepe.qmd
+      - text: "Other Tools"
+        menu:
           - text: "taxUMAP"
             href: tools/taxumap.qmd
           - text: "PolyPanner"
@@ -74,6 +76,8 @@ website:
           - tools/maaslin2.qmd
           - tools/anpan.qmd
           - tools/ccrepe.qmd
+      - section: "Other Tools"
+        contents:
           - tools/taxumap.qmd
           - tools/polypanner.qmd
           - tools/qiime2.qmd
