@@ -804,16 +804,15 @@ document.addEventListener("DOMContentLoaded", function () {
   const nodeIndex = new Map();
   let selectedNodeId = "root";
   const ncbiBaseUrl = "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=";
-  const colorDepthByRank = { phylum: 0, class: 1, order: 2, family: 3, genus: 4, species: 5 };
+  const colorDepthByRank = { "body site": 0, "domain": 0, "kingdom": 0, "phylum": 0, "class": 1, "order": 2, "family": 3, "genus": 4, "species": 5 };
   const bacterialPhyla = ["Actinomycetota", "Bacteroidota", "Verrucomicrobiota", "Bacillota", "Pseudomonadota", "Fusobacteriota"];
   const archaealPhyla = ["Euryarchaeota"];
   const fungalPhyla = ["Ascomycota", "Basidiomycota", "Zygomycota", "Mucoromycota", "Chytridiomycota", "Glomeromycota", "Neocallimastigomycota"];
   const bacteriophagePhyla = ["Uroviricota", "Phixviricota", "Preplasmiviricota"];
 
-  const assignIds = (node, parent = null, inheritedPhylum = "root", depth = -1, lineage = []) => {
+  const assignIds = (node, parent = null, inheritedPhylum = "root", lineage = []) => {
     const nodeId = parent ? `${parent.id}-${(parent.children || []).indexOf(node)}` : "root";
     const phylum = node.phylum || inheritedPhylum;
-    const currentDepth = node.rank === "body site" ? -1 : depth + 1;
     const lineageTrail = [...lineage, node.name];
     const enriched = {
       ...node,
@@ -821,7 +820,7 @@ document.addEventListener("DOMContentLoaded", function () {
       phylum,
       depth: colorDepthByRank[node.rank] ?? 0,
       lineage: lineageTrail,
-      children: (node.children || []).map((child) => assignIds(child, { id: nodeId, children: node.children || [] }, phylum, currentDepth, lineageTrail))
+      children: (node.children || []).map((child) => assignIds(child, { id: nodeId, children: node.children || [] }, phylum, lineageTrail))
     };
     nodeIndex.set(nodeId, enriched);
     return enriched;
