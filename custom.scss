@@ -10,8 +10,20 @@ $grid-body-width: 10000px;
   justify-content: center;
 }
 
+.workflow-diagram .cell,
+.workflow-diagram .cell-output-display,
+.workflow-diagram .cell-output-display > div,
+.workflow-diagram figure,
+.workflow-diagram figure > div,
+.workflow-diagram .mermaid,
+.workflow-diagram svg {
+  max-width: 100%;
+  width: 100%;
+}
+
 .workflow-diagram svg {
   display: block;
+  height: auto;
   margin: 0 auto;
 }
 
@@ -40,7 +52,9 @@ $grid-body-width: 10000px;
 }
 
 .workflow-panel-hidden {
-  display: none;
+  max-height: 0;
+  overflow: hidden;
+  visibility: hidden;
 }
 
 .workflow-filter-controls {

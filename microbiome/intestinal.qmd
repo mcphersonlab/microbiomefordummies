@@ -148,6 +148,18 @@ document.addEventListener("DOMContentLoaded", function () {
                             description: "Common intestinal species often abundant in adult gut metagenomes."
                           },
                           {
+                            name: "Bacteroides thetaiotaomicron",
+                            rank: "species",
+                            taxId: 818,
+                            description: "Major glycan-degrading gut commensal widely used as a model organism for host-microbe interactions."
+                          },
+                          {
+                            name: "Bacteroides fragilis",
+                            rank: "species",
+                            taxId: 817,
+                            description: "Well-studied intestinal species whose strains range from mutualists to clinically important opportunists."
+                          },
+                          {
                             name: "Bacteroides uniformis",
                             rank: "species",
                             taxId: 820,
@@ -243,6 +255,12 @@ document.addEventListener("DOMContentLoaded", function () {
                             rank: "species",
                             taxId: 166486,
                             description: "Canonical butyrate-producing intestinal species linked to epithelial health."
+                          },
+                          {
+                            name: "Roseburia hominis",
+                            rank: "species",
+                            taxId: 301301,
+                            description: "Butyrate-producing intestinal species often highlighted as a marker of a fiber-fermenting colon community."
                           }
                         ]
                       },
@@ -257,6 +275,40 @@ document.addEventListener("DOMContentLoaded", function () {
                             rank: "species",
                             taxId: 40520,
                             description: "Representative Blautia species commonly recovered from adult intestinal microbiomes."
+                          },
+                          {
+                            name: "Blautia producta",
+                            rank: "species",
+                            taxId: 33035,
+                            description: "Common anaerobic intestinal species associated with carbohydrate fermentation and cross-feeding networks."
+                          }
+                        ]
+                      },
+                      {
+                        name: "Agathobacter",
+                        rank: "genus",
+                        taxId: 1766253,
+                        description: "Butyrate-producing genus that includes important carbohydrate-fermenting colonic commensals.",
+                        children: [
+                          {
+                            name: "Agathobacter rectalis",
+                            rank: "species",
+                            taxId: 39491,
+                            description: "High-abundance butyrate-producing intestinal species formerly known as Eubacterium rectale."
+                          }
+                        ]
+                      },
+                      {
+                        name: "Coprococcus",
+                        rank: "genus",
+                        taxId: 33042,
+                        description: "Fermentative intestinal genus commonly associated with short-chain fatty acid production.",
+                        children: [
+                          {
+                            name: "Coprococcus comes",
+                            rank: "species",
+                            taxId: 410072,
+                            description: "Representative intestinal Coprococcus species found in many adult gut communities."
                           }
                         ]
                       }
@@ -281,6 +333,50 @@ document.addEventListener("DOMContentLoaded", function () {
                             description: "High-abundance, butyrate-producing intestinal species commonly depleted in inflammatory disease."
                           }
                         ]
+                      },
+                      {
+                        name: "Ruminococcus",
+                        rank: "genus",
+                        taxId: 1263,
+                        description: "Fiber-adapted intestinal genus frequently discussed in mucus and host-glycan utilization studies.",
+                        children: [
+                          {
+                            name: "Ruminococcus gnavus",
+                            rank: "species",
+                            taxId: 33038,
+                            description: "Common intestinal species often enriched in perturbed or inflammatory gut communities."
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                ]
+              },
+              {
+                name: "Peptostreptococcales",
+                rank: "order",
+                taxId: 3082720,
+                description: "Order containing anaerobic intestinal lineages that can expand strongly during dysbiosis.",
+                children: [
+                  {
+                    name: "Peptostreptococcaceae",
+                    rank: "family",
+                    taxId: 186804,
+                    description: "Family containing spore-forming anaerobes of major clinical importance in the gut.",
+                    children: [
+                      {
+                        name: "Clostridioides",
+                        rank: "genus",
+                        taxId: 1870884,
+                        description: "Genus containing toxigenic spore-forming anaerobes of major clinical importance.",
+                        children: [
+                          {
+                            name: "Clostridioides difficile",
+                            rank: "species",
+                            taxId: 1496,
+                            description: "Pathobiont and enteric pathogen that can bloom after antibiotic exposure and disrupt colon ecology."
+                          }
+                        ]
                       }
                     ]
                   }
@@ -294,6 +390,58 @@ document.addEventListener("DOMContentLoaded", function () {
             taxId: 91061,
             description: "Less dominant than Clostridia in the colon but still relevant for enterococci and lactobacilli.",
             children: [
+              {
+                name: "Bacillales",
+                rank: "order",
+                taxId: 1385,
+                description: "Order containing spore formers and skin- or environment-associated taxa that can also appear in gut datasets.",
+                children: [
+                  {
+                    name: "Bacillaceae",
+                    rank: "family",
+                    taxId: 186817,
+                    description: "Family containing spore-forming rods that are common in environmental and probiotic contexts.",
+                    children: [
+                      {
+                        name: "Bacillus",
+                        rank: "genus",
+                        taxId: 1386,
+                        description: "Genus of resilient, endospore-forming bacteria sometimes detected in intestinal and probiotic studies.",
+                        children: [
+                          {
+                            name: "Bacillus subtilis",
+                            rank: "species",
+                            taxId: 1423,
+                            description: "Classic spore-forming species used in biotechnology and some probiotic formulations."
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    name: "Staphylococcaceae",
+                    rank: "family",
+                    taxId: 90964,
+                    description: "Family containing aerotolerant cocci that more often reflect skin or clinical contamination than core gut residency.",
+                    children: [
+                      {
+                        name: "Staphylococcus",
+                        rank: "genus",
+                        taxId: 1279,
+                        description: "Genus of facultative cocci better known for skin and clinical niches but occasionally detected in gut-associated samples.",
+                        children: [
+                          {
+                            name: "Staphylococcus aureus",
+                            rank: "species",
+                            taxId: 1280,
+                            description: "Clinically important opportunist that can transiently colonize the intestine, especially in perturbed settings."
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
               {
                 name: "Lactobacillales",
                 rank: "order",
@@ -317,6 +465,12 @@ document.addEventListener("DOMContentLoaded", function () {
                             rank: "species",
                             taxId: 1351,
                             description: "Representative intestinal species notable for opportunism and antimicrobial resistance potential."
+                          },
+                          {
+                            name: "Enterococcus faecium",
+                            rank: "species",
+                            taxId: 1352,
+                            description: "Hospital-associated opportunist that can become abundant in antibiotic-perturbed intestinal communities."
                           }
                         ]
                       }
@@ -364,6 +518,50 @@ document.addEventListener("DOMContentLoaded", function () {
                             rank: "species",
                             taxId: 562,
                             description: "Canonical intestinal species ranging from benign commensals to clinically important strains."
+                          }
+                        ]
+                      },
+                      {
+                        name: "Klebsiella",
+                        rank: "genus",
+                        taxId: 570,
+                        description: "Genus of facultative anaerobes that frequently expands in inflammation-associated or antibiotic-perturbed gut states.",
+                        children: [
+                          {
+                            name: "Klebsiella pneumoniae",
+                            rank: "species",
+                            taxId: 573,
+                            description: "Important opportunistic species often tracked as a marker of intestinal dysbiosis and antimicrobial resistance risk."
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                name: "Pseudomonadales",
+                rank: "order",
+                taxId: 72274,
+                description: "Order containing aerotolerant gammaproteobacteria more typical of oxygenated or disturbed niches.",
+                children: [
+                  {
+                    name: "Pseudomonadaceae",
+                    rank: "family",
+                    taxId: 135621,
+                    description: "Family containing metabolically versatile bacteria that can appear in low-abundance intestinal datasets.",
+                    children: [
+                      {
+                        name: "Pseudomonas",
+                        rank: "genus",
+                        taxId: 286,
+                        description: "Genus of adaptable environmental and opportunistic bacteria that can transiently colonize the gut.",
+                        children: [
+                          {
+                            name: "Pseudomonas aeruginosa",
+                            rank: "species",
+                            taxId: 287,
+                            description: "Major opportunistic pathogen sometimes detected in highly perturbed intestinal microbiomes."
                           }
                         ]
                       }
