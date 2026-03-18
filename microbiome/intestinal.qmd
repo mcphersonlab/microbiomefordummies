@@ -828,6 +828,21 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const buildHigherTaxaTree = (tree) => {
     const phylaByName = new Map((tree.children || []).map((child) => [child.name, child]));
+    const groupedPhyla = [...bacterialPhyla, ...archaealPhyla, ...fungalPhyla, ...bacteriophagePhyla];
+    const duplicatePhyla = groupedPhyla.filter((name, index) => groupedPhyla.indexOf(name) !== index);
+    const ungroupedPhyla = [...phylaByName.keys()].filter((name) => !groupedPhyla.includes(name));
+
+    if (duplicatePhyla.length || ungroupedPhyla.length) {
+      const problems = [];
+      if (duplicatePhyla.length) {
+        problems.push(`duplicate group assignments for: ${[...new Set(duplicatePhyla)].join(", ")}`);
+      }
+      if (ungroupedPhyla.length) {
+        problems.push(`ungrouped phyla: ${ungroupedPhyla.join(", ")}`);
+      }
+      throw new Error(`Unable to build the higher-level taxonomy scaffold (${problems.join("; ")}).`);
+    }
+
     const pickChildren = (names) => names.map((name) => {
       const child = phylaByName.get(name);
       if (!child) {
@@ -848,7 +863,6 @@ document.addEventListener("DOMContentLoaded", function () {
             {
               name: "Bacteria",
               rank: "kingdom",
-              taxId: 2,
               description: "Kingdom-level bacterial grouping used here to organize the gut-associated bacterial phyla below.",
               children: pickChildren(bacterialPhyla)
             }
@@ -863,7 +877,6 @@ document.addEventListener("DOMContentLoaded", function () {
             {
               name: "Archaea",
               rank: "kingdom",
-              taxId: 2157,
               description: "Kingdom-level archaeal grouping used here to place intestinal archaeal phyla in context.",
               children: pickChildren(archaealPhyla)
             }
@@ -903,7 +916,15 @@ document.addEventListener("DOMContentLoaded", function () {
     };
   };
 
-  const treeData = assignIds(buildHigherTaxaTree(intestinalTree));
+  let treeBuildMessage = "";
+  let treeData;
+  try {
+    treeData = assignIds(buildHigherTaxaTree(intestinalTree));
+  } catch (error) {
+    console.error("Unable to build higher taxonomy scaffold for intestinalTree.", error);
+    treeBuildMessage = "The domain/kingdom scaffold could not be applied, so the tree is falling back to the phylum-first view until the grouping metadata is corrected.";
+    treeData = assignIds(intestinalTree);
+  }
 
   const openToDomain = () => {
     openNodeIds.clear();
@@ -933,10 +954,13 @@ document.addEventListener("DOMContentLoaded", function () {
         ${ncbiMarkup}
       </dl>
       <p>${node.description}</p>
+      ${treeBuildMessage && node.id === "root" ? `<p role="alert"><strong>Tree note:</strong> ${treeBuildMessage}</p>` : ""}
       ${
         childNames.length
           ? `<h4>Immediate descendants</h4><ul>${childNames.map((name) => `<li>${name}</li>`).join("")}</ul>`
-          : "<p><strong>Leaf node:</strong> no deeper representative descendants are shown for this branch on this page.</p>"
+          : node.rank === "species"
+            ? "<p><strong>Representative endpoint:</strong> this species is shown as an example terminal taxon for its branch on this page.</p>"
+            : "<p><strong>Leaf node:</strong> no deeper representative descendants are shown for this branch on this page.</p>"
       }
     `;
   };
