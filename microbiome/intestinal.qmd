@@ -5,7 +5,7 @@ title: "Intestinal Microbiome Taxa"
 The intestinal microbiome is dominated by a small number of bacterial phyla, but clinically relevant datasets also include archaeal, fungal, and viral lineages. The navigator below is designed to help you move through those levels without losing sight of the larger phylogenetic structure.
 
 ::: {.taxa-note}
-Use the tree to click through the major intestinal lineages. Neutral nodes show the added domain- and kingdom-level scaffolding, while colors stay anchored to phylum-level branches so bacterial, archaeal, fungal, and viral subtrees remain visually distinct. Sub-taxa use progressively lighter shades so you can keep track of which lower-level groups belong to the same higher-level branch.
+Use the tree to click through the major intestinal lineages. Neutral nodes show the added domain- and kingdom-level scaffolding, while each kingdom assigns a distinct bold color to every phylum-level branch. Sub-taxa then shift to progressively lighter shades so you can keep track of which lower-level groups belong to the same higher-level branch.
 :::
 
 ::: {.taxa-legend}
@@ -38,8 +38,8 @@ Use the tree to click through the major intestinal lineages. Neutral nodes show 
 </div>
 
 <div class="taxa-rank-legend">
-  <span><strong>Darker shades</strong> = higher taxonomic ranks (domain → kingdom → phylum → class)</span>
-  <span><strong>Lighter shades</strong> = deeper branches (order → family → genus → species)</span>
+  <span><strong>Boldest shade</strong> = the phylum-level branch color within each kingdom</span>
+  <span><strong>Lighter shades</strong> = deeper branches (class → order → family → genus → species) within that phylum</span>
 </div>
 :::
 
@@ -804,6 +804,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const nodeIndex = new Map();
   let selectedNodeId = "root";
   const ncbiBaseUrl = "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=";
+  const colorDepthByRank = { phylum: 0, class: 1, order: 2, family: 3, genus: 4, species: 5 };
   const bacterialPhyla = ["Actinomycetota", "Bacteroidota", "Verrucomicrobiota", "Bacillota", "Pseudomonadota", "Fusobacteriota"];
   const archaealPhyla = ["Euryarchaeota"];
   const fungalPhyla = ["Ascomycota", "Basidiomycota", "Zygomycota", "Mucoromycota", "Chytridiomycota", "Glomeromycota", "Neocallimastigomycota"];
@@ -818,7 +819,7 @@ document.addEventListener("DOMContentLoaded", function () {
       ...node,
       id: nodeId,
       phylum,
-      depth: Math.max(currentDepth, 0),
+      depth: colorDepthByRank[node.rank] ?? 0,
       lineage: lineageTrail,
       children: (node.children || []).map((child) => assignIds(child, { id: nodeId, children: node.children || [] }, phylum, currentDepth, lineageTrail))
     };
