@@ -56,11 +56,14 @@ The [Biobakery](https://huttenhower.sph.harvard.edu/tools/) suite is a collectio
 
 ## A Typical Microbiome Workflow
 
-Which path you take depends heavily on whether you start with **16S/amplicon reads** or **shotgun metagenomes**. The two diagrams below split those cases apart and extend the downstream analyses to include predicted functions, protein family analysis, and microbiome-metabolome association testing.
+Which path you take depends heavily on whether you start with **16S/amplicon reads** or **shotgun metagenomes**. Select a workflow type to view the corresponding diagram.
 
-::: {.grid}
+<div class="workflow-selector" role="group" aria-label="Select workflow diagram">
+  <button type="button" class="workflow-select-button is-active" data-target="workflow-16s" aria-pressed="true">16S / Amplicon</button>
+  <button type="button" class="workflow-select-button" data-target="workflow-shotgun" aria-pressed="false">Shotgun Metagenomics</button>
+</div>
 
-::: {.g-col-12}
+::: {#workflow-16s .workflow-panel}
 ### 16S / amplicon workflow
 
 ::: {.workflow-diagram}
@@ -82,7 +85,7 @@ flowchart TD
 **Best for:** community composition, diversity, and low-cost functional hypotheses when you only have amplicon data.
 :::
 
-::: {.g-col-12}
+::: {#workflow-shotgun .workflow-panel .workflow-panel-hidden}
 ### Shotgun metagenome workflow
 
 ::: {.workflow-diagram}
@@ -107,7 +110,33 @@ flowchart TD
 **Best for:** direct measurement of taxonomy, pathways, protein families, viruses, strain variation, and metabolomics-linked functional readouts.
 :::
 
-:::
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const buttons = document.querySelectorAll(".workflow-select-button");
+  const panels = document.querySelectorAll(".workflow-panel");
+
+  buttons.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      const target = btn.dataset.target;
+
+      buttons.forEach(function (b) {
+        const isActive = b === btn;
+        b.classList.toggle("is-active", isActive);
+        b.setAttribute("aria-pressed", isActive ? "true" : "false");
+      });
+
+      panels.forEach(function (panel) {
+        if (panel.id === target) {
+          panel.classList.remove("workflow-panel-hidden");
+        } else {
+          panel.classList.add("workflow-panel-hidden");
+        }
+      });
+    });
+  });
+});
+</script>
+
 
 ## Tool Summary Table
 
