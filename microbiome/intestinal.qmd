@@ -742,7 +742,7 @@ document.addEventListener("DOMContentLoaded", function () {
         rank: "phylum",
         taxId: 4811,
         phylum: "zygomycota",
-        description: "Historically defined fungal phylum still encountered in reference taxonomies and some microbiome annotations."
+        description: "A paraphyletic fungal grouping no longer recognized in modern taxonomy but retained here because it still appears in older reference taxonomies and microbiome annotations."
       },
       {
         name: "Mucoromycota",
