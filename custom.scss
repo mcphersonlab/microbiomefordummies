@@ -5,6 +5,44 @@
 // the left sidebar and right TOC panel (both kept at their default widths).
 $grid-body-width: 10000px;
 
+.workflow-diagram {
+  display: flex;
+  justify-content: center;
+}
+
+.workflow-diagram svg {
+  display: block;
+  margin: 0 auto;
+}
+
+.workflow-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 1rem 0 1.25rem;
+}
+
+.workflow-select-button {
+  border: 1px solid #0d6efd;
+  border-radius: 999px;
+  background: #fff;
+  color: #0d6efd;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.45rem 0.9rem;
+}
+
+.workflow-select-button.is-active,
+.workflow-select-button:hover,
+.workflow-select-button:focus {
+  background: #0d6efd;
+  color: #fff;
+}
+
+.workflow-panel-hidden {
+  display: none;
+}
+
 .workflow-filter-controls {
   display: flex;
   flex-wrap: wrap;
@@ -35,6 +73,11 @@ $grid-body-width: 10000px;
 .sequencing-summary-table th,
 .sequencing-summary-table td {
   vertical-align: top;
+}
+
+.sequencing-summary-table td:first-child,
+.sequencing-summary-table th:first-child {
+  white-space: nowrap;
 }
 
 .workflow-badge {
