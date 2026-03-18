@@ -2,24 +2,43 @@
 title: "Intestinal Microbiome Taxa"
 ---
 
-The intestinal microbiome is dominated by a small number of bacterial phyla, but the ecology that matters in practice often appears one or two levels lower — at the level of **families**, **genera**, and representative **species**. The navigator below is designed to help you move through those levels without losing sight of the larger phylogenetic structure.
+The intestinal microbiome is dominated by a small number of bacterial phyla, but clinically relevant datasets also include archaeal, fungal, and viral lineages. The navigator below is designed to help you move through those levels without losing sight of the larger phylogenetic structure.
 
 ::: {.taxa-note}
-Use the tree to click through the major intestinal lineages. Colors stay anchored to phylum-level identity throughout the tree: **Actinomycetota = purple**, **Bacteroidota = blue**, **Bacillota = green**, and **Pseudomonadota = red**. Sub-taxa use progressively lighter shades so you can keep track of which lower-level groups belong to the same higher-level branch.
+Use the tree to click through the major intestinal lineages. Neutral nodes show the added domain- and kingdom-level scaffolding, while colors stay anchored to phylum-level branches so bacterial, archaeal, fungal, and viral subtrees remain visually distinct. Sub-taxa use progressively lighter shades so you can keep track of which lower-level groups belong to the same higher-level branch.
 :::
 
 ::: {.taxa-legend}
-### Color guide
+### Lineage guide
 
 <div class="taxa-legend-items">
   <span class="taxa-legend-chip phylum-chip-actinomycetota">Actinomycetota</span>
   <span class="taxa-legend-chip phylum-chip-bacteroidota">Bacteroidota</span>
+  <span class="taxa-legend-chip phylum-chip-verrucomicrobiota">Verrucomicrobiota</span>
   <span class="taxa-legend-chip phylum-chip-bacillota">Bacillota</span>
   <span class="taxa-legend-chip phylum-chip-pseudomonadota">Pseudomonadota</span>
+  <span class="taxa-legend-chip phylum-chip-fusobacteriota">Fusobacteriota</span>
+</div>
+
+<div class="taxa-legend-items">
+  <span class="taxa-legend-chip phylum-chip-euryarchaeota">Euryarchaeota</span>
+  <span class="taxa-legend-chip phylum-chip-ascomycota">Ascomycota</span>
+  <span class="taxa-legend-chip phylum-chip-basidiomycota">Basidiomycota</span>
+  <span class="taxa-legend-chip phylum-chip-zygomycota">Zygomycota</span>
+  <span class="taxa-legend-chip phylum-chip-mucoromycota">Mucoromycota</span>
+  <span class="taxa-legend-chip phylum-chip-chytridiomycota">Chytridiomycota</span>
+  <span class="taxa-legend-chip phylum-chip-glomeromycota">Glomeromycota</span>
+  <span class="taxa-legend-chip phylum-chip-neocallimastigomycota">Neocallimastigomycota</span>
+</div>
+
+<div class="taxa-legend-items">
+  <span class="taxa-legend-chip phylum-chip-uroviricota">Uroviricota</span>
+  <span class="taxa-legend-chip phylum-chip-phixviricota">Phixviricota</span>
+  <span class="taxa-legend-chip phylum-chip-preplasmiviricota">Preplasmiviricota</span>
 </div>
 
 <div class="taxa-rank-legend">
-  <span><strong>Darker shades</strong> = higher taxonomic ranks (phylum, class)</span>
+  <span><strong>Darker shades</strong> = higher taxonomic ranks (domain → kingdom → phylum → class)</span>
   <span><strong>Lighter shades</strong> = deeper branches (order → family → genus → species)</span>
 </div>
 :::
@@ -28,7 +47,7 @@ Use the tree to click through the major intestinal lineages. Colors stay anchore
 
 <div class="taxa-tree-toolbar" role="group" aria-label="Tree navigation controls">
   <button type="button" class="taxa-tree-button" data-tree-action="expand-all">Expand all</button>
-  <button type="button" class="taxa-tree-button" data-tree-action="collapse-all">Collapse to phylum</button>
+  <button type="button" class="taxa-tree-button" data-tree-action="collapse-all">Collapse to domain</button>
   <button type="button" class="taxa-tree-button" data-tree-action="reset-focus">Reset focus</button>
 </div>
 
@@ -40,12 +59,13 @@ Use the tree to click through the major intestinal lineages. Colors stay anchore
 
   <aside class="taxa-detail-panel" id="intestinal-taxon-detail" aria-live="polite">
     <h3>Selected taxon</h3>
-    <p>Select a node in the tree to see its lineage, taxonomic rank, and representative descendants.</p>
+    <p>Select a node in the tree to see its lineage, taxonomic rank, and any representative descendants shown for that branch.</p>
   </aside>
 </div>
 
 ## How to read this page
 
+- **Domain- and kingdom-level patterns** help separate bacterial, archaeal, fungal, and bacteriophage branches before you move into phylum-level detail.
 - **Phylum-level patterns** are useful when comparing broad ecological states of the gut microbiome.
 - **Family- and genus-level patterns** are usually what you encounter in MetaPhlAn, QIIME 2, or downstream association tables.
 - **Species-level examples** help anchor the tree to well-known intestinal microbes without implying that these are the only important members of each branch.
@@ -55,7 +75,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const intestinalTree = {
     name: "Intestinal microbiome",
     rank: "body site",
-    description: "Representative bacterial clades commonly discussed in healthy and perturbed human gut microbiome studies.",
+    description: "Representative bacterial, archaeal, fungal, and viral clades commonly discussed in healthy and perturbed human gut microbiome studies.",
     children: [
       {
         name: "Actinomycetota",
@@ -208,6 +228,53 @@ document.addEventListener("DOMContentLoaded", function () {
                             rank: "species",
                             taxId: 28116,
                             description: "Representative intestinal Alistipes species commonly detected in shotgun surveys."
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        name: "Verrucomicrobiota",
+        rank: "phylum",
+        taxId: 74201,
+        phylum: "verrucomicrobiota",
+        description: "Usually a low-abundance but influential gut phylum highlighted by the mucin-degrading genus Akkermansia.",
+        children: [
+          {
+            name: "Verrucomicrobiia",
+            rank: "class",
+            taxId: 74203,
+            description: "Class that contains the best-studied intestinal Verrucomicrobiota lineage.",
+            children: [
+              {
+                name: "Verrucomicrobiales",
+                rank: "order",
+                taxId: 74205,
+                description: "Order containing the Akkermansia lineage most often tracked in gut microbiome studies.",
+                children: [
+                  {
+                    name: "Akkermansiaceae",
+                    rank: "family",
+                    taxId: 1903409,
+                    description: "Family centered on mucus-associated intestinal specialists.",
+                    children: [
+                      {
+                        name: "Akkermansia",
+                        rank: "genus",
+                        taxId: 239934,
+                        description: "Mucin-degrading intestinal genus frequently discussed in relation to metabolic health and epithelial barrier function.",
+                        children: [
+                          {
+                            name: "Akkermansia muciniphila",
+                            rank: "species",
+                            taxId: 239935,
+                            description: "Canonical mucus-associated intestinal species widely studied as a marker and potential mediator of gut barrier health."
                           }
                         ]
                       }
@@ -602,6 +669,130 @@ document.addEventListener("DOMContentLoaded", function () {
             ]
           }
         ]
+      },
+      {
+        name: "Fusobacteriota",
+        rank: "phylum",
+        taxId: 203691,
+        phylum: "fusobacteriota",
+        description: "Usually a minor gut phylum but clinically important because some members expand in inflammatory states and colorectal cancer-associated datasets.",
+        children: [
+          {
+            name: "Fusobacteriia",
+            rank: "class",
+            taxId: 32066,
+            description: "Class containing the best-known Fusobacteriota lineages in host-associated microbiome studies.",
+            children: [
+              {
+                name: "Fusobacteriales",
+                rank: "order",
+                taxId: 848,
+                description: "Order containing oral and intestinal taxa linked to mucosal inflammation.",
+                children: [
+                  {
+                    name: "Fusobacteriaceae",
+                    rank: "family",
+                    taxId: 849,
+                    description: "Family centered on fusiform anaerobes of oral and gastrointestinal relevance.",
+                    children: [
+                      {
+                        name: "Fusobacterium",
+                        rank: "genus",
+                        taxId: 836,
+                        description: "Genus of anaerobic pathobionts frequently highlighted in colorectal cancer and inflammatory gut studies.",
+                        children: [
+                          {
+                            name: "Fusobacterium nucleatum",
+                            rank: "species",
+                            taxId: 851,
+                            description: "Representative Fusobacterium species often discussed as an inflammation-associated and tumor-associated gut pathobiont."
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        name: "Euryarchaeota",
+        rank: "phylum",
+        taxId: 28890,
+        phylum: "euryarchaeota",
+        description: "Archaeal phylum that includes methanogens such as Methanobrevibacter, an important but often lower-abundance component of the intestinal microbiome."
+      },
+      {
+        name: "Ascomycota",
+        rank: "phylum",
+        taxId: 4890,
+        phylum: "ascomycota",
+        description: "Major fungal phylum that includes many yeasts and molds detected in gut mycobiome surveys."
+      },
+      {
+        name: "Basidiomycota",
+        rank: "phylum",
+        taxId: 5204,
+        phylum: "basidiomycota",
+        description: "Fungal phylum containing yeasts and other taxa that can contribute to the intestinal mycobiome."
+      },
+      {
+        name: "Zygomycota",
+        rank: "phylum",
+        taxId: 4811,
+        phylum: "zygomycota",
+        description: "A paraphyletic fungal grouping no longer recognized in modern taxonomy but retained here because it still appears in older reference taxonomies and microbiome annotations."
+      },
+      {
+        name: "Mucoromycota",
+        rank: "phylum",
+        taxId: 1653571,
+        phylum: "mucoromycota",
+        description: "Modern fungal phylum that contains mucoralean molds sometimes detected in intestinal or environmental sequencing datasets."
+      },
+      {
+        name: "Chytridiomycota",
+        rank: "phylum",
+        taxId: 4762,
+        phylum: "chytridiomycota",
+        description: "Flagellated fungal phylum occasionally included in broad environmental and host-associated eukaryotic reference databases."
+      },
+      {
+        name: "Glomeromycota",
+        rank: "phylum",
+        taxId: 214504,
+        phylum: "glomeromycota",
+        description: "Fungal phylum best known for arbuscular mycorrhizal symbiosis but sometimes retained in broad phylogenetic reference frameworks."
+      },
+      {
+        name: "Neocallimastigomycota",
+        rank: "phylum",
+        taxId: 451453,
+        phylum: "neocallimastigomycota",
+        description: "Anaerobic fungal phylum associated with digestive tracts and fiber degradation in herbivores, included here as a non-bacterial intestinal lineage."
+      },
+      {
+        name: "Uroviricota",
+        rank: "phylum",
+        taxId: 2732395,
+        phylum: "uroviricota",
+        description: "Viral phylum representing part of the intestinal virome and broader DNA virus diversity detected in metagenomic datasets."
+      },
+      {
+        name: "Phixviricota",
+        rank: "phylum",
+        taxId: 2732769,
+        phylum: "phixviricota",
+        description: "Viral phylum used for bacteriophage diversity in newer virome-oriented taxonomic frameworks."
+      },
+      {
+        name: "Preplasmiviricota",
+        rank: "phylum",
+        taxId: 2732754,
+        phylum: "preplasmiviricota",
+        description: "Viral phylum included to reflect current higher-level virome taxonomies relevant to metagenomic reference trees."
       }
     ]
   };
@@ -613,6 +804,10 @@ document.addEventListener("DOMContentLoaded", function () {
   const nodeIndex = new Map();
   let selectedNodeId = "root";
   const ncbiBaseUrl = "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=";
+  const bacterialPhyla = ["Actinomycetota", "Bacteroidota", "Verrucomicrobiota", "Bacillota", "Pseudomonadota", "Fusobacteriota"];
+  const archaealPhyla = ["Euryarchaeota"];
+  const fungalPhyla = ["Ascomycota", "Basidiomycota", "Zygomycota", "Mucoromycota", "Chytridiomycota", "Glomeromycota", "Neocallimastigomycota"];
+  const bacteriophagePhyla = ["Uroviricota", "Phixviricota", "Preplasmiviricota"];
 
   const assignIds = (node, parent = null, inheritedPhylum = "root", depth = -1, lineage = []) => {
     const nodeId = parent ? `${parent.id}-${(parent.children || []).indexOf(node)}` : "root";
@@ -631,9 +826,107 @@ document.addEventListener("DOMContentLoaded", function () {
     return enriched;
   };
 
-  const treeData = assignIds(intestinalTree);
+  const buildHigherTaxaTree = (tree) => {
+    const phylaByName = new Map((tree.children || []).map((child) => [child.name, child]));
+    const groupedPhyla = [...bacterialPhyla, ...archaealPhyla, ...fungalPhyla, ...bacteriophagePhyla];
+    const duplicatePhyla = groupedPhyla.filter((name, index) => groupedPhyla.indexOf(name) !== index);
+    const ungroupedPhyla = [...phylaByName.keys()].filter((name) => !groupedPhyla.includes(name));
 
-  const openToPhylum = () => {
+    if (duplicatePhyla.length || ungroupedPhyla.length) {
+      const problems = [];
+      if (duplicatePhyla.length) {
+        problems.push(`duplicate group assignments for: ${[...new Set(duplicatePhyla)].join(", ")}`);
+      }
+      if (ungroupedPhyla.length) {
+        problems.push(`ungrouped phyla: ${ungroupedPhyla.join(", ")}`);
+      }
+      throw new Error(`Unable to build the higher-level taxonomy scaffold (${problems.join("; ")}).`);
+    }
+
+    const pickChildren = (names) => names.map((name) => {
+      const child = phylaByName.get(name);
+      if (!child) {
+        throw new Error(`Missing phylum in intestinalTree: ${name}`);
+      }
+      return child;
+    });
+
+    return {
+      ...tree,
+      children: [
+        {
+          name: "Bacteria",
+          rank: "domain",
+          taxId: 2,
+          description: "Domain containing the major bacterial intestinal lineages represented in this tree.",
+          children: [
+            {
+              name: "Bacteria",
+              rank: "kingdom",
+              description: "Kingdom-level bacterial grouping used here to organize the gut-associated bacterial phyla below.",
+              children: pickChildren(bacterialPhyla)
+            }
+          ]
+        },
+        {
+          name: "Archaea",
+          rank: "domain",
+          taxId: 2157,
+          description: "Domain containing archaeal lineages that contribute to gut ecology, especially methanogenesis.",
+          children: [
+            {
+              name: "Archaea",
+              rank: "kingdom",
+              description: "Kingdom-level archaeal grouping used here to place intestinal archaeal phyla in context.",
+              children: pickChildren(archaealPhyla)
+            }
+          ]
+        },
+        {
+          name: "Eukaryota",
+          rank: "domain",
+          taxId: 2759,
+          description: "Domain containing the fungal intestinal lineages included in this simplified mycobiome overview.",
+          children: [
+            {
+              name: "Fungi",
+              rank: "kingdom",
+              taxId: 4751,
+              description: "Kingdom containing the intestinal and reference fungal phyla highlighted in this tree.",
+              children: pickChildren(fungalPhyla)
+            }
+          ]
+        },
+        {
+          name: "Viruses",
+          rank: "domain",
+          taxId: 10239,
+          description: "Domain containing viral lineages included here to represent bacteriophage-oriented intestinal virome branches.",
+          children: [
+            {
+              name: "Bacteriophages",
+              rank: "kingdom",
+              taxId: 10699,
+              description: "Kingdom-level grouping used here to organize bacteriophage-focused intestinal virome phyla beneath the viral domain.",
+              children: pickChildren(bacteriophagePhyla)
+            }
+          ]
+        }
+      ]
+    };
+  };
+
+  let treeBuildMessage = "";
+  let treeData;
+  try {
+    treeData = assignIds(buildHigherTaxaTree(intestinalTree));
+  } catch (error) {
+    console.error("Unable to build higher taxonomy scaffold for intestinalTree.", error);
+    treeBuildMessage = "The domain/kingdom scaffold could not be applied, so the tree is falling back to the phylum-first view until the grouping metadata is corrected.";
+    treeData = assignIds(intestinalTree);
+  }
+
+  const openToDomain = () => {
     openNodeIds.clear();
     openNodeIds.add("root");
     treeData.children.forEach((child) => openNodeIds.add(child.id));
@@ -661,10 +954,13 @@ document.addEventListener("DOMContentLoaded", function () {
         ${ncbiMarkup}
       </dl>
       <p>${node.description}</p>
+      ${treeBuildMessage && node.id === "root" ? `<p role="alert"><strong>Tree note:</strong> ${treeBuildMessage}</p>` : ""}
       ${
         childNames.length
           ? `<h4>Immediate descendants</h4><ul>${childNames.map((name) => `<li>${name}</li>`).join("")}</ul>`
-          : "<p><strong>Leaf node:</strong> this species is shown as a representative endpoint for this branch.</p>"
+          : node.rank === "species"
+            ? "<p><strong>Representative endpoint:</strong> this species is shown as an example terminal taxon for its branch on this page.</p>"
+            : "<p><strong>Leaf node:</strong> no deeper representative descendants are shown for this branch on this page.</p>"
       }
     `;
   };
@@ -736,17 +1032,17 @@ document.addEventListener("DOMContentLoaded", function () {
         expandAll(treeData);
       }
       if (action === "collapse-all") {
-        openToPhylum();
+        openToDomain();
       }
       if (action === "reset-focus") {
         selectedNodeId = "root";
-        openToPhylum();
+        openToDomain();
       }
       renderTree();
     });
   });
 
-  openToPhylum();
+  openToDomain();
   renderTree();
 });
 </script>

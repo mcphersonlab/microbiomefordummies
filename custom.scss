@@ -350,6 +350,18 @@ $grid-body-width: 10000px;
 .taxa-node-button.phylum-bacteroidota.depth-4 { background: #e3f2fd; }
 .taxa-node-button.phylum-bacteroidota.depth-5 { background: #f2f8fe; }
 
+.phylum-chip-verrucomicrobiota,
+.taxa-node-button.phylum-verrucomicrobiota.depth-0 {
+  background: #00897b;
+  color: #fff;
+}
+
+.taxa-node-button.phylum-verrucomicrobiota.depth-1 { background: #26a69a; }
+.taxa-node-button.phylum-verrucomicrobiota.depth-2 { background: #80cbc4; }
+.taxa-node-button.phylum-verrucomicrobiota.depth-3 { background: #b2dfdb; }
+.taxa-node-button.phylum-verrucomicrobiota.depth-4 { background: #e0f2f1; }
+.taxa-node-button.phylum-verrucomicrobiota.depth-5 { background: #f0fbfa; }
+
 .phylum-chip-bacillota,
 .taxa-node-button.phylum-bacillota.depth-0 {
   background: #2e7d32;
@@ -373,6 +385,84 @@ $grid-body-width: 10000px;
 .taxa-node-button.phylum-pseudomonadota.depth-3 { background: #ffcdd2; }
 .taxa-node-button.phylum-pseudomonadota.depth-4 { background: #ffebee; }
 .taxa-node-button.phylum-pseudomonadota.depth-5 { background: #fff5f6; }
+
+.phylum-chip-fusobacteriota,
+.taxa-node-button.phylum-fusobacteriota.depth-0 {
+  background: #ef6c00;
+  color: #fff;
+}
+
+.taxa-node-button.phylum-fusobacteriota.depth-1 { background: #fb8c00; }
+.taxa-node-button.phylum-fusobacteriota.depth-2 { background: #ffb74d; }
+.taxa-node-button.phylum-fusobacteriota.depth-3 { background: #ffe0b2; }
+.taxa-node-button.phylum-fusobacteriota.depth-4 { background: #fff3e0; }
+.taxa-node-button.phylum-fusobacteriota.depth-5 { background: #fff8ee; }
+
+.phylum-chip-euryarchaeota,
+.taxa-node-button.phylum-euryarchaeota.depth-0 {
+  background: #5e35b1;
+  color: #fff;
+}
+
+.phylum-chip-ascomycota,
+.taxa-node-button.phylum-ascomycota.depth-0 {
+  background: #6d4c41;
+  color: #fff;
+}
+
+.phylum-chip-basidiomycota,
+.taxa-node-button.phylum-basidiomycota.depth-0 {
+  background: #8d6e63;
+  color: #fff;
+}
+
+.phylum-chip-zygomycota,
+.taxa-node-button.phylum-zygomycota.depth-0 {
+  background: #795548;
+  color: #fff;
+}
+
+.phylum-chip-mucoromycota,
+.taxa-node-button.phylum-mucoromycota.depth-0 {
+  background: #a1887f;
+  color: #fff;
+}
+
+.phylum-chip-chytridiomycota,
+.taxa-node-button.phylum-chytridiomycota.depth-0 {
+  background: #546e7a;
+  color: #fff;
+}
+
+.phylum-chip-glomeromycota,
+.taxa-node-button.phylum-glomeromycota.depth-0 {
+  background: #6a994e;
+  color: #fff;
+}
+
+.phylum-chip-neocallimastigomycota,
+.taxa-node-button.phylum-neocallimastigomycota.depth-0 {
+  background: #00acc1;
+  color: #fff;
+}
+
+.phylum-chip-uroviricota,
+.taxa-node-button.phylum-uroviricota.depth-0 {
+  background: #1565c0;
+  color: #fff;
+}
+
+.phylum-chip-phixviricota,
+.taxa-node-button.phylum-phixviricota.depth-0 {
+  background: #0277bd;
+  color: #fff;
+}
+
+.phylum-chip-preplasmiviricota,
+.taxa-node-button.phylum-preplasmiviricota.depth-0 {
+  background: #00838f;
+  color: #fff;
+}
 
 .taxa-node-button.phylum-root {
   background: #edf2f7;
