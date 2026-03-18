@@ -5,7 +5,7 @@ title: "Intestinal Microbiome Taxa"
 The intestinal microbiome is dominated by a small number of bacterial phyla, but clinically relevant datasets also include archaeal, fungal, and viral lineages. The navigator below is designed to help you move through those levels without losing sight of the larger phylogenetic structure.
 
 ::: {.taxa-note}
-Use the tree to click through the major intestinal lineages. Colors stay anchored to each top-level phylum throughout the tree so bacterial, archaeal, fungal, and viral branches remain visually distinct. Sub-taxa use progressively lighter shades so you can keep track of which lower-level groups belong to the same higher-level branch.
+Use the tree to click through the major intestinal lineages. Neutral nodes show the added domain- and kingdom-level scaffolding, while colors stay anchored to phylum-level branches so bacterial, archaeal, fungal, and viral subtrees remain visually distinct. Sub-taxa use progressively lighter shades so you can keep track of which lower-level groups belong to the same higher-level branch.
 :::
 
 ::: {.taxa-legend}
@@ -38,7 +38,7 @@ Use the tree to click through the major intestinal lineages. Colors stay anchore
 </div>
 
 <div class="taxa-rank-legend">
-  <span><strong>Darker shades</strong> = higher taxonomic ranks (phylum, class)</span>
+  <span><strong>Darker shades</strong> = higher taxonomic ranks (domain → kingdom → phylum → class)</span>
   <span><strong>Lighter shades</strong> = deeper branches (order → family → genus → species)</span>
 </div>
 :::
@@ -47,7 +47,7 @@ Use the tree to click through the major intestinal lineages. Colors stay anchore
 
 <div class="taxa-tree-toolbar" role="group" aria-label="Tree navigation controls">
   <button type="button" class="taxa-tree-button" data-tree-action="expand-all">Expand all</button>
-  <button type="button" class="taxa-tree-button" data-tree-action="collapse-all">Collapse to phylum</button>
+  <button type="button" class="taxa-tree-button" data-tree-action="collapse-all">Collapse to domain</button>
   <button type="button" class="taxa-tree-button" data-tree-action="reset-focus">Reset focus</button>
 </div>
 
@@ -65,6 +65,7 @@ Use the tree to click through the major intestinal lineages. Colors stay anchore
 
 ## How to read this page
 
+- **Domain- and kingdom-level patterns** help separate bacterial, archaeal, fungal, and bacteriophage branches before you move into phylum-level detail.
 - **Phylum-level patterns** are useful when comparing broad ecological states of the gut microbiome.
 - **Family- and genus-level patterns** are usually what you encounter in MetaPhlAn, QIIME 2, or downstream association tables.
 - **Species-level examples** help anchor the tree to well-known intestinal microbes without implying that these are the only important members of each branch.
@@ -821,9 +822,83 @@ document.addEventListener("DOMContentLoaded", function () {
     return enriched;
   };
 
-  const treeData = assignIds(intestinalTree);
+  const buildHigherTaxaTree = (tree) => {
+    const bacterialPhyla = ["Actinomycetota", "Bacteroidota", "Verrucomicrobiota", "Bacillota", "Pseudomonadota", "Fusobacteriota"];
+    const archaealPhyla = ["Euryarchaeota"];
+    const fungalPhyla = ["Ascomycota", "Basidiomycota", "Zygomycota", "Mucoromycota", "Chytridiomycota", "Glomeromycota", "Neocallimastigomycota"];
+    const bacteriophagePhyla = ["Uroviricota", "Phixviricota", "Preplasmiviricota"];
+    const phylaByName = new Map((tree.children || []).map((child) => [child.name, child]));
+    const pickChildren = (names) => names.map((name) => phylaByName.get(name)).filter(Boolean);
 
-  const openToPhylum = () => {
+    return {
+      ...tree,
+      children: [
+        {
+          name: "Bacteria",
+          rank: "domain",
+          taxId: 2,
+          description: "Domain containing the major bacterial intestinal lineages represented in this tree.",
+          children: [
+            {
+              name: "Bacteria",
+              rank: "kingdom",
+              taxId: 2,
+              description: "Kingdom-level bacterial grouping used here to organize the gut-associated bacterial phyla below.",
+              children: pickChildren(bacterialPhyla)
+            }
+          ]
+        },
+        {
+          name: "Archaea",
+          rank: "domain",
+          taxId: 2157,
+          description: "Domain containing archaeal lineages that contribute to gut ecology, especially methanogenesis.",
+          children: [
+            {
+              name: "Archaea",
+              rank: "kingdom",
+              taxId: 2157,
+              description: "Kingdom-level archaeal grouping used here to place intestinal archaeal phyla in context.",
+              children: pickChildren(archaealPhyla)
+            }
+          ]
+        },
+        {
+          name: "Eukaryota",
+          rank: "domain",
+          taxId: 2759,
+          description: "Domain containing the fungal intestinal lineages included in this simplified mycobiome overview.",
+          children: [
+            {
+              name: "Fungi",
+              rank: "kingdom",
+              taxId: 4751,
+              description: "Kingdom containing the intestinal and reference fungal phyla highlighted in this tree.",
+              children: pickChildren(fungalPhyla)
+            }
+          ]
+        },
+        {
+          name: "Viruses",
+          rank: "domain",
+          taxId: 10239,
+          description: "Domain containing viral lineages included here to represent bacteriophage-oriented intestinal virome branches.",
+          children: [
+            {
+              name: "Bacteriophages",
+              rank: "kingdom",
+              description: "Kingdom-level grouping used here to organize bacteriophage-focused intestinal virome phyla beneath the viral domain.",
+              children: pickChildren(bacteriophagePhyla)
+            }
+          ]
+        }
+      ]
+    };
+  };
+
+  const treeData = assignIds(buildHigherTaxaTree(intestinalTree));
+
+  const openToDomain = () => {
     openNodeIds.clear();
     openNodeIds.add("root");
     treeData.children.forEach((child) => openNodeIds.add(child.id));
@@ -926,17 +1001,17 @@ document.addEventListener("DOMContentLoaded", function () {
         expandAll(treeData);
       }
       if (action === "collapse-all") {
-        openToPhylum();
+        openToDomain();
       }
       if (action === "reset-focus") {
         selectedNodeId = "root";
-        openToPhylum();
+        openToDomain();
       }
       renderTree();
     });
   });
 
-  openToPhylum();
+  openToDomain();
   renderTree();
 });
 </script>
