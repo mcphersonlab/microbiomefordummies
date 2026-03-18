@@ -404,47 +404,95 @@ $grid-body-width: 10000px;
   color: #fff;
 }
 
+.taxa-node-button.phylum-euryarchaeota.depth-1 { background: #7e57c2; }
+.taxa-node-button.phylum-euryarchaeota.depth-2 { background: #b39ddb; }
+.taxa-node-button.phylum-euryarchaeota.depth-3 { background: #d1c4e9; }
+.taxa-node-button.phylum-euryarchaeota.depth-4 { background: #ede7f6; }
+.taxa-node-button.phylum-euryarchaeota.depth-5 { background: #f6f1fb; }
+
 .phylum-chip-ascomycota,
 .taxa-node-button.phylum-ascomycota.depth-0 {
   background: #6d4c41;
   color: #fff;
 }
 
+.taxa-node-button.phylum-ascomycota.depth-1 { background: #8d6e63; }
+.taxa-node-button.phylum-ascomycota.depth-2 { background: #bcaaa4; }
+.taxa-node-button.phylum-ascomycota.depth-3 { background: #d7ccc8; }
+.taxa-node-button.phylum-ascomycota.depth-4 { background: #efebe9; }
+.taxa-node-button.phylum-ascomycota.depth-5 { background: #f7f3f1; }
+
 .phylum-chip-basidiomycota,
 .taxa-node-button.phylum-basidiomycota.depth-0 {
-  background: #8d6e63;
+  background: #ad6800;
   color: #fff;
 }
+
+.taxa-node-button.phylum-basidiomycota.depth-1 { background: #c88719; }
+.taxa-node-button.phylum-basidiomycota.depth-2 { background: #ddb270; }
+.taxa-node-button.phylum-basidiomycota.depth-3 { background: #eed3ab; }
+.taxa-node-button.phylum-basidiomycota.depth-4 { background: #f8ead2; }
+.taxa-node-button.phylum-basidiomycota.depth-5 { background: #fcf4e7; }
 
 .phylum-chip-zygomycota,
 .taxa-node-button.phylum-zygomycota.depth-0 {
-  background: #795548;
+  background: #8e244d;
   color: #fff;
 }
+
+.taxa-node-button.phylum-zygomycota.depth-1 { background: #ad3b63; }
+.taxa-node-button.phylum-zygomycota.depth-2 { background: #d08198; }
+.taxa-node-button.phylum-zygomycota.depth-3 { background: #e6b7c5; }
+.taxa-node-button.phylum-zygomycota.depth-4 { background: #f5dfe6; }
+.taxa-node-button.phylum-zygomycota.depth-5 { background: #fbf1f4; }
 
 .phylum-chip-mucoromycota,
 .taxa-node-button.phylum-mucoromycota.depth-0 {
-  background: #a1887f;
+  background: #2f6f4f;
   color: #fff;
 }
+
+.taxa-node-button.phylum-mucoromycota.depth-1 { background: #4b8a69; }
+.taxa-node-button.phylum-mucoromycota.depth-2 { background: #89b79e; }
+.taxa-node-button.phylum-mucoromycota.depth-3 { background: #b7d3c0; }
+.taxa-node-button.phylum-mucoromycota.depth-4 { background: #deece2; }
+.taxa-node-button.phylum-mucoromycota.depth-5 { background: #f1f7f3; }
 
 .phylum-chip-chytridiomycota,
 .taxa-node-button.phylum-chytridiomycota.depth-0 {
-  background: #546e7a;
+  background: #355c7d;
   color: #fff;
 }
+
+.taxa-node-button.phylum-chytridiomycota.depth-1 { background: #557a99; }
+.taxa-node-button.phylum-chytridiomycota.depth-2 { background: #91abc0; }
+.taxa-node-button.phylum-chytridiomycota.depth-3 { background: #bfd0dc; }
+.taxa-node-button.phylum-chytridiomycota.depth-4 { background: #e1eaef; }
+.taxa-node-button.phylum-chytridiomycota.depth-5 { background: #f2f6f8; }
 
 .phylum-chip-glomeromycota,
 .taxa-node-button.phylum-glomeromycota.depth-0 {
-  background: #6a994e;
+  background: #5f7c2f;
   color: #fff;
 }
 
+.taxa-node-button.phylum-glomeromycota.depth-1 { background: #7e9a49; }
+.taxa-node-button.phylum-glomeromycota.depth-2 { background: #aec08a; }
+.taxa-node-button.phylum-glomeromycota.depth-3 { background: #cfdbbb; }
+.taxa-node-button.phylum-glomeromycota.depth-4 { background: #e7eddc; }
+.taxa-node-button.phylum-glomeromycota.depth-5 { background: #f4f7ef; }
+
 .phylum-chip-neocallimastigomycota,
 .taxa-node-button.phylum-neocallimastigomycota.depth-0 {
-  background: #00acc1;
+  background: #006d77;
   color: #fff;
 }
+
+.taxa-node-button.phylum-neocallimastigomycota.depth-1 { background: #1f8f97; }
+.taxa-node-button.phylum-neocallimastigomycota.depth-2 { background: #75b9bf; }
+.taxa-node-button.phylum-neocallimastigomycota.depth-3 { background: #aed7da; }
+.taxa-node-button.phylum-neocallimastigomycota.depth-4 { background: #daedef; }
+.taxa-node-button.phylum-neocallimastigomycota.depth-5 { background: #eff8f9; }
 
 .phylum-chip-uroviricota,
 .taxa-node-button.phylum-uroviricota.depth-0 {
@@ -452,17 +500,35 @@ $grid-body-width: 10000px;
   color: #fff;
 }
 
+.taxa-node-button.phylum-uroviricota.depth-1 { background: #3b82d6; }
+.taxa-node-button.phylum-uroviricota.depth-2 { background: #85b2e6; }
+.taxa-node-button.phylum-uroviricota.depth-3 { background: #b9d5f1; }
+.taxa-node-button.phylum-uroviricota.depth-4 { background: #deecf8; }
+.taxa-node-button.phylum-uroviricota.depth-5 { background: #f0f6fc; }
+
 .phylum-chip-phixviricota,
 .taxa-node-button.phylum-phixviricota.depth-0 {
-  background: #0277bd;
+  background: #5b4bc4;
   color: #fff;
 }
+
+.taxa-node-button.phylum-phixviricota.depth-1 { background: #7a6ad5; }
+.taxa-node-button.phylum-phixviricota.depth-2 { background: #aaa1e7; }
+.taxa-node-button.phylum-phixviricota.depth-3 { background: #cec8f3; }
+.taxa-node-button.phylum-phixviricota.depth-4 { background: #e7e4fa; }
+.taxa-node-button.phylum-phixviricota.depth-5 { background: #f4f2fd; }
 
 .phylum-chip-preplasmiviricota,
 .taxa-node-button.phylum-preplasmiviricota.depth-0 {
   background: #00838f;
   color: #fff;
 }
+
+.taxa-node-button.phylum-preplasmiviricota.depth-1 { background: #25a2aa; }
+.taxa-node-button.phylum-preplasmiviricota.depth-2 { background: #7ac9ce; }
+.taxa-node-button.phylum-preplasmiviricota.depth-3 { background: #b1e0e3; }
+.taxa-node-button.phylum-preplasmiviricota.depth-4 { background: #dcf1f2; }
+.taxa-node-button.phylum-preplasmiviricota.depth-5 { background: #eff9fa; }
 
 .taxa-node-button.phylum-root {
   background: #edf2f7;
