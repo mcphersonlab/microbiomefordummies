@@ -804,6 +804,10 @@ document.addEventListener("DOMContentLoaded", function () {
   const nodeIndex = new Map();
   let selectedNodeId = "root";
   const ncbiBaseUrl = "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=";
+  const bacterialPhyla = ["Actinomycetota", "Bacteroidota", "Verrucomicrobiota", "Bacillota", "Pseudomonadota", "Fusobacteriota"];
+  const archaealPhyla = ["Euryarchaeota"];
+  const fungalPhyla = ["Ascomycota", "Basidiomycota", "Zygomycota", "Mucoromycota", "Chytridiomycota", "Glomeromycota", "Neocallimastigomycota"];
+  const bacteriophagePhyla = ["Uroviricota", "Phixviricota", "Preplasmiviricota"];
 
   const assignIds = (node, parent = null, inheritedPhylum = "root", depth = -1, lineage = []) => {
     const nodeId = parent ? `${parent.id}-${(parent.children || []).indexOf(node)}` : "root";
@@ -823,12 +827,14 @@ document.addEventListener("DOMContentLoaded", function () {
   };
 
   const buildHigherTaxaTree = (tree) => {
-    const bacterialPhyla = ["Actinomycetota", "Bacteroidota", "Verrucomicrobiota", "Bacillota", "Pseudomonadota", "Fusobacteriota"];
-    const archaealPhyla = ["Euryarchaeota"];
-    const fungalPhyla = ["Ascomycota", "Basidiomycota", "Zygomycota", "Mucoromycota", "Chytridiomycota", "Glomeromycota", "Neocallimastigomycota"];
-    const bacteriophagePhyla = ["Uroviricota", "Phixviricota", "Preplasmiviricota"];
     const phylaByName = new Map((tree.children || []).map((child) => [child.name, child]));
-    const pickChildren = (names) => names.map((name) => phylaByName.get(name)).filter(Boolean);
+    const pickChildren = (names) => names.map((name) => {
+      const child = phylaByName.get(name);
+      if (!child) {
+        throw new Error(`Missing phylum in intestinalTree: ${name}`);
+      }
+      return child;
+    });
 
     return {
       ...tree,
@@ -887,6 +893,7 @@ document.addEventListener("DOMContentLoaded", function () {
             {
               name: "Bacteriophages",
               rank: "kingdom",
+              taxId: 10699,
               description: "Kingdom-level grouping used here to organize bacteriophage-focused intestinal virome phyla beneath the viral domain.",
               children: pickChildren(bacteriophagePhyla)
             }
