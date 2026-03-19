@@ -1,0 +1,326 @@
+---
+title: "Relative Abundance"
+subtitle: "Family-level stacked bar charts with tree-matched colors"
+---
+
+This page shows how to build a **family-level relative-abundance bar chart** from **MetaPhlAn** output, while keeping the visual logic consistent with the **intestinal phylogenetic tree navigator** elsewhere on this site.
+
+The main idea is:
+
+1. keep families ordered by **phylogenetic relatedness**
+2. keep colors anchored to the same **phylum-level palette** used in the tree navigator
+3. show **statistical significance** in a second visual layer instead of overloading the bar colors
+
+::: {.callout-note}
+For most beginner-friendly microbiome plots, **family level** is a good compromise: less sparse than species-level data, but still biologically interpretable.
+:::
+
+---
+
+## The palette to reuse
+
+The intestinal tree page already uses these bacterial phylum colors:
+
+| Phylum | Tree color |
+|---|---|
+| Actinomycetota | `#7e57c2` |
+| Bacteroidota | `#1976d2` |
+| Verrucomicrobiota | `#00897b` |
+| Bacillota | `#2e7d32` |
+| Pseudomonadota | `#c62828` |
+| Fusobacteriota | `#ef6c00` |
+
+For family-level bars, it usually looks cleaner to use **lighter shades within each phylum**, which matches the tree's logic that deeper ranks become lighter.
+
+---
+
+## R packages
+
+```r
+install.packages(c("dplyr", "tidyr", "tibble", "forcats", "ggplot2", "vegan", "scales"))
+```
+
+```r
+library(dplyr)
+library(tidyr)
+library(tibble)
+library(forcats)
+library(ggplot2)
+library(vegan)
+library(scales)
+```
+
+---
+
+## Step 1: Read a family-level MetaPhlAn table
+
+```r
+metaphlan_raw <- read.delim("metaphlan_merged.tsv", check.names = FALSE, comment.char = "#")
+metadata <- read.delim("metadata.tsv", check.names = FALSE)
+
+family_long <- metaphlan_raw |>
+  rename(feature = clade_name) |>
+  filter(grepl("\\|f__[^|]+$", feature)) |>
+  mutate(
+    family = sub(".*\\|f__", "", feature),
+    phylum = sub(".*\\|p__([^|]+).*", "\\1", feature),
+    class = sub(".*\\|c__([^|]+).*", "\\1", feature),
+    order = sub(".*\\|o__([^|]+).*", "\\1", feature)
+  ) |>
+  select(feature, phylum, class, order, family, everything()) |>
+  pivot_longer(
+    cols = -c(feature, phylum, class, order, family),
+    names_to = "sample_id",
+    values_to = "abundance"
+  ) |>
+  left_join(metadata, by = "sample_id")
+```
+
+If you have repeated rows at the same family level, aggregate them:
+
+```r
+family_long <- family_long |>
+  group_by(sample_id, group, timepoint, phylum, class, order, family) |>
+  summarise(abundance = sum(abundance), .groups = "drop")
+```
+
+---
+
+## Step 2: Choose a phylogenetic order for families
+
+To make the legend and stacked bars feel more biological, do **not** sort families only by abundance. Instead, keep closely related families adjacent.
+
+A simple gut-oriented order that matches the intestinal tree page is:
+
+```r
+phylo_order_tbl <- tibble(
+  family = c(
+    "Bifidobacteriaceae",
+    "Bacteroidaceae", "Prevotellaceae", "Rikenellaceae", "Akkermansiaceae",
+    "Lachnospiraceae", "Ruminococcaceae", "Peptostreptococcaceae",
+    "Bacillaceae", "Staphylococcaceae", "Enterococcaceae",
+    "Enterobacteriaceae", "Pseudomonadaceae", "Sutterellaceae",
+    "Fusobacteriaceae"
+  ),
+  phylo_rank = seq_len(15)
+)
+```
+
+If your study contains a different set of families, extend this table using the same logic:
+
+- sort by **phylum** first
+- then by **class/order**
+- then by **family**
+
+That gives you a legend that reads like a simplified phylogenetic tree rather than a random color list.
+
+---
+
+## Step 3: Keep the top families and lump the rest into "Other"
+
+```r
+top_families <- family_long |>
+  group_by(family) |>
+  summarise(mean_abundance = mean(abundance), .groups = "drop") |>
+  slice_max(mean_abundance, n = 15) |>
+  pull(family)
+
+family_plot <- family_long |>
+  mutate(family = if_else(family %in% top_families, family, "Other")) |>
+  group_by(sample_id, group, timepoint, phylum, class, order, family) |>
+  summarise(abundance = sum(abundance), .groups = "drop")
+```
+
+---
+
+## Step 4: Build a tree-matched family palette
+
+The phylum anchor colors below come directly from the tree navigator. Within each phylum, we create a short gradient so that related families share the same color family.
+
+```r
+phylum_anchor_colors <- c(
+  Actinomycetota = "#7e57c2",
+  Bacteroidota = "#1976d2",
+  Verrucomicrobiota = "#00897b",
+  Bacillota = "#2e7d32",
+  Pseudomonadota = "#c62828",
+  Fusobacteriota = "#ef6c00"
+)
+
+phylum_light_colors <- c(
+  Actinomycetota = "#f5f0fb",
+  Bacteroidota = "#f2f8fe",
+  Verrucomicrobiota = "#f0fbfa",
+  Bacillota = "#f0f8e8",
+  Pseudomonadota = "#fff5f6",
+  Fusobacteriota = "#fff8ee"
+)
+
+family_key <- family_plot |>
+  filter(family != "Other") |>
+  distinct(phylum, class, order, family) |>
+  left_join(phylo_order_tbl, by = "family") |>
+  arrange(phylum, class, order, phylo_rank, family)
+
+family_palette <- family_key |>
+  group_by(phylum) |>
+  group_modify(~ {
+    shades <- colorRampPalette(c(
+      phylum_anchor_colors[.y$phylum],
+      phylum_light_colors[.y$phylum]
+    ))(nrow(.x))
+
+    mutate(.x, fill_color = shades)
+  }) |>
+  ungroup() |>
+  select(family, fill_color) |>
+  deframe()
+
+family_palette <- c(family_palette, Other = "#d9d9d9")
+```
+
+This produces a palette where:
+
+- **Bacteroidota families** stay blue
+- **Bacillota families** stay green
+- **Pseudomonadota families** stay red
+- and so on
+
+That way your stacked bar chart still communicates phylogeny at a glance.
+
+---
+
+## Step 5: Apply the phylogenetic order to the legend and stacks
+
+```r
+family_levels <- c(family_key$family, "Other")
+
+family_plot <- family_plot |>
+  mutate(
+    family = factor(family, levels = family_levels),
+    sample_id = factor(sample_id, levels = metadata$sample_id)
+  )
+```
+
+---
+
+## Step 6: Draw the stacked bar chart
+
+```r
+ggplot(family_plot, aes(x = sample_id, y = abundance, fill = family)) +
+  geom_col(width = 0.9) +
+  facet_grid(. ~ group, scales = "free_x", space = "free_x") +
+  scale_fill_manual(values = family_palette, drop = FALSE) +
+  scale_y_continuous(labels = label_percent(scale = 1)) +
+  labs(
+    title = "Family-level relative abundance",
+    subtitle = "Families are ordered by phylogenetic relatedness and colored by the tree navigator palette",
+    x = NULL,
+    y = "Relative abundance (%)",
+    fill = "Family"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1),
+    panel.grid.major.x = element_blank(),
+    legend.position = "right"
+  )
+```
+
+::: {.callout-tip}
+If your study is longitudinal, put **time on the x-axis** and facet by subject or treatment group. The same color/order logic still works.
+:::
+
+---
+
+## How to show statistical significance without breaking the color logic
+
+If fill color already encodes **phylogeny**, avoid reusing the same fill for **significance**. That usually makes the plot harder to read.
+
+A better approach is:
+
+- keep bar colors for **taxonomy / phylogenetic relatedness**
+- add a **second panel** for significance or effect size
+- optionally add `*`, `**`, or arrows in the legend labels or strip labels
+
+### Recommended option: a companion significance heatmap
+
+Suppose you already ran a model such as **MaAsLin2** or a paired longitudinal test and have a table with effect sizes and `qval` values.
+
+```r
+stats_tbl <- read.delim("maaslin2/all_results.tsv", check.names = FALSE) |>
+  filter(metadata == "timepoint") |>
+  transmute(
+    family = feature,
+    effect = coef,
+    qval = qval,
+    sig_label = case_when(
+      qval < 0.001 ~ "***",
+      qval < 0.01 ~ "**",
+      qval < 0.05 ~ "*",
+      TRUE ~ ""
+    )
+  ) |>
+  filter(family %in% levels(family_plot$family)) |>
+  mutate(family = factor(family, levels = rev(levels(family_plot$family))))
+
+
+ggplot(stats_tbl, aes(x = 1, y = family, fill = effect)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = sig_label), fontface = "bold", size = 4) +
+  scale_fill_gradient2(low = "#2166ac", mid = "white", high = "#b2182b") +
+  labs(
+    title = "Companion significance panel",
+    subtitle = "Tile color = model effect size, star = significance threshold",
+    x = NULL,
+    y = NULL,
+    fill = "Effect"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+```
+
+This gives you a clean split:
+
+- the **stacked bar chart** answers *what is present, in what proportion, and how taxa are related*
+- the **heatmap** answers *which families differ significantly, and in which direction*
+
+### Optional shortcut: add significance to legend labels
+
+If you want something lighter-weight, append stars to the labels of significant families.
+
+```r
+sig_families <- stats_tbl |>
+  filter(qval < 0.05) |>
+  pull(family)
+
+legend_labels <- setNames(
+  nm = levels(family_plot$family),
+  object = ifelse(levels(family_plot$family) %in% sig_families,
+                  paste0(levels(family_plot$family), " *"),
+                  levels(family_plot$family))
+)
+```
+
+Then pass `labels = legend_labels` into `scale_fill_manual()`. This is simple, but the side-panel heatmap is usually easier to interpret.
+
+---
+
+## Recommended family-level plotting workflow
+
+1. Start from a **family-level MetaPhlAn table**.
+2. Join sample metadata.
+3. Keep the **top 10-20 families** and lump the rest into **Other**.
+4. Order families by **phylum → class → order → family**.
+5. Use the **same phylum color anchors** as the intestinal tree navigator.
+6. Use lighter within-phylum shades for family-level bars.
+7. Show significance in a **companion plot**, not by replacing the phylogenetic fill colors.
+
+---
+
+## Related pages
+
+- [MetaPhlAn tutorial](../tools/metaphlan.qmd)
+- [Diversity tutorial](diversity.qmd)
+- [Intestinal microbiome tree](../microbiome/intestinal.qmd)
+- [MaAsLin2 tutorial](../tools/maaslin2.qmd)

@@ -45,6 +45,12 @@ website:
             href: tools/polypanner.qmd
           - text: "QIIME 2"
             href: tools/qiime2.qmd
+      - text: "Statistics"
+        menu:
+          - text: "Diversity"
+            href: statistics/diversity.qmd
+          - text: "Relative Abundance"
+            href: statistics/relative-abundance.qmd
       - text: "Microbiome Taxa"
         menu:
           - text: "Overview"
@@ -81,6 +87,10 @@ website:
           - tools/taxumap.qmd
           - tools/polypanner.qmd
           - tools/qiime2.qmd
+      - section: "Statistics"
+        contents:
+          - statistics/diversity.qmd
+          - statistics/relative-abundance.qmd
       - section: "Microbiome Taxa by Body Site"
         contents:
           - microbiome/index.qmd

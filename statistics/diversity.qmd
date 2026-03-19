@@ -1,0 +1,377 @@
+---
+title: "Diversity"
+subtitle: "Alpha- and beta-diversity from bioBakery outputs"
+---
+
+This page shows a beginner-friendly way to calculate **alpha diversity** (within-sample diversity) and **beta diversity** (between-sample dissimilarity) from the tables produced by the bioBakery ecosystem.
+
+The same workflow works for both:
+
+- **MetaPhlAn** taxonomic profiles if you want organism-level diversity
+- **HUMAnN** gene family or pathway tables if you want functional diversity
+
+::: {.callout-note}
+For taxonomic diversity, most people start with a **species-level MetaPhlAn table**. For functional diversity, use an **unstratified HUMAnN pathway or gene-family table**.
+:::
+
+## What files to start from
+
+A practical minimal input set is:
+
+| File | Typical source | What it contains |
+|---|---|---|
+| `metaphlan_merged.tsv` | `merge_metaphlan_tables.py` | Taxa x samples relative abundance matrix |
+| `pathabundance.tsv` or joined HUMAnN table | `humann_join_tables` | Pathways or gene families x samples |
+| `metadata.tsv` | Your study design | Sample IDs, group labels, time points, etc. |
+
+For diversity calculations you want a matrix with:
+
+- **rows = samples**
+- **columns = taxa or pathways**
+- **values = non-negative abundances**
+
+---
+
+## R packages
+
+```r
+install.packages(c("vegan", "dplyr", "tidyr", "tibble", "ggplot2", "Rtsne", "uwot"))
+```
+
+```r
+library(vegan)
+library(dplyr)
+library(tidyr)
+library(tibble)
+library(ggplot2)
+library(Rtsne)
+library(uwot)
+```
+
+---
+
+## Step 1: Read a MetaPhlAn table
+
+A merged MetaPhlAn table usually has one taxon per row and one sample per column. The example below keeps only **species-level rows**.
+
+```r
+metaphlan_raw <- read.delim("metaphlan_merged.tsv", check.names = FALSE, comment.char = "#")
+metadata <- read.delim("metadata.tsv", check.names = FALSE)
+
+species_mat <- metaphlan_raw |>
+  rename(feature = clade_name) |>
+  filter(grepl("\\|s__[^|]+$", feature)) |>
+  column_to_rownames("feature") |>
+  t() |>
+  as.data.frame() |>
+  rownames_to_column("sample_id") |>
+  left_join(metadata, by = "sample_id")
+
+sample_info <- species_mat |> select(sample_id, group, timepoint)
+abund <- species_mat |> select(-sample_id, -group, -timepoint) |> as.matrix()
+mode(abund) <- "numeric"
+rownames(abund) <- sample_info$sample_id
+
+# MetaPhlAn is already relative abundance, but re-scaling is a safe habit.
+abund_rel <- decostand(abund, method = "total")
+```
+
+::: {.callout-tip}
+If you prefer **family-level** diversity, change the filter to `grepl("\\|f__[^|]+$", feature)` instead of species-level rows.
+:::
+
+### HUMAnN variant
+
+For HUMAnN, use the same structure but usually remove **stratified rows** first so that each feature is a pathway or gene family rather than a pathway-with-species combination.
+
+```r
+humann_raw <- read.delim("pathabundance.tsv", check.names = FALSE)
+
+pathway_mat <- humann_raw |>
+  rename(feature = `# Pathway`) |>
+  filter(!grepl("\\|", feature)) |>
+  column_to_rownames("feature") |>
+  t() |>
+  as.matrix()
+
+mode(pathway_mat) <- "numeric"
+pathway_rel <- decostand(pathway_mat, method = "total")
+```
+
+---
+
+## Alpha diversity
+
+**Alpha diversity** asks: *how diverse is each sample on its own?*
+
+### The two basics: richness and evenness
+
+- **Richness** = how many taxa/features are detected
+- **Evenness** = how evenly abundance is spread across those taxa/features
+
+In practice, beginners usually report richness and evenness alongside three very common alpha-diversity metrics:
+
+1. **Shannon diversity**
+2. **Simpson diversity**
+3. **Inverse Simpson diversity**
+
+### When to use each metric
+
+| Metric | What it emphasizes | Intuition |
+|---|---|---|
+| **Richness** | Number of detected taxa | "How many things are here?" |
+| **Pielou evenness** | Balance of abundances | "Are a few taxa dominating?" |
+| **Shannon** | Both richness and evenness | Sensitive to common taxa, but still notices rare taxa |
+| **Simpson** | Dominance | Drops when one or a few taxa take over |
+| **Inverse Simpson** | Effective number of dominant taxa | Easier to explain to beginners than raw Simpson |
+
+### Calculate alpha diversity with `vegan`
+
+```r
+alpha_div <- tibble(
+  sample_id = rownames(abund_rel),
+  richness = specnumber(abund_rel),
+  shannon = diversity(abund_rel, index = "shannon"),
+  simpson = diversity(abund_rel, index = "simpson"),
+  inverse_simpson = diversity(abund_rel, index = "invsimpson")
+) |>
+  mutate(
+    pielou_evenness = if_else(richness > 1, shannon / log(richness), NA_real_)
+  ) |>
+  left_join(sample_info, by = "sample_id")
+
+alpha_div
+```
+
+### Quick interpretation guide
+
+- **High richness + high evenness** → many taxa and none dominates too strongly
+- **High richness + low evenness** → many taxa are present, but only a few are doing most of the work
+- **Low Shannon** → either few taxa, or strong dominance by one/few taxa
+- **Low Simpson / inverse Simpson** → especially strong dominance structure
+
+### Plot alpha diversity
+
+```r
+ggplot(alpha_div, aes(x = group, y = shannon, fill = group)) +
+  geom_boxplot(width = 0.7, alpha = 0.85, outlier.shape = NA) +
+  geom_jitter(width = 0.12, size = 2, alpha = 0.8) +
+  labs(
+    title = "Shannon alpha diversity by group",
+    x = NULL,
+    y = "Shannon diversity"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(legend.position = "none")
+```
+
+### Statistical testing for alpha diversity
+
+For two groups, a Wilcoxon rank-sum test is a common first pass. For more complex designs, use a linear model or mixed model.
+
+```r
+wilcox.test(shannon ~ group, data = alpha_div)
+wilcox.test(inverse_simpson ~ group, data = alpha_div)
+```
+
+::: {.callout-warning}
+Avoid over-interpreting tiny differences in alpha diversity. A statistically significant result can still be biologically small, especially when sequencing depth, filtering, or zero handling differs between groups.
+:::
+
+---
+
+## Beta diversity
+
+**Beta diversity** asks: *how different are samples from each other?*
+
+The answer depends on the **dissimilarity metric** you choose.
+
+### Three very common beta-diversity metrics
+
+| Metric | `vegan` implementation | Best for | Notes |
+|---|---|---|---|
+| **Bray-Curtis** | `vegdist(..., method = "bray")` | Relative abundance data | Usually the first choice for MetaPhlAn/HUMAnN profiles |
+| **Jaccard** | `vegdist(..., method = "jaccard")` after presence/absence conversion | Presence/absence questions | Ignores abundance magnitude |
+| **Aitchison** | CLR transform + `dist()` | Compositional data | Very useful when you want a composition-aware analysis |
+
+### Bray-Curtis dissimilarity
+
+Bray-Curtis is popular because it reflects **abundance shifts** between samples.
+
+```r
+bray_dist <- vegdist(abund_rel, method = "bray")
+```
+
+### Jaccard dissimilarity
+
+Jaccard is useful when you only care whether a taxon/pathway is present.
+
+```r
+abund_pa <- decostand(abund_rel, method = "pa")
+jaccard_dist <- vegdist(abund_pa, method = "jaccard")
+```
+
+### Aitchison distance
+
+Aitchison distance is built for **compositional data**. It requires a centered log-ratio (CLR) transform, which means adding a small pseudocount first.
+
+```r
+abund_clr <- decostand(abund_rel + 1e-06, method = "clr")
+aitchison_dist <- dist(abund_clr)
+```
+
+::: {.callout-tip}
+A simple beginner workflow is: **Bray-Curtis for your main ecological analysis**, then **Aitchison as a sensitivity check** if you want a composition-aware view.
+:::
+
+---
+
+## Ordination and visualization
+
+A distance matrix is hard to read directly, so you usually project it into 2 dimensions.
+
+### A useful plotting helper
+
+```r
+plot_ordination <- function(df, x, y, title) {
+  ggplot(df, aes(x = .data[[x]], y = .data[[y]], color = group)) +
+    geom_point(size = 3, alpha = 0.9) +
+    labs(title = title, x = x, y = y, color = "Group") +
+    theme_minimal(base_size = 12)
+}
+```
+
+### PCA
+
+**PCA** works on a transformed abundance matrix, not directly on a distance matrix. For ecological data, a **Hellinger transform** is a good beginner-friendly choice.
+
+```r
+abund_hellinger <- decostand(abund_rel, method = "hellinger")
+pca_fit <- prcomp(abund_hellinger, center = TRUE, scale. = FALSE)
+
+pca_df <- as.data.frame(pca_fit$x[, 1:2]) |>
+  rownames_to_column("sample_id") |>
+  left_join(sample_info, by = "sample_id")
+
+plot_ordination(pca_df, "PC1", "PC2", "PCA of Hellinger-transformed abundances")
+```
+
+### PCoA
+
+**PCoA** is a natural companion to Bray-Curtis because it starts from a dissimilarity matrix.
+
+```r
+pcoa_fit <- cmdscale(bray_dist, eig = TRUE, k = 2)
+
+pcoa_df <- as.data.frame(pcoa_fit$points) |>
+  setNames(c("PCoA1", "PCoA2")) |>
+  rownames_to_column("sample_id") |>
+  left_join(sample_info, by = "sample_id")
+
+plot_ordination(pcoa_df, "PCoA1", "PCoA2", "PCoA of Bray-Curtis distances")
+```
+
+### NMDS
+
+**NMDS** is one of the most widely used ordination methods in ecology because it focuses on preserving rank-order distances.
+
+```r
+set.seed(123)
+nmds_fit <- metaMDS(abund_rel, distance = "bray", k = 2, trymax = 100)
+
+nmds_df <- as.data.frame(scores(nmds_fit, display = "sites")) |>
+  rownames_to_column("sample_id") |>
+  left_join(sample_info, by = "sample_id")
+
+plot_ordination(nmds_df, "NMDS1", "NMDS2", "NMDS on Bray-Curtis distances")
+```
+
+### t-SNE
+
+**t-SNE** is mainly for visualization. It can reveal local neighborhood structure, but distances between distant clusters are not always easy to interpret biologically.
+
+```r
+set.seed(123)
+tsne_fit <- Rtsne(abund_hellinger, dims = 2, perplexity = 10, check_duplicates = FALSE)
+
+tsne_df <- as.data.frame(tsne_fit$Y) |>
+  setNames(c("tSNE1", "tSNE2")) |>
+  mutate(sample_id = rownames(abund_hellinger)) |>
+  left_join(sample_info, by = "sample_id")
+
+plot_ordination(tsne_df, "tSNE1", "tSNE2", "t-SNE of Hellinger-transformed abundances")
+```
+
+### UMAP
+
+**UMAP** is another visualization-first method that often gives cleaner-looking clusters than t-SNE while preserving more global structure.
+
+```r
+set.seed(123)
+umap_fit <- uwot::umap(abund_hellinger, n_neighbors = 15, min_dist = 0.2)
+
+umap_df <- as.data.frame(umap_fit) |>
+  setNames(c("UMAP1", "UMAP2")) |>
+  mutate(sample_id = rownames(abund_hellinger)) |>
+  left_join(sample_info, by = "sample_id")
+
+plot_ordination(umap_df, "UMAP1", "UMAP2", "UMAP of Hellinger-transformed abundances")
+```
+
+### Which ordination should you show?
+
+A sensible beginner combination is:
+
+- **PCoA + Bray-Curtis** for the main ecological result
+- **NMDS + Bray-Curtis** as a robust ecological cross-check
+- **PCA** if you want a linear view of transformed abundances
+- **t-SNE / UMAP** as exploratory visualizations, not your only evidence
+
+---
+
+## Statistical testing for beta diversity
+
+Visualization is helpful, but it is not the statistical test.
+
+### PERMANOVA
+
+Use `adonis2()` to test whether groups differ in their community composition.
+
+```r
+adonis2(bray_dist ~ group, data = sample_info, permutations = 999)
+```
+
+### Check dispersion before over-interpreting PERMANOVA
+
+PERMANOVA can be significant either because group centroids differ or because one group is much more dispersed.
+
+```r
+bray_dispersion <- betadisper(bray_dist, sample_info$group)
+anova(bray_dispersion)
+permutest(bray_dispersion)
+```
+
+::: {.callout-important}
+A common reporting pattern is: **Bray-Curtis PCoA plot + PERMANOVA p-value + dispersion check**.
+:::
+
+---
+
+## Recommended beginner workflow
+
+1. Start with a **species-level MetaPhlAn** or **unstratified HUMAnN** table.
+2. Re-scale to proportions with `decostand(..., "total")`.
+3. Calculate **richness, Shannon, Simpson, inverse Simpson, and Pielou evenness**.
+4. Use **Bray-Curtis** as your main beta-diversity metric.
+5. Visualize beta diversity with **PCoA** and **NMDS**.
+6. Use **PERMANOVA** to test group separation.
+7. Re-run beta diversity with **Aitchison distance** if you want a composition-aware sensitivity analysis.
+
+---
+
+## Further reading
+
+- [MetaPhlAn tutorial](../tools/metaphlan.qmd)
+- [HUMAnN tutorial](../tools/humann.qmd)
+- [QIIME 2 tutorial](../tools/qiime2.qmd) for amplicon-oriented diversity workflows
+- `?vegan::diversity`, `?vegan::vegdist`, `?vegan::metaMDS`, `?vegan::adonis2`
