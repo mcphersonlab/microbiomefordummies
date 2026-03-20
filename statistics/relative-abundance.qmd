@@ -298,14 +298,11 @@ That way you get the best part of LEfSe-style interpretation without losing the 
 
 @media (min-width: 900px) {
   .ra-results-meta {
-    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    grid-template-columns: minmax(0, 11fr) minmax(0, 9fr);
     align-items: start;
   }
 
-  .ra-results-meta .ra-summary {
-    margin-top: 0;
-  }
-
+  .ra-results-meta .ra-summary,
   .ra-results-meta .ra-replicate-checks {
     margin-top: 0;
   }
