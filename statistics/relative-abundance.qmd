@@ -631,7 +631,7 @@ document.addEventListener("DOMContentLoaded", function () {
     return chartLeft + index * (barWidth + gap);
   }
 
-  function getReplicateCheckStatus(check) {
+  function computeReplicateCheckStatus(check) {
     return check.q < SIGNIFICANCE_THRESHOLD
       ? {
           chipModifierClass: "ra-replicate-chip--significant",
@@ -771,7 +771,7 @@ document.addEventListener("DOMContentLoaded", function () {
       : "All same-group / same-time-point replicate checks remain non-significant.";
 
     replicateChecks.innerHTML = level.replicateChecks.map((check) => {
-      const status = getReplicateCheckStatus(check);
+      const status = computeReplicateCheckStatus(check);
       const chipClass = `ra-replicate-chip ${status.chipModifierClass}`.trim();
       return `
       <div class="${chipClass}">
