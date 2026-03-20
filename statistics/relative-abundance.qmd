@@ -233,6 +233,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const significanceChart = document.getElementById("ra-significance-chart");
   const summary = document.getElementById("ra-summary");
   const replicateChecks = document.getElementById("ra-replicate-checks");
+  const SIGNIFICANCE_THRESHOLD = 0.05;
 
   const cohortSamples = [
     { sample: "CB1", group: "Control", timepoint: "Baseline" },
@@ -631,7 +632,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function replicateCheckStatus(check) {
-    return check.q < 0.05
+    return check.q < SIGNIFICANCE_THRESHOLD
       ? {
           chipClass: "ra-replicate-chip ra-replicate-chip--significant",
           label: "significant"
@@ -721,7 +722,7 @@ document.addEventListener("DOMContentLoaded", function () {
     `;
 
     legend.innerHTML = level.taxa.map((taxon) => {
-      const significant = taxon.comparisons[contrastName].q < 0.05 ? " • significant in selected contrast" : "";
+      const significant = taxon.comparisons[contrastName].q < SIGNIFICANCE_THRESHOLD ? " • significant in selected contrast" : "";
       return `
         <div class="ra-legend-item">
           <span class="ra-legend-swatch" style="background:${taxon.color}"></span>
@@ -740,13 +741,13 @@ document.addEventListener("DOMContentLoaded", function () {
       const effectWidth = Math.abs(signedEffect) * scale;
       const x = signedEffect >= 0 ? zeroX : zeroX - effectWidth;
       const pointX = signedEffect >= 0 ? zeroX + effectWidth : zeroX - effectWidth;
-      const qLabel = comparison.q < 0.05 ? `q=${comparison.q.toFixed(3)}` : "ns";
-      const point = comparison.q < 0.05
+      const qLabel = comparison.q < SIGNIFICANCE_THRESHOLD ? `q=${comparison.q.toFixed(3)}` : "ns";
+      const point = comparison.q < SIGNIFICANCE_THRESHOLD
         ? `<circle cx="${pointX}" cy="${y}" r="4.5" fill="#0f172a"></circle>`
         : `<circle cx="${pointX}" cy="${y}" r="4.5" fill="white" stroke="#64748b" stroke-width="1.2"></circle>`;
       return `
         <text x="0" y="${y + 3}" font-size="9" fill="#0f172a">${taxon.name}</text>
-        <rect x="${x}" y="${y - 8}" width="${effectWidth}" height="16" fill="${taxon.color}" opacity="${comparison.q < 0.05 ? 0.95 : 0.45}" rx="4" ry="4"></rect>
+        <rect x="${x}" y="${y - 8}" width="${effectWidth}" height="16" fill="${taxon.color}" opacity="${comparison.q < SIGNIFICANCE_THRESHOLD ? 0.95 : 0.45}" rx="4" ry="4"></rect>
         ${point}
         <text x="${signedEffect >= 0 ? 270 : 34}" y="${y + 3}" font-size="8" fill="#475569">${qLabel}</text>
       `;
@@ -763,8 +764,8 @@ document.addEventListener("DOMContentLoaded", function () {
     `;
 
     const significantTaxa = level.taxa
-      .filter((taxon) => taxon.comparisons[contrastName].q < 0.05 && taxon.name !== "Other");
-    const significantReplicateChecks = level.replicateChecks.filter((check) => check.q < 0.05);
+      .filter((taxon) => taxon.comparisons[contrastName].q < SIGNIFICANCE_THRESHOLD && taxon.name !== "Other");
+    const significantReplicateChecks = level.replicateChecks.filter((check) => check.q < SIGNIFICANCE_THRESHOLD);
     const replicateSummaryText = significantReplicateChecks.length
       ? "One or more same-group / same-time-point replicate checks are significant in this synthetic example, so interpret the contrast-specific signal more cautiously."
       : "All same-group / same-time-point replicate checks remain non-significant.";
