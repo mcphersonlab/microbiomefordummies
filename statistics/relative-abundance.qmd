@@ -77,6 +77,10 @@ That way you get the best part of LEfSe-style interpretation without losing the 
   margin-bottom: 0.5rem;
 }
 
+.ra-card--full-row {
+  grid-column: 1 / -1;
+}
+
 .ra-controls {
   display: flex;
   flex-wrap: wrap;
@@ -102,6 +106,10 @@ That way you get the best part of LEfSe-style interpretation without losing the 
   background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   max-width: 34rem;
   margin: 0 auto;
+}
+
+.ra-chart-frame--wide {
+  max-width: none;
 }
 
 #ra-bar-chart svg,
@@ -282,6 +290,27 @@ That way you get the best part of LEfSe-style interpretation without losing the 
   margin-top: 1rem;
 }
 
+.ra-results-meta {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+@media (min-width: 900px) {
+  .ra-results-meta {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    align-items: start;
+  }
+
+  .ra-results-meta .ra-summary {
+    margin-top: 0;
+  }
+
+  .ra-results-meta .ra-replicate-checks {
+    margin-top: 0;
+  }
+}
+
 .ra-replicate-chip {
   border: 1px solid #d8dee4;
   border-radius: 0.8rem;
@@ -344,9 +373,16 @@ document.addEventListener("DOMContentLoaded", function () {
         <h3>Integrated statistical comparison framework</h3>
         <p class="ra-caption">This companion panel synthesizes Pre- group matching, control stability, experimental response, and time +4 group separation so every taxon is interpreted against the full longitudinal design without losing the taxon colors used in the stacked bars.</p>
         <div id="ra-framework-overview" class="ra-framework-overview" aria-live="polite"></div>
-        <div id="ra-significance-chart" class="ra-chart-frame" aria-live="polite"></div>
-        <p id="ra-summary" class="ra-summary"></p>
-        <div id="ra-replicate-checks" class="ra-replicate-checks" aria-live="polite"></div>
+      </section>
+
+      <section class="ra-card ra-card--full-row">
+        <h3>Statistical results across the full framework</h3>
+        <p class="ra-caption">The full statistical readout sits in a single row below the overview cards so you can compare every taxon against the same longitudinal decision framework without stretching the top layout.</p>
+        <div id="ra-significance-chart" class="ra-chart-frame ra-chart-frame--wide" aria-live="polite"></div>
+        <div class="ra-results-meta">
+          <p id="ra-summary" class="ra-summary"></p>
+          <div id="ra-replicate-checks" class="ra-replicate-checks" aria-live="polite"></div>
+        </div>
       </section>
     </div>
   `;
