@@ -1,5 +1,5 @@
 ---
-title: "Microbiome Tools for Dummies"
+title: "Microbiome for Dummies"
 subtitle: "A beginner-friendly guide to microbiome bioinformatic tools"
 ---
 
