@@ -954,7 +954,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function renderLevel(levelName, contrastName) {
     const level = levels[levelName];
-    const contrast = contrasts[contrastName];
+    const contrastKey = contrasts[contrastName] ? contrastName : "post_group";
+    const contrast = contrasts[contrastKey];
     const maxEffect = 3.6;
     const stripBaseHeight = 48;
     const stripRowHeight = 28;
@@ -1030,7 +1031,8 @@ document.addEventListener("DOMContentLoaded", function () {
     `;
 
     legend.innerHTML = level.taxa.map((taxon) => {
-      const significant = taxon.comparisons[contrastName].q < SIGNIFICANCE_THRESHOLD ? " • significant in selected contrast" : "";
+      const selectedComparison = taxon.comparisons[contrastKey] || taxon.comparisons.post_group;
+      const significant = selectedComparison.q < SIGNIFICANCE_THRESHOLD ? " • significant in selected contrast" : "";
       return `
         <div class="ra-legend-item">
           <span class="ra-legend-swatch" style="background:${taxon.color}"></span>
@@ -1043,7 +1045,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const zeroX = 150;
     const stripScale = 110 / maxEffect;
     const significanceRows = level.taxa.map((taxon, index) => {
-      const comparison = taxon.comparisons[contrastName];
+      const comparison = taxon.comparisons[contrastKey] || taxon.comparisons.post_group;
       const y = 34 + index * stripRowHeight;
       const signedEffect = comparison.effect;
       const effectWidth = Math.abs(signedEffect) * stripScale;
