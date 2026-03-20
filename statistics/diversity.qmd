@@ -1103,8 +1103,8 @@ document.addEventListener("DOMContentLoaded", function () {
     input.addEventListener(eventName, scheduleRenderAll);
   });
 
-  betaMetricInput.addEventListener("change", renderAll);
-  betaOrdinationInput.addEventListener("change", renderAll);
+  betaMetricInput.addEventListener("change", scheduleRenderAll);
+  betaOrdinationInput.addEventListener("change", scheduleRenderAll);
 
   renderAll();
 });
