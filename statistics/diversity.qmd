@@ -1090,7 +1090,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  function controlRenderEvent(input) {
+  function getControlEventType(input) {
     return input instanceof HTMLSelectElement ? "change" : "input";
   }
 
@@ -1103,7 +1103,7 @@ document.addEventListener("DOMContentLoaded", function () {
     betaSamplesInput,
     betaPresenceInput
   ].forEach((input) => {
-    input.addEventListener(controlRenderEvent(input), scheduleRenderAll);
+    input.addEventListener(getControlEventType(input), scheduleRenderAll);
   });
 
   betaMetricInput.addEventListener("change", scheduleRenderAll);

@@ -634,11 +634,11 @@ document.addEventListener("DOMContentLoaded", function () {
   function getReplicateCheckStatus(check) {
     return check.q < SIGNIFICANCE_THRESHOLD
       ? {
-          chipClass: "ra-replicate-chip ra-replicate-chip--significant",
+          chipModifierClass: "ra-replicate-chip--significant",
           label: "significant"
         }
       : {
-          chipClass: "ra-replicate-chip",
+          chipModifierClass: "",
           label: "non-significant"
         };
   }
@@ -772,8 +772,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
     replicateChecks.innerHTML = level.replicateChecks.map((check) => {
       const status = getReplicateCheckStatus(check);
+      const chipClass = `ra-replicate-chip ${status.chipModifierClass}`.trim();
       return `
-      <div class="${status.chipClass}">
+      <div class="${chipClass}">
         <strong>${check.label}</strong>
         <span>Same-group / same-time-point pairwise check: q=${check.q.toFixed(3)} · ${status.label}</span>
       </div>
