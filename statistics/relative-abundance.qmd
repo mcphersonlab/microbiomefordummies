@@ -433,6 +433,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   };
 
+  // These keys are preserved from the original synthetic contrast dataset so the page can
+  // reuse the existing effect/q-value tables while presenting the new Pre-/+4 terminology.
   const comparisonFramework = [
     {
       key: "baseline_group",
@@ -462,17 +464,33 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const cmp = (effect, q, enriched) => ({ effect, q, enriched });
 
-  const average = (left, right) => Number(((left + right) / 2).toFixed(1));
+  const MIDPOINT_WEIGHT = 0.5;
+  const EARLIER_REFERENCE_WEIGHT = 0.75;
+  const LATER_REFERENCE_WEIGHT = 0.25;
+  const interpolateBetween = (left, right, leftWeight = MIDPOINT_WEIGHT) => Number(((left * leftWeight) + (right * (1 - leftWeight))).toFixed(1));
 
-  function expandTriplicateScores(scores) {
-    const [controlPreA, controlPreB, controlPostA, controlPostB, experimentalPreA, experimentalPreB, experimentalPostA, experimentalPostB] = scores;
+  // Expand two synthetic reference profiles per group/time window into triplicate samples
+  // so the chart can show time -3, Pre- (time 0), and time +4 without rewriting all taxa.
+  // Time -3 and Pre- reuse the same pre-intervention references, but are biased toward the
+  // earlier or later reference profile so they read as distinct triplicate measurements.
+  function expandCompressedLongitudinalScores(scores) {
+    const [
+      controlPreReferenceA,
+      controlPreReferenceB,
+      controlPlus4ReferenceA,
+      controlPlus4ReferenceB,
+      experimentalPreReferenceA,
+      experimentalPreReferenceB,
+      experimentalPlus4ReferenceA,
+      experimentalPlus4ReferenceB
+    ] = scores;
     return [
-      controlPreA, average(controlPreA, controlPreB), controlPreB,
-      average(controlPreA, controlPreB), controlPreA, controlPreB,
-      controlPostA, average(controlPostA, controlPostB), controlPostB,
-      experimentalPreA, average(experimentalPreA, experimentalPreB), experimentalPreB,
-      average(experimentalPreA, experimentalPreB), experimentalPreA, experimentalPreB,
-      experimentalPostA, average(experimentalPostA, experimentalPostB), experimentalPostB
+      controlPreReferenceA, interpolateBetween(controlPreReferenceA, controlPreReferenceB), controlPreReferenceB,
+      interpolateBetween(controlPreReferenceA, controlPreReferenceB, EARLIER_REFERENCE_WEIGHT), interpolateBetween(controlPreReferenceA, controlPreReferenceB), interpolateBetween(controlPreReferenceA, controlPreReferenceB, LATER_REFERENCE_WEIGHT),
+      controlPlus4ReferenceA, interpolateBetween(controlPlus4ReferenceA, controlPlus4ReferenceB), controlPlus4ReferenceB,
+      experimentalPreReferenceA, interpolateBetween(experimentalPreReferenceA, experimentalPreReferenceB), experimentalPreReferenceB,
+      interpolateBetween(experimentalPreReferenceA, experimentalPreReferenceB, EARLIER_REFERENCE_WEIGHT), interpolateBetween(experimentalPreReferenceA, experimentalPreReferenceB), interpolateBetween(experimentalPreReferenceA, experimentalPreReferenceB, LATER_REFERENCE_WEIGHT),
+      experimentalPlus4ReferenceA, interpolateBetween(experimentalPlus4ReferenceA, experimentalPlus4ReferenceB), experimentalPlus4ReferenceB
     ];
   }
 
@@ -826,7 +844,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   Object.values(levels).forEach((level) => {
     level.taxa.forEach((taxon) => {
-      taxon.scores = expandTriplicateScores(taxon.scores);
+      taxon.scores = expandCompressedLongitudinalScores(taxon.scores);
     });
   });
 
@@ -851,12 +869,13 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function normalizeComparisonLabel(label) {
-    return label
-      .replaceAll("Intervention", "Experimental")
-      .replaceAll("Control baseline", "Control Pre-")
-      .replaceAll("Experimental baseline", "Experimental Pre-")
-      .replaceAll("Control post", "Control +4")
-      .replaceAll("Experimental post", "Experimental +4");
+    const comparisonLabelMap = {
+      "Control baseline": "Control Pre-",
+      "Intervention baseline": "Experimental Pre-",
+      "Control post": "Control +4",
+      "Intervention post": "Experimental +4"
+    };
+    return comparisonLabelMap[label] || label;
   }
 
   function formatEnrichedSource(label) {
@@ -1075,6 +1094,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     const strongestEntry = significantTaxa
+      // Rank intervention-linked taxa by the two signal-bearing contrasts in the final
+      // framework: within-experimental response and between-group separation at time +4.
       .map((taxon) => ({
         taxon,
         combinedEffect: Math.abs(taxon.comparisons.post_group.effect) + Math.abs(taxon.comparisons.intervention_time.effect)
