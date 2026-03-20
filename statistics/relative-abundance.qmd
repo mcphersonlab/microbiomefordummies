@@ -34,13 +34,13 @@ For family-level bars, it usually looks cleaner to use **lighter shades within e
 
 ## Interactive taxonomic bar-chart explorer
 
-The interactive explorer below now uses a **longitudinal control-versus-experimental design** with triplicate subjects at **time -3**, **Pre- (time 0)**, and **time +4**. You can change taxonomic level, inspect the sample-code key, and watch both the stacked bars and the integrated comparison framework update together.
+The interactive explorer below now uses a **longitudinal control-versus-experimental design** with triplicate subjects at **time -3**, **Pre- (time 0)**, and **time +4**. You can change taxonomic level, choose a statistical contrast, inspect the sample-code key, and compare the stacked bars against a LEfSe-like significance strip while keeping the full framework table below.
 
-My recommended visualization idea is the **taxa-preserving comparison framework**:
+My recommended visualization idea is the **taxa-preserving significance strip**:
 
 - the stacked bars keep taxa-specific color as the primary encoding
-- a second aligned panel keeps the four core longitudinal comparisons visible at the same time
-- significant cells keep their `q` labels, but taxa **keep the same taxon color** instead of switching to a significance palette
+- a second aligned panel shows **LEfSe-like signed effect size** for the selected longitudinal contrast
+- significant taxa keep their `q` labels, but taxa **keep the same taxon color** instead of switching to a significance palette
 
 That way you get the best part of LEfSe-style interpretation without losing the phylogenetic color logic of the bar chart itself.
 
@@ -355,6 +355,15 @@ document.addEventListener("DOMContentLoaded", function () {
           <option value="species">Species</option>
         </select>
       </label>
+      <label for="ra-contrast-select">
+        Statistical contrast
+        <select id="ra-contrast-select">
+          <option value="baseline_group">Control vs experimental at Pre-</option>
+          <option value="post_group" selected>Control vs experimental at time +4</option>
+          <option value="control_time">Control Pre- vs time +4</option>
+          <option value="intervention_time">Experimental Pre- vs time +4</option>
+        </select>
+      </label>
     </div>
 
     <div class="ra-lab-grid">
@@ -367,9 +376,9 @@ document.addEventListener("DOMContentLoaded", function () {
       </section>
 
       <section class="ra-card">
-        <h3>Integrated statistical comparison framework</h3>
-        <p class="ra-caption">This companion panel synthesizes Pre- group matching, control stability, experimental response, and time +4 group separation so every taxon is interpreted against the full longitudinal design without losing the taxon colors used in the stacked bars.</p>
-        <div id="ra-framework-overview" class="ra-framework-overview" aria-live="polite"></div>
+        <h3>Taxa Preserving Significance Strip</h3>
+        <p class="ra-caption">This companion panel behaves like a LEfSe-style effect-size plot for the selected longitudinal contrast, while keeping the same taxon colors used in the stacked bars.</p>
+        <div id="ra-significance-strip" class="ra-chart-frame" aria-live="polite"></div>
       </section>
 
       <section class="ra-card ra-card--full-row">
@@ -385,9 +394,10 @@ document.addEventListener("DOMContentLoaded", function () {
   `;
 
   const levelSelect = document.getElementById("ra-level-select");
+  const contrastSelect = document.getElementById("ra-contrast-select");
   const barChart = document.getElementById("ra-bar-chart");
   const legend = document.getElementById("ra-legend");
-  const frameworkOverview = document.getElementById("ra-framework-overview");
+  const significanceStrip = document.getElementById("ra-significance-strip");
   const significanceChart = document.getElementById("ra-significance-chart");
   const summary = document.getElementById("ra-summary");
   const replicateChecks = document.getElementById("ra-replicate-checks");
@@ -465,35 +475,6 @@ document.addEventListener("DOMContentLoaded", function () {
       description: "This asks which taxa changed longitudinally inside the experimental arm itself."
     }
   };
-
-  // These keys are preserved from the original synthetic contrast dataset so the page can
-  // reuse the existing effect/q-value tables while presenting the new Pre-/+4 terminology.
-  const comparisonFramework = [
-    {
-      key: "baseline_group",
-      label: "1. Pre- group match",
-      emphasis: "Expect non-significant",
-      detail: "Control-group and experimental-group should still match at time 0."
-    },
-    {
-      key: "control_time",
-      label: "2. Control stability",
-      emphasis: "Expect non-significant",
-      detail: "Control-group drift from Pre- to time +4 should stay small."
-    },
-    {
-      key: "intervention_time",
-      label: "3. Experimental response",
-      emphasis: "Look for significance",
-      detail: "Experimental-group Pre- to time +4 captures the within-arm intervention signal."
-    },
-    {
-      key: "post_group",
-      label: "4. Time +4 separation",
-      emphasis: "Look for significance",
-      detail: "Control-group and experimental-group should separate by time +4."
-    }
-  ];
 
   const cmp = (effect, q, enriched) => ({ effect, q, enriched });
 
@@ -971,8 +952,12 @@ document.addEventListener("DOMContentLoaded", function () {
     `;
   }
 
-  function renderLevel(levelName) {
+  function renderLevel(levelName, contrastName) {
     const level = levels[levelName];
+    const contrast = contrasts[contrastName];
+    const maxEffect = 3.6;
+    const stripBaseHeight = 48;
+    const stripRowHeight = 28;
     const svgWidth = 560;
     const svgHeight = 268;
     const chartLeft = 42;
@@ -1045,8 +1030,7 @@ document.addEventListener("DOMContentLoaded", function () {
     `;
 
     legend.innerHTML = level.taxa.map((taxon) => {
-      const frameworkCall = classifyTaxon(taxon);
-      const significant = frameworkCall.label === "Intervention-linked" ? " • passes integrated framework" : "";
+      const significant = taxon.comparisons[contrastName].q < SIGNIFICANCE_THRESHOLD ? " • significant in selected contrast" : "";
       return `
         <div class="ra-legend-item">
           <span class="ra-legend-swatch" style="background:${taxon.color}"></span>
@@ -1055,13 +1039,37 @@ document.addEventListener("DOMContentLoaded", function () {
       `;
     }).join("");
 
-    frameworkOverview.innerHTML = comparisonFramework.map((item) => `
-      <div class="ra-framework-step">
-        <strong>${item.label}</strong>
-        <span><em>${item.emphasis}</em></span>
-        <span>${item.detail}</span>
-      </div>
-    `).join("");
+    const stripHeight = stripBaseHeight + level.taxa.length * stripRowHeight;
+    const zeroX = 150;
+    const stripScale = 110 / maxEffect;
+    const significanceRows = level.taxa.map((taxon, index) => {
+      const comparison = taxon.comparisons[contrastName];
+      const y = 34 + index * stripRowHeight;
+      const signedEffect = comparison.effect;
+      const effectWidth = Math.abs(signedEffect) * stripScale;
+      const x = signedEffect >= 0 ? zeroX : zeroX - effectWidth;
+      const pointX = signedEffect >= 0 ? zeroX + effectWidth : zeroX - effectWidth;
+      const qLabel = comparison.q < SIGNIFICANCE_THRESHOLD ? `q=${comparison.q.toFixed(3)}` : "ns";
+      const point = comparison.q < SIGNIFICANCE_THRESHOLD
+        ? `<circle cx="${pointX}" cy="${y}" r="4.5" fill="#0f172a"></circle>`
+        : `<circle cx="${pointX}" cy="${y}" r="4.5" fill="white" stroke="#64748b" stroke-width="1.2"></circle>`;
+      return `
+        <text x="0" y="${y + 3}" font-size="9" fill="#0f172a">${taxon.name}</text>
+        <rect x="${x}" y="${y - 8}" width="${effectWidth}" height="16" fill="${taxon.color}" opacity="${comparison.q < SIGNIFICANCE_THRESHOLD ? 0.95 : 0.45}" rx="4" ry="4"></rect>
+        ${point}
+        <text x="${signedEffect >= 0 ? 270 : 34}" y="${y + 3}" font-size="8" fill="#475569">${qLabel}</text>
+      `;
+    }).join("");
+
+    significanceStrip.innerHTML = `
+      <svg viewBox="0 0 320 ${stripHeight}" width="100%" role="img" aria-label="Taxa preserving significance strip">
+        <text x="0" y="12" font-size="9" fill="#334155">${contrast.label}</text>
+        <line x1="${zeroX}" y1="20" x2="${zeroX}" y2="${stripHeight - 8}" stroke="#94a3b8" stroke-width="1"></line>
+        <text x="${zeroX - 82}" y="24" font-size="8" fill="#475569">${contrast.leftLabel}</text>
+        <text x="${zeroX + 8}" y="24" font-size="8" fill="#475569">${contrast.rightLabel}</text>
+        ${significanceRows}
+      </svg>
+    `;
 
     significanceChart.innerHTML = `
       <div class="ra-framework-scroll">
@@ -1139,10 +1147,14 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   levelSelect.addEventListener("change", function () {
-    renderLevel(levelSelect.value);
+    renderLevel(levelSelect.value, contrastSelect.value);
   });
 
-  renderLevel(levelSelect.value);
+  contrastSelect.addEventListener("change", function () {
+    renderLevel(levelSelect.value, contrastSelect.value);
+  });
+
+  renderLevel(levelSelect.value, contrastSelect.value);
 });
 </script>
 :::
