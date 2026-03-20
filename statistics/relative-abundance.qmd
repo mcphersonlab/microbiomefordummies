@@ -1,6 +1,6 @@
 ---
 title: "Relative Abundance"
-subtitle: "Interactive taxonomic-level stacked bar charts with taxa-preserving significance overlays"
+subtitle: "Interactive longitudinal taxonomic bar charts with taxa-preserving significance overlays"
 ---
 
 This page shows how to build a **family-level relative-abundance bar chart** from **MetaPhlAn** output, while keeping the visual logic consistent with the **intestinal phylogenetic tree navigator** elsewhere on this site.
@@ -34,12 +34,12 @@ For family-level bars, it usually looks cleaner to use **lighter shades within e
 
 ## Interactive taxonomic bar-chart explorer
 
-The interactive explorer below lets you **change taxonomic level** and watch both the stacked bars and the significance layer update together.
+The interactive explorer below now uses a **longitudinal control-versus-intervention design** with matched **baseline** and **post-intervention** samples. You can change taxonomic level, switch the statistical contrast, and watch both the stacked bars and the significance layer update together.
 
 My recommended visualization idea is the **taxa-preserving significance strip**:
 
 - the stacked bars keep taxa-specific color as the primary encoding
-- a second aligned panel shows **LEfSe-like signed effect size**
+- a second aligned panel shows **LEfSe-like signed effect size** for the currently selected longitudinal contrast
 - significant taxa get a bold point and `q` label, but they **keep the same taxon color** instead of switching to a significance palette
 
 That way you get the best part of LEfSe-style interpretation without losing the phylogenetic color logic of the bar chart itself.
@@ -143,6 +143,29 @@ That way you get the best part of LEfSe-style interpretation without losing the 
   margin-top: 0.9rem;
   color: #334155;
 }
+
+.ra-replicate-checks {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 1rem;
+}
+
+.ra-replicate-chip {
+  border: 1px solid #d8dee4;
+  border-radius: 0.8rem;
+  background: #f8fafc;
+  padding: 0.7rem 0.8rem;
+}
+
+.ra-replicate-chip strong {
+  display: block;
+  color: #0f172a;
+}
+
+.ra-replicate-chip span {
+  color: #475569;
+  font-size: 0.9rem;
+}
 </style>
 
 <div id="relative-abundance-lab"></div>
@@ -161,100 +184,454 @@ document.addEventListener("DOMContentLoaded", function () {
           <option value="species">Species</option>
         </select>
       </label>
+      <label for="ra-contrast-select">
+        Statistical contrast
+        <select id="ra-contrast-select">
+          <option value="baseline_group">Control vs intervention at baseline</option>
+          <option value="post_group" selected>Control vs intervention post-intervention</option>
+          <option value="control_time">Control baseline vs post-intervention</option>
+          <option value="intervention_time">Intervention baseline vs post-intervention</option>
+        </select>
+      </label>
     </div>
 
     <div class="ra-lab-grid">
       <section class="ra-card">
         <h3>Stacked relative-abundance bars</h3>
-        <p class="ra-caption">The same cohort is shown at multiple taxonomic levels. Coarser ranks collapse features into broader ecological buckets, while finer ranks reveal within-family structure.</p>
+        <p class="ra-caption">The same longitudinal cohort is shown at multiple taxonomic levels. Both groups start with matched baseline samples, then only the intervention arm shifts strongly at the post-intervention time point.</p>
         <div id="ra-bar-chart" class="ra-chart-frame" aria-live="polite"></div>
         <div id="ra-legend" class="ra-legend" aria-live="polite"></div>
       </section>
 
       <section class="ra-card">
         <h3>Taxa-preserving significance strip</h3>
-        <p class="ra-caption">This companion panel behaves like a LEfSe-style effect-size plot, but the bars keep the same taxon colors you used to identify the stacked bars.</p>
+        <p class="ra-caption">This companion panel behaves like a LEfSe-style effect-size plot, but now you can switch between between-group and within-group longitudinal contrasts without losing the taxon colors used in the stacked bars.</p>
         <div id="ra-significance-chart" class="ra-chart-frame" aria-live="polite"></div>
         <p id="ra-summary" class="ra-summary"></p>
+        <div id="ra-replicate-checks" class="ra-replicate-checks" aria-live="polite"></div>
       </section>
     </div>
   `;
 
   const levelSelect = document.getElementById("ra-level-select");
+  const contrastSelect = document.getElementById("ra-contrast-select");
   const barChart = document.getElementById("ra-bar-chart");
   const legend = document.getElementById("ra-legend");
   const significanceChart = document.getElementById("ra-significance-chart");
   const summary = document.getElementById("ra-summary");
+  const replicateChecks = document.getElementById("ra-replicate-checks");
 
   const cohortSamples = [
-    { sample: "C1", group: "Control" },
-    { sample: "C2", group: "Control" },
-    { sample: "C3", group: "Control" },
-    { sample: "F1", group: "High fiber" },
-    { sample: "F2", group: "High fiber" },
-    { sample: "F3", group: "High fiber" }
+    { sample: "CB1", group: "Control", timepoint: "Baseline" },
+    { sample: "CB2", group: "Control", timepoint: "Baseline" },
+    { sample: "CP1", group: "Control", timepoint: "Post" },
+    { sample: "CP2", group: "Control", timepoint: "Post" },
+    { sample: "IB1", group: "Intervention", timepoint: "Baseline" },
+    { sample: "IB2", group: "Intervention", timepoint: "Baseline" },
+    { sample: "IP1", group: "Intervention", timepoint: "Post" },
+    { sample: "IP2", group: "Intervention", timepoint: "Post" }
   ];
+
+  const sampleBlocks = [
+    { label: "Control baseline", timepoint: "Baseline", startIndex: 0, endIndex: 1 },
+    { label: "Control post", timepoint: "Post", startIndex: 2, endIndex: 3 },
+    { label: "Intervention baseline", timepoint: "Baseline", startIndex: 4, endIndex: 5 },
+    { label: "Intervention post", timepoint: "Post", startIndex: 6, endIndex: 7 }
+  ];
+
+  const groupBlocks = [
+    { label: "Control", startIndex: 0, endIndex: 3 },
+    { label: "Intervention", startIndex: 4, endIndex: 7 }
+  ];
+
+  const contrasts = {
+    baseline_group: {
+      label: "Control vs intervention at baseline",
+      leftLabel: "Control baseline",
+      rightLabel: "Intervention baseline",
+      description: "Both groups should remain statistically similar before the intervention starts."
+    },
+    post_group: {
+      label: "Control vs intervention post-intervention",
+      leftLabel: "Control post",
+      rightLabel: "Intervention post",
+      description: "This is the main between-group post-intervention contrast."
+    },
+    control_time: {
+      label: "Control baseline vs post-intervention",
+      leftLabel: "Control baseline",
+      rightLabel: "Control post",
+      description: "This asks whether the control arm drifted over time without the intervention."
+    },
+    intervention_time: {
+      label: "Intervention baseline vs post-intervention",
+      leftLabel: "Intervention baseline",
+      rightLabel: "Intervention post",
+      description: "This asks which taxa changed longitudinally inside the intervention arm itself."
+    }
+  };
+
+  const cmp = (effect, q, enriched) => ({ effect, q, enriched });
 
   const levels = {
     phylum: {
       taxa: [
-        { name: "Bacteroidota", color: "#1976d2", scores: [38, 36, 35, 24, 23, 22], effect: -2.9, q: 0.012, enriched: "Control" },
-        { name: "Bacillota", color: "#2e7d32", scores: [33, 35, 34, 40, 41, 39], effect: 2.1, q: 0.018, enriched: "High fiber" },
-        { name: "Actinomycetota", color: "#7e57c2", scores: [11, 10, 9, 16, 17, 18], effect: 2.8, q: 0.006, enriched: "High fiber" },
-        { name: "Pseudomonadota", color: "#c62828", scores: [9, 8, 10, 7, 7, 8], effect: -0.9, q: 0.170, enriched: "Control" },
-        { name: "Verrucomicrobiota", color: "#00897b", scores: [6, 7, 6, 9, 8, 9], effect: 1.4, q: 0.041, enriched: "High fiber" },
-        { name: "Fusobacteriota", color: "#ef6c00", scores: [3, 4, 4, 4, 4, 4], effect: 0.2, q: 0.620, enriched: "High fiber" }
+        {
+          name: "Bacteroidota",
+          color: "#1976d2",
+          scores: [38, 37, 37, 36, 37, 36, 26, 25],
+          comparisons: {
+            baseline_group: cmp(-0.3, 0.640, "Control baseline"),
+            post_group: cmp(-2.8, 0.011, "Control post"),
+            control_time: cmp(-0.4, 0.510, "Control baseline"),
+            intervention_time: cmp(-2.9, 0.009, "Intervention baseline")
+          }
+        },
+        {
+          name: "Bacillota",
+          color: "#2e7d32",
+          scores: [33, 34, 33, 34, 33, 34, 40, 41],
+          comparisons: {
+            baseline_group: cmp(0.2, 0.710, "Intervention baseline"),
+            post_group: cmp(1.9, 0.024, "Intervention post"),
+            control_time: cmp(0.2, 0.680, "Control post"),
+            intervention_time: cmp(2.2, 0.016, "Intervention post")
+          }
+        },
+        {
+          name: "Actinomycetota",
+          color: "#7e57c2",
+          scores: [11, 10, 10, 10, 10, 10, 17, 17],
+          comparisons: {
+            baseline_group: cmp(-0.1, 0.860, "Control baseline"),
+            post_group: cmp(2.9, 0.006, "Intervention post"),
+            control_time: cmp(-0.1, 0.840, "Control baseline"),
+            intervention_time: cmp(3.0, 0.004, "Intervention post")
+          }
+        },
+        {
+          name: "Pseudomonadota",
+          color: "#c62828",
+          scores: [9, 9, 10, 9, 9, 9, 7, 7],
+          comparisons: {
+            baseline_group: cmp(0.0, 0.980, "Intervention baseline"),
+            post_group: cmp(-1.0, 0.180, "Control post"),
+            control_time: cmp(0.3, 0.620, "Control post"),
+            intervention_time: cmp(-1.1, 0.150, "Intervention baseline")
+          }
+        },
+        {
+          name: "Verrucomicrobiota",
+          color: "#00897b",
+          scores: [6, 6, 6, 7, 6, 7, 9, 9],
+          comparisons: {
+            baseline_group: cmp(0.1, 0.820, "Intervention baseline"),
+            post_group: cmp(1.8, 0.031, "Intervention post"),
+            control_time: cmp(0.3, 0.590, "Control post"),
+            intervention_time: cmp(2.1, 0.018, "Intervention post")
+          }
+        },
+        {
+          name: "Fusobacteriota",
+          color: "#ef6c00",
+          scores: [3, 4, 4, 4, 5, 4, 4, 4],
+          comparisons: {
+            baseline_group: cmp(0.2, 0.670, "Intervention baseline"),
+            post_group: cmp(0.0, 0.990, "Intervention post"),
+            control_time: cmp(0.2, 0.730, "Control post"),
+            intervention_time: cmp(-0.2, 0.700, "Intervention baseline")
+          }
+        }
+      ],
+      replicateChecks: [
+        { label: "Control baseline replicates", q: 0.830 },
+        { label: "Control post replicates", q: 0.770 },
+        { label: "Intervention baseline replicates", q: 0.810 },
+        { label: "Intervention post replicates", q: 0.680 }
       ]
     },
     family: {
       taxa: [
-        { name: "Bacteroidaceae", color: "#1976d2", scores: [26, 25, 24, 14, 13, 13], effect: -3.3, q: 0.004, enriched: "Control" },
-        { name: "Prevotellaceae", color: "#64b5f6", scores: [8, 7, 8, 14, 15, 15], effect: 2.7, q: 0.009, enriched: "High fiber" },
-        { name: "Lachnospiraceae", color: "#2e7d32", scores: [20, 21, 22, 23, 24, 23], effect: 1.3, q: 0.072, enriched: "High fiber" },
-        { name: "Ruminococcaceae", color: "#81c784", scores: [12, 11, 12, 16, 17, 18], effect: 2.4, q: 0.015, enriched: "High fiber" },
-        { name: "Bifidobacteriaceae", color: "#7e57c2", scores: [6, 7, 5, 11, 12, 12], effect: 3.1, q: 0.003, enriched: "High fiber" },
-        { name: "Akkermansiaceae", color: "#00897b", scores: [4, 5, 4, 8, 8, 7], effect: 1.9, q: 0.028, enriched: "High fiber" },
-        { name: "Other", color: "#d9d9d9", scores: [24, 24, 25, 14, 11, 12], effect: -0.4, q: 0.410, enriched: "Control" }
+        {
+          name: "Bacteroidaceae",
+          color: "#1976d2",
+          scores: [25, 24, 24, 23, 24, 23, 14, 13],
+          comparisons: {
+            baseline_group: cmp(-0.4, 0.620, "Control baseline"),
+            post_group: cmp(-3.1, 0.006, "Control post"),
+            control_time: cmp(-0.3, 0.580, "Control baseline"),
+            intervention_time: cmp(-3.0, 0.005, "Intervention baseline")
+          }
+        },
+        {
+          name: "Prevotellaceae",
+          color: "#64b5f6",
+          scores: [8, 8, 8, 9, 8, 9, 15, 16],
+          comparisons: {
+            baseline_group: cmp(0.2, 0.740, "Intervention baseline"),
+            post_group: cmp(2.8, 0.010, "Intervention post"),
+            control_time: cmp(0.3, 0.600, "Control post"),
+            intervention_time: cmp(2.7, 0.009, "Intervention post")
+          }
+        },
+        {
+          name: "Lachnospiraceae",
+          color: "#2e7d32",
+          scores: [20, 21, 20, 21, 20, 20, 23, 24],
+          comparisons: {
+            baseline_group: cmp(-0.2, 0.700, "Control baseline"),
+            post_group: cmp(1.2, 0.082, "Intervention post"),
+            control_time: cmp(0.1, 0.860, "Control post"),
+            intervention_time: cmp(1.4, 0.070, "Intervention post")
+          }
+        },
+        {
+          name: "Ruminococcaceae",
+          color: "#81c784",
+          scores: [12, 12, 12, 13, 12, 12, 17, 17],
+          comparisons: {
+            baseline_group: cmp(0.0, 0.930, "Intervention baseline"),
+            post_group: cmp(2.1, 0.019, "Intervention post"),
+            control_time: cmp(0.2, 0.720, "Control post"),
+            intervention_time: cmp(2.2, 0.015, "Intervention post")
+          }
+        },
+        {
+          name: "Bifidobacteriaceae",
+          color: "#7e57c2",
+          scores: [6, 6, 6, 7, 6, 6, 12, 12],
+          comparisons: {
+            baseline_group: cmp(0.0, 0.980, "Intervention baseline"),
+            post_group: cmp(3.0, 0.004, "Intervention post"),
+            control_time: cmp(0.2, 0.690, "Control post"),
+            intervention_time: cmp(3.1, 0.003, "Intervention post")
+          }
+        },
+        {
+          name: "Akkermansiaceae",
+          color: "#00897b",
+          scores: [4, 4, 4, 5, 4, 4, 8, 8],
+          comparisons: {
+            baseline_group: cmp(0.0, 0.990, "Intervention baseline"),
+            post_group: cmp(2.2, 0.016, "Intervention post"),
+            control_time: cmp(0.3, 0.620, "Control post"),
+            intervention_time: cmp(2.3, 0.014, "Intervention post")
+          }
+        },
+        {
+          name: "Other",
+          color: "#d9d9d9",
+          scores: [25, 25, 26, 22, 26, 26, 11, 10],
+          comparisons: {
+            baseline_group: cmp(0.1, 0.840, "Intervention baseline"),
+            post_group: cmp(-0.5, 0.440, "Control post"),
+            control_time: cmp(-0.4, 0.500, "Control baseline"),
+            intervention_time: cmp(-0.6, 0.390, "Intervention baseline")
+          }
+        }
+      ],
+      replicateChecks: [
+        { label: "Control baseline replicates", q: 0.790 },
+        { label: "Control post replicates", q: 0.720 },
+        { label: "Intervention baseline replicates", q: 0.840 },
+        { label: "Intervention post replicates", q: 0.610 }
       ]
     },
     genus: {
       taxa: [
-        { name: "Bacteroides", color: "#1976d2", scores: [23, 22, 21, 12, 11, 11], effect: -3.0, q: 0.005, enriched: "Control" },
-        { name: "Prevotella", color: "#64b5f6", scores: [6, 6, 7, 13, 13, 14], effect: 2.9, q: 0.008, enriched: "High fiber" },
-        { name: "Faecalibacterium", color: "#2e7d32", scores: [15, 15, 16, 18, 19, 18], effect: 1.5, q: 0.063, enriched: "High fiber" },
-        { name: "Roseburia", color: "#81c784", scores: [9, 9, 10, 13, 14, 14], effect: 2.2, q: 0.021, enriched: "High fiber" },
-        { name: "Bifidobacterium", color: "#7e57c2", scores: [5, 6, 5, 11, 12, 12], effect: 3.0, q: 0.004, enriched: "High fiber" },
-        { name: "Akkermansia", color: "#00897b", scores: [4, 4, 3, 8, 8, 8], effect: 2.0, q: 0.027, enriched: "High fiber" },
-        { name: "Other", color: "#d9d9d9", scores: [38, 38, 38, 25, 23, 23], effect: -0.3, q: 0.540, enriched: "Control" }
+        {
+          name: "Bacteroides",
+          color: "#1976d2",
+          scores: [23, 22, 22, 21, 22, 21, 12, 11],
+          comparisons: {
+            baseline_group: cmp(-0.3, 0.650, "Control baseline"),
+            post_group: cmp(-3.0, 0.005, "Control post"),
+            control_time: cmp(-0.2, 0.670, "Control baseline"),
+            intervention_time: cmp(-2.9, 0.006, "Intervention baseline")
+          }
+        },
+        {
+          name: "Prevotella",
+          color: "#64b5f6",
+          scores: [6, 6, 6, 7, 6, 7, 13, 14],
+          comparisons: {
+            baseline_group: cmp(0.2, 0.760, "Intervention baseline"),
+            post_group: cmp(2.9, 0.008, "Intervention post"),
+            control_time: cmp(0.3, 0.590, "Control post"),
+            intervention_time: cmp(2.8, 0.008, "Intervention post")
+          }
+        },
+        {
+          name: "Faecalibacterium",
+          color: "#2e7d32",
+          scores: [15, 15, 15, 16, 15, 15, 18, 19],
+          comparisons: {
+            baseline_group: cmp(0.0, 0.940, "Intervention baseline"),
+            post_group: cmp(1.4, 0.066, "Intervention post"),
+            control_time: cmp(0.2, 0.740, "Control post"),
+            intervention_time: cmp(1.5, 0.059, "Intervention post")
+          }
+        },
+        {
+          name: "Roseburia",
+          color: "#81c784",
+          scores: [9, 9, 9, 10, 9, 9, 13, 14],
+          comparisons: {
+            baseline_group: cmp(0.0, 0.930, "Intervention baseline"),
+            post_group: cmp(2.1, 0.022, "Intervention post"),
+            control_time: cmp(0.2, 0.700, "Control post"),
+            intervention_time: cmp(2.3, 0.018, "Intervention post")
+          }
+        },
+        {
+          name: "Bifidobacterium",
+          color: "#7e57c2",
+          scores: [5, 5, 5, 6, 5, 5, 11, 12],
+          comparisons: {
+            baseline_group: cmp(0.0, 0.970, "Intervention baseline"),
+            post_group: cmp(3.0, 0.004, "Intervention post"),
+            control_time: cmp(0.2, 0.690, "Control post"),
+            intervention_time: cmp(3.0, 0.004, "Intervention post")
+          }
+        },
+        {
+          name: "Akkermansia",
+          color: "#00897b",
+          scores: [4, 4, 4, 4, 4, 4, 8, 8],
+          comparisons: {
+            baseline_group: cmp(0.0, 0.990, "Intervention baseline"),
+            post_group: cmp(2.0, 0.027, "Intervention post"),
+            control_time: cmp(0.0, 0.990, "Control baseline"),
+            intervention_time: cmp(2.2, 0.020, "Intervention post")
+          }
+        },
+        {
+          name: "Other",
+          color: "#d9d9d9",
+          scores: [38, 39, 39, 36, 39, 39, 25, 22],
+          comparisons: {
+            baseline_group: cmp(0.1, 0.840, "Intervention baseline"),
+            post_group: cmp(-0.4, 0.490, "Control post"),
+            control_time: cmp(-0.4, 0.510, "Control baseline"),
+            intervention_time: cmp(-0.5, 0.430, "Intervention baseline")
+          }
+        }
+      ],
+      replicateChecks: [
+        { label: "Control baseline replicates", q: 0.810 },
+        { label: "Control post replicates", q: 0.700 },
+        { label: "Intervention baseline replicates", q: 0.820 },
+        { label: "Intervention post replicates", q: 0.600 }
       ]
     },
     species: {
       taxa: [
-        { name: "Bacteroides vulgatus", color: "#1976d2", scores: [11, 11, 10, 5, 5, 5], effect: -2.8, q: 0.011, enriched: "Control" },
-        { name: "Bacteroides uniformis", color: "#42a5f5", scores: [8, 8, 8, 4, 4, 4], effect: -2.2, q: 0.025, enriched: "Control" },
-        { name: "Prevotella copri", color: "#64b5f6", scores: [4, 4, 5, 10, 10, 11], effect: 3.2, q: 0.003, enriched: "High fiber" },
-        { name: "Faecalibacterium prausnitzii", color: "#2e7d32", scores: [11, 11, 12, 14, 15, 15], effect: 1.7, q: 0.037, enriched: "High fiber" },
-        { name: "Bifidobacterium adolescentis", color: "#7e57c2", scores: [3, 3, 3, 8, 9, 9], effect: 3.1, q: 0.004, enriched: "High fiber" },
-        { name: "Akkermansia muciniphila", color: "#00897b", scores: [3, 4, 3, 7, 7, 7], effect: 2.4, q: 0.019, enriched: "High fiber" },
-        { name: "Other", color: "#d9d9d9", scores: [60, 59, 59, 52, 50, 49], effect: -0.1, q: 0.790, enriched: "Control" }
+        {
+          name: "Bacteroides vulgatus",
+          color: "#1976d2",
+          scores: [11, 11, 10, 10, 10, 10, 5, 5],
+          comparisons: {
+            baseline_group: cmp(0.0, 0.990, "Control baseline"),
+            post_group: cmp(-2.8, 0.011, "Control post"),
+            control_time: cmp(-0.2, 0.730, "Control baseline"),
+            intervention_time: cmp(-2.6, 0.013, "Intervention baseline")
+          }
+        },
+        {
+          name: "Bacteroides uniformis",
+          color: "#42a5f5",
+          scores: [8, 8, 8, 8, 8, 8, 4, 4],
+          comparisons: {
+            baseline_group: cmp(0.0, 0.990, "Control baseline"),
+            post_group: cmp(-2.2, 0.025, "Control post"),
+            control_time: cmp(0.0, 0.990, "Control baseline"),
+            intervention_time: cmp(-2.1, 0.027, "Intervention baseline")
+          }
+        },
+        {
+          name: "Prevotella copri",
+          color: "#64b5f6",
+          scores: [4, 4, 4, 4, 4, 4, 10, 11],
+          comparisons: {
+            baseline_group: cmp(0.0, 0.990, "Intervention baseline"),
+            post_group: cmp(3.2, 0.003, "Intervention post"),
+            control_time: cmp(0.0, 0.990, "Control baseline"),
+            intervention_time: cmp(3.1, 0.004, "Intervention post")
+          }
+        },
+        {
+          name: "Faecalibacterium prausnitzii",
+          color: "#2e7d32",
+          scores: [11, 11, 11, 12, 11, 11, 14, 15],
+          comparisons: {
+            baseline_group: cmp(0.0, 0.920, "Intervention baseline"),
+            post_group: cmp(1.7, 0.037, "Intervention post"),
+            control_time: cmp(0.3, 0.610, "Control post"),
+            intervention_time: cmp(1.8, 0.033, "Intervention post")
+          }
+        },
+        {
+          name: "Bifidobacterium adolescentis",
+          color: "#7e57c2",
+          scores: [3, 3, 3, 3, 3, 3, 8, 9],
+          comparisons: {
+            baseline_group: cmp(0.0, 0.990, "Intervention baseline"),
+            post_group: cmp(3.1, 0.004, "Intervention post"),
+            control_time: cmp(0.0, 0.990, "Control baseline"),
+            intervention_time: cmp(3.2, 0.003, "Intervention post")
+          }
+        },
+        {
+          name: "Akkermansia muciniphila",
+          color: "#00897b",
+          scores: [3, 4, 3, 4, 3, 3, 7, 7],
+          comparisons: {
+            baseline_group: cmp(-0.2, 0.710, "Control baseline"),
+            post_group: cmp(2.4, 0.019, "Intervention post"),
+            control_time: cmp(0.2, 0.690, "Control post"),
+            intervention_time: cmp(2.5, 0.017, "Intervention post")
+          }
+        },
+        {
+          name: "Other",
+          color: "#d9d9d9",
+          scores: [60, 59, 61, 59, 61, 61, 52, 49],
+          comparisons: {
+            baseline_group: cmp(0.0, 0.930, "Intervention baseline"),
+            post_group: cmp(-0.1, 0.790, "Control post"),
+            control_time: cmp(0.0, 0.910, "Control baseline"),
+            intervention_time: cmp(-0.2, 0.710, "Intervention baseline")
+          }
+        }
+      ],
+      replicateChecks: [
+        { label: "Control baseline replicates", q: 0.760 },
+        { label: "Control post replicates", q: 0.680 },
+        { label: "Intervention baseline replicates", q: 0.780 },
+        { label: "Intervention post replicates", q: 0.570 }
       ]
     }
   };
 
-  function renderLevel(levelName) {
+  function xForSample(index, chartLeft, barWidth, gap) {
+    return chartLeft + index * (barWidth + gap);
+  }
+
+  function renderLevel(levelName, contrastName) {
     const level = levels[levelName];
+    const contrast = contrasts[contrastName];
     const maxEffect = 3.6;
     const SIG_BASE_HEIGHT = 48;
     const SIG_ROW_HEIGHT = 28;
 
-    const svgWidth = 420;
-    const svgHeight = 230;
-    const chartLeft = 42;
-    const chartTop = 20;
-    const chartBottom = 185;
-    const chartWidth = 340;
-    const barWidth = 38;
-    const gap = 14;
+    const svgWidth = 460;
+    const svgHeight = 246;
+    const chartLeft = 46;
+    const chartTop = 22;
+    const chartBottom = 182;
+    const barWidth = 30;
+    const gap = 10;
+    const chartWidth = cohortSamples.length * (barWidth + gap) - gap;
 
     const bars = cohortSamples.map((sampleMeta, sampleIndex) => {
       let currentY = chartBottom;
@@ -262,21 +639,40 @@ document.addEventListener("DOMContentLoaded", function () {
         const value = taxon.scores[sampleIndex];
         const height = (value / 100) * (chartBottom - chartTop);
         currentY -= height;
-        return `<rect x="${chartLeft + sampleIndex * (barWidth + gap)}" y="${currentY}" width="${barWidth}" height="${height}" fill="${taxon.color}" rx="3" ry="3"></rect>`;
+        return `<rect x="${xForSample(sampleIndex, chartLeft, barWidth, gap)}" y="${currentY}" width="${barWidth}" height="${height}" fill="${taxon.color}" rx="3" ry="3"></rect>`;
       }).join("");
 
-      const groupBand = sampleMeta.group === "Control" ? "#e2e8f0" : "#dcedc8";
+      const bandFill = sampleMeta.timepoint === "Baseline" ? "#dbeafe" : "#fee2e2";
+      const bandStroke = sampleMeta.group === "Control" ? "#1976d2" : "#c62828";
       return `
-        <rect x="${chartLeft + sampleIndex * (barWidth + gap)}" y="${chartBottom + 6}" width="${barWidth}" height="18" fill="${groupBand}" rx="4" ry="4"></rect>
+        <rect x="${xForSample(sampleIndex, chartLeft, barWidth, gap)}" y="${chartBottom + 8}" width="${barWidth}" height="18" fill="${bandFill}" stroke="${bandStroke}" stroke-width="1" rx="4" ry="4"></rect>
         ${segments}
-        <text x="${chartLeft + sampleIndex * (barWidth + gap) + barWidth / 2}" y="${chartBottom + 18}" text-anchor="middle" font-size="9" fill="#0f172a">${sampleMeta.sample}</text>
+        <text x="${xForSample(sampleIndex, chartLeft, barWidth, gap) + barWidth / 2}" y="${chartBottom + 20}" text-anchor="middle" font-size="9" fill="#0f172a">${sampleMeta.sample}</text>
       `;
     }).join("");
 
-    const groupLabels = `
-      <text x="94" y="214" text-anchor="middle" font-size="10" fill="#334155">Control</text>
-      <text x="249" y="214" text-anchor="middle" font-size="10" fill="#334155">High fiber</text>
-    `;
+    const blockLabels = sampleBlocks.map((block, blockIndex) => {
+      const xStart = xForSample(block.startIndex, chartLeft, barWidth, gap);
+      const xEnd = xForSample(block.endIndex, chartLeft, barWidth, gap) + barWidth;
+      const xCenter = (xStart + xEnd) / 2;
+      const shortLabel = block.timepoint === "Baseline" ? "Baseline" : "Post";
+      const separator = blockIndex < sampleBlocks.length - 1
+        ? `<line x1="${xEnd + gap / 2}" y1="${chartTop}" x2="${xEnd + gap / 2}" y2="${chartBottom + 34}" stroke="#cbd5e1" stroke-dasharray="3 3"></line>`
+        : "";
+      return `
+        ${separator}
+        <text x="${xCenter}" y="${chartBottom + 38}" text-anchor="middle" font-size="9" fill="#475569">${shortLabel}</text>
+      `;
+    }).join("");
+
+    const groupLabels = groupBlocks.map((block) => {
+      const xStart = xForSample(block.startIndex, chartLeft, barWidth, gap);
+      const xEnd = xForSample(block.endIndex, chartLeft, barWidth, gap) + barWidth;
+      return `
+        <line x1="${xStart}" y1="${chartBottom + 48}" x2="${xEnd}" y2="${chartBottom + 48}" stroke="#94a3b8" stroke-width="1.4"></line>
+        <text x="${(xStart + xEnd) / 2}" y="${chartBottom + 61}" text-anchor="middle" font-size="10" fill="#334155">${block.label}</text>
+      `;
+    }).join("");
 
     const yTicks = [0, 25, 50, 75, 100].map((tick) => {
       const y = chartBottom - ((tick / 100) * (chartBottom - chartTop));
@@ -288,18 +684,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
     barChart.innerHTML = `
       <svg viewBox="0 0 ${svgWidth} ${svgHeight}" width="100%" role="img" aria-label="Interactive stacked relative abundance bar chart">
-        <text x="0" y="12" font-size="9" fill="#334155">${levelName.charAt(0).toUpperCase() + levelName.slice(1)}-level relative abundance across a control and high-fiber cohort</text>
+        <text x="0" y="12" font-size="9" fill="#334155">${levelName.charAt(0).toUpperCase() + levelName.slice(1)}-level relative abundance across longitudinal control and intervention cohorts</text>
         ${yTicks}
         <line x1="${chartLeft}" y1="${chartTop}" x2="${chartLeft}" y2="${chartBottom}" stroke="#94a3b8" stroke-width="1"></line>
         <line x1="${chartLeft}" y1="${chartBottom}" x2="${chartLeft + chartWidth}" y2="${chartBottom}" stroke="#94a3b8" stroke-width="1"></line>
         <text x="12" y="18" transform="rotate(-90 12 18)" font-size="8" fill="#334155">Relative abundance (%)</text>
         ${bars}
+        ${blockLabels}
         ${groupLabels}
       </svg>
     `;
 
     legend.innerHTML = level.taxa.map((taxon) => {
-      const significant = taxon.q < 0.05 ? " • significant" : "";
+      const significant = taxon.comparisons[contrastName].q < 0.05 ? " • significant in selected contrast" : "";
       return `
         <div class="ra-legend-item">
           <span class="ra-legend-swatch" style="background:${taxon.color}"></span>
@@ -312,18 +709,19 @@ document.addEventListener("DOMContentLoaded", function () {
     const zeroX = 150;
     const scale = 110 / maxEffect;
     const significanceRows = level.taxa.map((taxon, index) => {
+      const comparison = taxon.comparisons[contrastName];
       const y = 34 + index * SIG_ROW_HEIGHT;
-      const signedEffect = taxon.effect;
+      const signedEffect = comparison.effect;
       const effectWidth = Math.abs(signedEffect) * scale;
       const x = signedEffect >= 0 ? zeroX : zeroX - effectWidth;
       const pointX = signedEffect >= 0 ? zeroX + effectWidth : zeroX - effectWidth;
-      const qLabel = taxon.q < 0.05 ? `q=${taxon.q.toFixed(3)}` : "ns";
-      const point = taxon.q < 0.05
+      const qLabel = comparison.q < 0.05 ? `q=${comparison.q.toFixed(3)}` : "ns";
+      const point = comparison.q < 0.05
         ? `<circle cx="${pointX}" cy="${y}" r="4.5" fill="#0f172a"></circle>`
         : `<circle cx="${pointX}" cy="${y}" r="4.5" fill="white" stroke="#64748b" stroke-width="1.2"></circle>`;
       return `
         <text x="0" y="${y + 3}" font-size="9" fill="#0f172a">${taxon.name}</text>
-        <rect x="${x}" y="${y - 8}" width="${effectWidth}" height="16" fill="${taxon.color}" opacity="${taxon.q < 0.05 ? 0.95 : 0.45}" rx="4" ry="4"></rect>
+        <rect x="${x}" y="${y - 8}" width="${effectWidth}" height="16" fill="${taxon.color}" opacity="${comparison.q < 0.05 ? 0.95 : 0.45}" rx="4" ry="4"></rect>
         ${point}
         <text x="${signedEffect >= 0 ? 270 : 34}" y="${y + 3}" font-size="8" fill="#475569">${qLabel}</text>
       `;
@@ -331,34 +729,46 @@ document.addEventListener("DOMContentLoaded", function () {
 
     significanceChart.innerHTML = `
       <svg viewBox="0 0 320 ${sigChartHeight}" width="100%" role="img" aria-label="Taxa preserving significance strip">
-        <text x="0" y="12" font-size="9" fill="#334155">Negative = control-enriched, positive = high-fiber-enriched effect size</text>
+        <text x="0" y="12" font-size="9" fill="#334155">${contrast.label}</text>
         <line x1="${zeroX}" y1="20" x2="${zeroX}" y2="${sigChartHeight - 8}" stroke="#94a3b8" stroke-width="1"></line>
-        <text x="${zeroX - 58}" y="24" font-size="8" fill="#475569">Control</text>
-        <text x="${zeroX + 8}" y="24" font-size="8" fill="#475569">High fiber</text>
+        <text x="${zeroX - 82}" y="24" font-size="8" fill="#475569">${contrast.leftLabel}</text>
+        <text x="${zeroX + 8}" y="24" font-size="8" fill="#475569">${contrast.rightLabel}</text>
         ${significanceRows}
       </svg>
     `;
 
     const significantTaxa = level.taxa
-      .filter((taxon) => taxon.q < 0.05 && taxon.name !== "Other");
+      .filter((taxon) => taxon.comparisons[contrastName].q < 0.05 && taxon.name !== "Other");
+
+    replicateChecks.innerHTML = level.replicateChecks.map((check) => `
+      <div class="ra-replicate-chip">
+        <strong>${check.label}</strong>
+        <span>Same-group / same-time-point pairwise check: q=${check.q.toFixed(3)} · non-significant</span>
+      </div>
+    `).join("");
 
     if (significantTaxa.length === 0) {
-      summary.textContent = `At the ${levelName} level, no taxa show significant shifts after multiple-testing correction. This companion strip still preserves taxon color identity while surfacing the non-significant pattern.`;
+      summary.textContent = `${contrast.description} At the ${levelName} level, no taxa reach multiple-testing significance in this selected contrast, and all same-group / same-time-point replicate checks also remain non-significant.`;
       return;
     }
 
     const strongestEntry = significantTaxa
-      .map((taxon) => ({ taxon, signedEffect: taxon.effect }))
+      .map((taxon) => ({ taxon, signedEffect: taxon.comparisons[contrastName].effect }))
       .sort((a, b) => Math.abs(b.signedEffect) - Math.abs(a.signedEffect))[0];
     const strongest = strongestEntry.taxon;
-    summary.textContent = `At the ${levelName} level, the strongest significant shift is ${strongest.name} (${strongest.enriched}-enriched, LEfSe-like effect ${strongest.effect.toFixed(1)}, q=${strongest.q.toFixed(3)}). This companion strip preserves taxon color identity while still surfacing significance.`;
+    const strongestComparison = strongest.comparisons[contrastName];
+    summary.textContent = `${contrast.description} At the ${levelName} level, the strongest significant shift is ${strongest.name} (${strongestComparison.enriched}-enriched, LEfSe-like effect ${strongestComparison.effect.toFixed(1)}, q=${strongestComparison.q.toFixed(3)}). Same-group / same-time-point replicate checks remain non-significant.`;
   }
 
   levelSelect.addEventListener("change", function () {
-    renderLevel(levelSelect.value);
+    renderLevel(levelSelect.value, contrastSelect.value);
   });
 
-  renderLevel(levelSelect.value);
+  contrastSelect.addEventListener("change", function () {
+    renderLevel(levelSelect.value, contrastSelect.value);
+  });
+
+  renderLevel(levelSelect.value, contrastSelect.value);
 });
 </script>
 :::
