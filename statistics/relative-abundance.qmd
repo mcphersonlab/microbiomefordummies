@@ -166,6 +166,19 @@ That way you get the best part of LEfSe-style interpretation without losing the 
   color: #475569;
   font-size: 0.9rem;
 }
+
+.ra-replicate-chip--significant {
+  border-color: #fecaca;
+  background: #fff1f2;
+}
+
+.ra-replicate-chip--significant strong {
+  color: #991b1b;
+}
+
+.ra-replicate-chip--significant span {
+  color: #9f1239;
+}
 </style>
 
 <div id="relative-abundance-lab"></div>
@@ -617,6 +630,18 @@ document.addEventListener("DOMContentLoaded", function () {
     return chartLeft + index * (barWidth + gap);
   }
 
+  function replicateCheckStatus(check) {
+    return check.q < 0.05
+      ? {
+          chipClass: "ra-replicate-chip ra-replicate-chip--significant",
+          label: "significant"
+        }
+      : {
+          chipClass: "ra-replicate-chip",
+          label: "non-significant"
+        };
+  }
+
   function renderLevel(levelName, contrastName) {
     const level = levels[levelName];
     const contrast = contrasts[contrastName];
@@ -739,16 +764,23 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const significantTaxa = level.taxa
       .filter((taxon) => taxon.comparisons[contrastName].q < 0.05 && taxon.name !== "Other");
+    const significantReplicateChecks = level.replicateChecks.filter((check) => check.q < 0.05);
+    const replicateSummaryText = significantReplicateChecks.length
+      ? "One or more same-group / same-time-point replicate checks are significant in this synthetic example, so interpret the contrast-specific signal more cautiously."
+      : "All same-group / same-time-point replicate checks remain non-significant.";
 
-    replicateChecks.innerHTML = level.replicateChecks.map((check) => `
-      <div class="ra-replicate-chip">
+    replicateChecks.innerHTML = level.replicateChecks.map((check) => {
+      const status = replicateCheckStatus(check);
+      return `
+      <div class="${status.chipClass}">
         <strong>${check.label}</strong>
-        <span>Same-group / same-time-point pairwise check: q=${check.q.toFixed(3)} · non-significant</span>
+        <span>Same-group / same-time-point pairwise check: q=${check.q.toFixed(3)} · ${status.label}</span>
       </div>
-    `).join("");
+    `;
+    }).join("");
 
     if (significantTaxa.length === 0) {
-      summary.textContent = `${contrast.description} At the ${levelName} level, no taxa reach multiple-testing significance in this selected contrast, and all same-group / same-time-point replicate checks also remain non-significant.`;
+      summary.textContent = `${contrast.description} At the ${levelName} level, no taxa reach multiple-testing significance in this selected contrast. ${replicateSummaryText}`;
       return;
     }
 
@@ -757,7 +789,7 @@ document.addEventListener("DOMContentLoaded", function () {
       .sort((a, b) => Math.abs(b.signedEffect) - Math.abs(a.signedEffect))[0];
     const strongest = strongestEntry.taxon;
     const strongestComparison = strongest.comparisons[contrastName];
-    summary.textContent = `${contrast.description} At the ${levelName} level, the strongest significant shift is ${strongest.name} (${strongestComparison.enriched}-enriched, LEfSe-like effect ${strongestComparison.effect.toFixed(1)}, q=${strongestComparison.q.toFixed(3)}). Same-group / same-time-point replicate checks remain non-significant.`;
+    summary.textContent = `${contrast.description} At the ${levelName} level, the strongest significant shift is ${strongest.name} (${strongestComparison.enriched}-enriched, LEfSe-like effect ${strongestComparison.effect.toFixed(1)}, q=${strongestComparison.q.toFixed(3)}). ${replicateSummaryText}`;
   }
 
   levelSelect.addEventListener("change", function () {

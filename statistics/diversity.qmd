@@ -1071,25 +1071,37 @@ document.addEventListener("DOMContentLoaded", function () {
     betaSummary.textContent = `${metricLabels[metric]} + ${ordinationLabels[ordination]} using the current alpha-defined source sample: mean within-group distance = ${formatNumber(meanWithin)} and mean between-group distance = ${formatNumber(meanBetween)}.${thresholdNote} ${ordinationDescriptions[ordination]}`;
   }
 
+  let scheduledRenderFrame = null;
+
   function renderAll() {
     renderSharedBaseline();
     renderAlpha();
     renderBeta();
   }
 
+  function scheduleRenderAll() {
+    if (scheduledRenderFrame !== null) {
+      return;
+    }
+
+    scheduledRenderFrame = window.requestAnimationFrame(() => {
+      scheduledRenderFrame = null;
+      renderAll();
+    });
+  }
+
   [
     alphaRichnessInput,
     alphaDominanceInput,
-    alphaFocusMetricInput,
     betaShiftInput,
     betaVariabilityInput,
     betaSamplesInput,
     betaPresenceInput
   ].forEach((input) => {
-    input.addEventListener("input", renderAll);
-    input.addEventListener("change", renderAll);
+    input.addEventListener("input", scheduleRenderAll);
   });
 
+  alphaFocusMetricInput.addEventListener("change", renderAll);
   betaMetricInput.addEventListener("change", renderAll);
   betaOrdinationInput.addEventListener("change", renderAll);
 
