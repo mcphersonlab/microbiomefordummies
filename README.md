@@ -1,4 +1,4 @@
-# Microbiome Tools for Dummies
+# Microbiome for Dummies
 
 A beginner-friendly Quarto website covering microbiome bioinformatic tools, focusing on the [Biobakery](https://huttenhower.sph.harvard.edu/tools/) suite developed by the Huttenhower and Segata labs.
 
