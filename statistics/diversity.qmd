@@ -209,6 +209,23 @@ document.addEventListener("DOMContentLoaded", function () {
   const simpson = (proportions) =>
     1 - proportions.reduce((sum, value) => sum + value * value, 0);
 
+  function getLabelColor(hexColor) {
+    if (!hexColor || typeof hexColor !== "string") {
+      return "white";
+    }
+
+    const hex = hexColor.replace("#", "");
+    if (hex.length !== 6) {
+      return "white";
+    }
+
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    return brightness > 150 ? "#111827" : "white";
+  }
+
   function alphaComposition(richness, dominance) {
     const maxShare = (1 / richness) + dominance * (1 - 1 / richness);
     const otherShare = (1 - maxShare) / (richness - 1);
@@ -231,9 +248,11 @@ document.addEventListener("DOMContentLoaded", function () {
     let offset = 0;
     const segments = composition.map((value, index) => {
       const width = value * 100;
-      const rect = `<rect x="${offset}" y="20" width="${width}" height="36" rx="5" ry="5" fill="${palette[index % palette.length]}"></rect>`;
+      const segmentColor = palette[index % palette.length];
+      const rect = `<rect x="${offset}" y="20" width="${width}" height="36" rx="5" ry="5" fill="${segmentColor}"></rect>`;
+      const labelColor = getLabelColor(segmentColor);
       const label = width > 7
-        ? `<text x="${offset + width / 2}" y="43" text-anchor="middle" font-size="11" fill="white" font-weight="700">T${index + 1}</text>`
+        ? `<text x="${offset + width / 2}" y="43" text-anchor="middle" font-size="11" fill="${labelColor}" font-weight="700">T${index + 1}</text>`
         : "";
       offset += width;
       return rect + label;

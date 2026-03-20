@@ -300,7 +300,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const scale = 110 / maxEffect;
     const significanceRows = level.taxa.map((taxon, index) => {
       const y = 34 + index * SIG_ROW_HEIGHT;
-      const signedEffect = taxon.enriched === "High fiber" ? taxon.effect : -taxon.effect;
+      const signedEffect = taxon.effect;
       const effectWidth = Math.abs(signedEffect) * scale;
       const x = signedEffect >= 0 ? zeroX : zeroX - effectWidth;
       const pointX = signedEffect >= 0 ? zeroX + effectWidth : zeroX - effectWidth;
@@ -326,9 +326,18 @@ document.addEventListener("DOMContentLoaded", function () {
       </svg>
     `;
 
-    const strongest = level.taxa
-      .filter((taxon) => taxon.q < 0.05 && taxon.name !== "Other")
-      .sort((a, b) => b.effect - a.effect)[0];
+    const significantTaxa = level.taxa
+      .filter((taxon) => taxon.q < 0.05 && taxon.name !== "Other");
+
+    if (significantTaxa.length === 0) {
+      summary.textContent = `At the ${levelName} level, no taxa show significant shifts after multiple-testing correction. This companion strip still preserves taxon color identity while surfacing the non-significant pattern.`;
+      return;
+    }
+
+    const strongestEntry = significantTaxa
+      .map((taxon) => ({ taxon, signedEffect: taxon.effect }))
+      .sort((a, b) => Math.abs(b.signedEffect) - Math.abs(a.signedEffect))[0];
+    const strongest = strongestEntry.taxon;
     summary.textContent = `At the ${levelName} level, the strongest significant shift is ${strongest.name} (${strongest.enriched}-enriched, LEfSe-like effect ${strongest.effect.toFixed(1)}, q=${strongest.q.toFixed(3)}). This companion strip preserves taxon color identity while still surfacing significance.`;
   }
 
