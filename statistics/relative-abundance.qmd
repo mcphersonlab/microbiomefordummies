@@ -205,7 +205,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       <section class="ra-card">
         <h3>Taxa-preserving significance strip</h3>
-        <p class="ra-caption">This companion panel behaves like a LEfSe-style effect-size plot, but now you can switch between between-group and within-group longitudinal contrasts without losing the taxon colors used in the stacked bars.</p>
+        <p class="ra-caption">This companion panel behaves like a LEfSe-style effect-size plot, but now you can switch between-group and within-group longitudinal contrasts without losing the taxon colors used in the stacked bars.</p>
         <div id="ra-significance-chart" class="ra-chart-frame" aria-live="polite"></div>
         <p id="ra-summary" class="ra-summary"></p>
         <div id="ra-replicate-checks" class="ra-replicate-checks" aria-live="polite"></div>

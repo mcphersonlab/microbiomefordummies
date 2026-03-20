@@ -453,7 +453,7 @@ document.addEventListener("DOMContentLoaded", function () {
     return metrics[key];
   }
 
-  function buildTreatmentSignal(length) {
+  function buildInterventionSignal(length) {
     const raw = Array.from({ length }, (_, index) => {
       const fraction = length === 1 ? 0 : index / (length - 1);
       if (fraction < 0.34) {
@@ -488,15 +488,15 @@ document.addEventListener("DOMContentLoaded", function () {
     const variability = Number(betaVariabilityInput.value);
     return shiftedProfile(
       baseProfile,
-      buildTreatmentSignal(baseProfile.length),
+      buildInterventionSignal(baseProfile.length),
       shiftStrength,
       patternedOffset(baseProfile.length, 0, variability * 0.7, 1.1)
     );
   }
 
   function buildBetaSamples(baseProfile, shiftStrength, variability, sampleCount) {
-    const treatmentSignal = buildTreatmentSignal(baseProfile.length);
-    const controlSignal = treatmentSignal.map((value) => value * 0.14);
+    const interventionSignal = buildInterventionSignal(baseProfile.length);
+    const controlSignal = interventionSignal.map((value) => value * 0.14);
     const samples = [{ name: "Source", group: "Baseline", values: baseProfile }];
 
     for (let index = 0; index < sampleCount; index += 1) {
@@ -518,7 +518,7 @@ document.addEventListener("DOMContentLoaded", function () {
         group: "Intervention",
         values: shiftedProfile(
           baseProfile,
-          treatmentSignal,
+          interventionSignal,
           shiftStrength,
           patternedOffset(baseProfile.length, index, 0.025 + variability * 0.5, 1.6)
         )
