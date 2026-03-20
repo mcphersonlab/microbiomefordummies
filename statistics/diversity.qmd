@@ -1,6 +1,6 @@
 ---
-title: "Diversity"
-subtitle: "Alpha- and beta-diversity from bioBakery outputs"
+title: "Ecological Diversity"
+subtitle: "Interactive alpha- and beta-diversity intuition from bioBakery outputs"
 ---
 
 This page shows a beginner-friendly way to calculate **alpha diversity** (within-sample diversity) and **beta diversity** (between-sample dissimilarity) from the tables produced by the bioBakery ecosystem.
@@ -12,6 +12,429 @@ The same workflow works for both:
 
 ::: {.callout-note}
 For taxonomic diversity, most people start with a **species-level MetaPhlAn table**. For functional diversity, use an **unstratified HUMAnN pathway or gene-family table**.
+:::
+
+## Interactive ecological diversity explainer
+
+The mini-lab below is **interactive and intentionally synthetic**: it is there to help you build intuition before you run the R code further down the page on your own tables.
+
+::: {=html}
+<style>
+#ecological-diversity-lab {
+  margin: 1.5rem 0 2rem;
+}
+
+.eco-diversity-grid {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.eco-card {
+  border: 1px solid #d8dee4;
+  border-radius: 0.9rem;
+  padding: 1rem 1.1rem 1.2rem;
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+
+.eco-card h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+
+.eco-control-grid {
+  display: grid;
+  gap: 0.9rem;
+  margin: 1rem 0;
+}
+
+.eco-control-grid label,
+.eco-select-label {
+  display: grid;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+.eco-control-grid input[type="range"] {
+  width: 100%;
+}
+
+.eco-select-label select {
+  max-width: 13rem;
+}
+
+.eco-metric-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  margin-top: 1rem;
+}
+
+.eco-metric-card {
+  border-radius: 0.8rem;
+  background: #f8fafc;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid #e2e8f0;
+}
+
+.eco-metric-label {
+  display: block;
+  font-size: 0.8rem;
+  color: #475569;
+}
+
+.eco-metric-value {
+  display: block;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.eco-chart-frame {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.8rem;
+  padding: 0.75rem;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.eco-beta-summary {
+  margin: 0.8rem 0 0;
+  color: #334155;
+}
+
+.eco-caption {
+  font-size: 0.9rem;
+  color: #475569;
+}
+</style>
+
+<div id="ecological-diversity-lab"></div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const diversityLab = document.getElementById("ecological-diversity-lab");
+  diversityLab.innerHTML = `
+    <div class="eco-diversity-grid">
+      <section class="eco-card" aria-labelledby="alpha-diversity-heading">
+        <h3 id="alpha-diversity-heading">Alpha diversity explorer</h3>
+        <p class="eco-caption">Change the number of observed taxa and how dominant the largest taxon is. The composition bar and the metrics update together.</p>
+
+        <div class="eco-control-grid">
+          <label for="alpha-richness">
+            Observed taxa
+            <input id="alpha-richness" type="range" min="3" max="12" step="1" value="7">
+          </label>
+
+          <label for="alpha-dominance">
+            Dominance of the most abundant taxon
+            <input id="alpha-dominance" type="range" min="0" max="0.85" step="0.01" value="0.35">
+          </label>
+        </div>
+
+        <div id="alpha-composition-chart" class="eco-chart-frame" aria-live="polite"></div>
+
+        <div class="eco-metric-grid" aria-live="polite">
+          <div class="eco-metric-card">
+            <span class="eco-metric-label">Richness</span>
+            <span class="eco-metric-value" id="alpha-richness-value"></span>
+          </div>
+          <div class="eco-metric-card">
+            <span class="eco-metric-label">Shannon</span>
+            <span class="eco-metric-value" id="alpha-shannon-value"></span>
+          </div>
+          <div class="eco-metric-card">
+            <span class="eco-metric-label">Simpson</span>
+            <span class="eco-metric-value" id="alpha-simpson-value"></span>
+          </div>
+          <div class="eco-metric-card">
+            <span class="eco-metric-label">Pielou evenness</span>
+            <span class="eco-metric-value" id="alpha-evenness-value"></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="eco-card" aria-labelledby="beta-diversity-heading">
+        <h3 id="beta-diversity-heading">Beta diversity explorer</h3>
+        <p class="eco-caption">Move the treatment group farther away from the controls, then switch distance metrics to see how the between-sample pattern changes.</p>
+
+        <div class="eco-control-grid">
+          <label for="beta-shift">
+            Group shift strength
+            <input id="beta-shift" type="range" min="0" max="0.55" step="0.01" value="0.22">
+          </label>
+          <label class="eco-select-label" for="beta-metric">
+            Distance metric
+            <select id="beta-metric">
+              <option value="bray">Bray-Curtis</option>
+              <option value="jaccard">Jaccard</option>
+              <option value="aitchison">Aitchison-like CLR Euclidean</option>
+            </select>
+          </label>
+        </div>
+
+        <div id="beta-centroid-chart" class="eco-chart-frame"></div>
+        <div id="beta-heatmap-chart" class="eco-chart-frame" style="margin-top: 0.85rem;"></div>
+        <p id="beta-diversity-summary" class="eco-beta-summary" aria-live="polite"></p>
+      </section>
+    </div>
+  `;
+
+  const alphaRichnessInput = document.getElementById("alpha-richness");
+  const alphaDominanceInput = document.getElementById("alpha-dominance");
+  const alphaCompositionChart = document.getElementById("alpha-composition-chart");
+  const alphaRichnessValue = document.getElementById("alpha-richness-value");
+  const alphaShannonValue = document.getElementById("alpha-shannon-value");
+  const alphaSimpsonValue = document.getElementById("alpha-simpson-value");
+  const alphaEvennessValue = document.getElementById("alpha-evenness-value");
+
+  const betaShiftInput = document.getElementById("beta-shift");
+  const betaMetricInput = document.getElementById("beta-metric");
+  const betaCentroidChart = document.getElementById("beta-centroid-chart");
+  const betaHeatmapChart = document.getElementById("beta-heatmap-chart");
+  const betaSummary = document.getElementById("beta-diversity-summary");
+
+  const palette = [
+    "#1976d2", "#2e7d32", "#c62828", "#7e57c2", "#ef6c00", "#00897b",
+    "#5d4037", "#546e7a", "#f9a825", "#8e24aa", "#3949ab", "#6d4c41"
+  ];
+  const PRESENCE_THRESHOLD = 0.08;
+  const AITCHISON_DISPLAY_SCALE = 5;
+
+  const formatNumber = (value) => Number(value).toFixed(2);
+
+  const shannon = (proportions) =>
+    -proportions.reduce((sum, value) => sum + (value > 0 ? value * Math.log(value) : 0), 0);
+
+  const simpson = (proportions) =>
+    1 - proportions.reduce((sum, value) => sum + value * value, 0);
+
+  function getLabelColor(hexColor) {
+    if (!hexColor || typeof hexColor !== "string") {
+      return "white";
+    }
+
+    const hex = hexColor.replace("#", "");
+    if (hex.length !== 6) {
+      return "white";
+    }
+
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    return brightness > 150 ? "#111827" : "white";
+  }
+
+  function alphaComposition(richness, dominance) {
+    const maxShare = (1 / richness) + dominance * (1 - 1 / richness);
+    const otherShare = (1 - maxShare) / (richness - 1);
+    return Array.from({ length: richness }, (_, index) => index === 0 ? maxShare : otherShare);
+  }
+
+  function renderAlpha() {
+    const richness = Number(alphaRichnessInput.value);
+    const dominance = Number(alphaDominanceInput.value);
+    const composition = alphaComposition(richness, dominance);
+    const alphaShannon = shannon(composition);
+    const alphaSimpson = simpson(composition);
+    const alphaEvenness = richness > 1 ? alphaShannon / Math.log(richness) : 0;
+
+    alphaRichnessValue.textContent = String(richness);
+    alphaShannonValue.textContent = formatNumber(alphaShannon);
+    alphaSimpsonValue.textContent = formatNumber(alphaSimpson);
+    alphaEvennessValue.textContent = formatNumber(alphaEvenness);
+
+    let offset = 0;
+    const segments = composition.map((value, index) => {
+      const width = value * 100;
+      const segmentColor = palette[index % palette.length];
+      const rect = `<rect x="${offset}" y="20" width="${width}" height="36" rx="5" ry="5" fill="${segmentColor}"></rect>`;
+      const labelColor = getLabelColor(segmentColor);
+      const label = width > 7
+        ? `<text x="${offset + width / 2}" y="43" text-anchor="middle" font-size="11" fill="${labelColor}" font-weight="700">T${index + 1}</text>`
+        : "";
+      offset += width;
+      return rect + label;
+    }).join("");
+
+    alphaCompositionChart.innerHTML = `
+      <svg viewBox="0 0 100 82" width="100%" role="img" aria-label="Synthetic community composition bar">
+        <text x="0" y="10" font-size="8" fill="#334155">Higher dominance lowers evenness even when richness stays constant.</text>
+        ${segments}
+        <text x="0" y="74" font-size="8" fill="#475569">Each segment is one detected taxon.</text>
+      </svg>
+    `;
+  }
+
+  function normalize(values) {
+    const total = values.reduce((sum, value) => sum + value, 0);
+    return values.map((value) => value / total);
+  }
+
+  function buildBetaSamples(shiftStrength) {
+    const controlA = normalize([0.34, 0.22, 0.18, 0.14, 0.08, 0.04]);
+    const controlB = normalize([0.31, 0.24, 0.17, 0.16, 0.08, 0.04]);
+    const treatmentBase = normalize([
+      0.20 - shiftStrength * 0.06,
+      0.18 - shiftStrength * 0.04,
+      0.14,
+      0.16 + shiftStrength * 0.08,
+      0.17 + shiftStrength * 0.12,
+      0.15 + shiftStrength * 0.10
+    ]);
+    const treatmentB = normalize([
+      0.21 - shiftStrength * 0.04,
+      0.17 - shiftStrength * 0.03,
+      0.15,
+      0.15 + shiftStrength * 0.07,
+      0.18 + shiftStrength * 0.11,
+      0.14 + shiftStrength * 0.09
+    ]);
+
+    return [
+      { name: "Control 1", group: "Control", values: controlA },
+      { name: "Control 2", group: "Control", values: controlB },
+      { name: "Treatment 1", group: "Treatment", values: treatmentBase },
+      { name: "Treatment 2", group: "Treatment", values: treatmentB }
+    ];
+  }
+
+  function brayCurtis(a, b) {
+    let numerator = 0;
+    let denominator = 0;
+    for (let i = 0; i < a.length; i += 1) {
+      numerator += Math.abs(a[i] - b[i]);
+      denominator += a[i] + b[i];
+    }
+    return denominator === 0 ? 0 : numerator / denominator;
+  }
+
+  function jaccard(a, b) {
+    let intersection = 0;
+    let union = 0;
+    for (let i = 0; i < a.length; i += 1) {
+      const presentA = a[i] > PRESENCE_THRESHOLD ? 1 : 0;
+      const presentB = b[i] > PRESENCE_THRESHOLD ? 1 : 0;
+      if (presentA || presentB) {
+        union += 1;
+      }
+      if (presentA && presentB) {
+        intersection += 1;
+      }
+    }
+    return union === 0 ? 0 : 1 - (intersection / union);
+  }
+
+  function clrEuclidean(a, b) {
+    const pseudo = 1e-6;
+    const clr = (values) => {
+      const logs = values.map((value) => Math.log(value + pseudo));
+      const meanLog = logs.reduce((sum, value) => sum + value, 0) / logs.length;
+      return logs.map((value) => value - meanLog);
+    };
+    const clrA = clr(a);
+    const clrB = clr(b);
+    const squared = clrA.reduce((sum, value, index) => sum + Math.pow(value - clrB[index], 2), 0);
+    return Math.sqrt(squared) / AITCHISON_DISPLAY_SCALE;
+  }
+
+  function betaDistance(a, b, metric) {
+    if (metric === "jaccard") {
+      return jaccard(a, b);
+    }
+    if (metric === "aitchison") {
+      return clrEuclidean(a, b);
+    }
+    return brayCurtis(a, b);
+  }
+
+  function renderBeta() {
+    const shiftStrength = Number(betaShiftInput.value);
+    const metric = betaMetricInput.value;
+    const samples = buildBetaSamples(shiftStrength);
+
+    const controlMean = samples
+      .filter((sample) => sample.group === "Control")
+      .reduce((totals, sample) => totals.map((value, index) => value + sample.values[index]), Array(samples[0].values.length).fill(0))
+      .map((value) => value / 2);
+    const treatmentMean = samples
+      .filter((sample) => sample.group === "Treatment")
+      .reduce((totals, sample) => totals.map((value, index) => value + sample.values[index]), Array(samples[0].values.length).fill(0))
+      .map((value) => value / 2);
+
+    const centroidBars = [controlMean, treatmentMean].map((values, groupIndex) => {
+      let yOffset = 100;
+      const x = 35 + groupIndex * 80;
+      const segments = values.map((value, index) => {
+        const height = value * 90;
+        yOffset -= height;
+        return `<rect x="${x}" y="${yOffset}" width="34" height="${height}" fill="${palette[index]}" rx="3" ry="3"></rect>`;
+      }).join("");
+      const label = groupIndex === 0 ? "Control" : "Treatment";
+      return `${segments}<text x="${x + 17}" y="116" text-anchor="middle" font-size="8" fill="#334155">${label}</text>`;
+    }).join("");
+
+    betaCentroidChart.innerHTML = `
+      <svg viewBox="0 0 150 122" width="100%" role="img" aria-label="Group centroid composition bars">
+        <text x="0" y="10" font-size="8" fill="#334155">Group centroids: same data, different ecological distances.</text>
+        <line x1="20" y1="10" x2="20" y2="100" stroke="#94a3b8" stroke-width="0.7"></line>
+        <line x1="20" y1="100" x2="140" y2="100" stroke="#94a3b8" stroke-width="0.7"></line>
+        ${centroidBars}
+      </svg>
+    `;
+
+    let heatmapCells = "";
+    let within = [];
+    let between = [];
+
+    samples.forEach((rowSample, rowIndex) => {
+      samples.forEach((colSample, colIndex) => {
+        const value = rowIndex === colIndex ? 0 : betaDistance(rowSample.values, colSample.values, metric);
+        const colorScale = Math.min(255, Math.round(245 - Math.min(value, 1) * 160));
+        const fill = `rgb(${255 - colorScale / 4}, ${colorScale}, ${255})`;
+        heatmapCells += `
+          <rect x="${44 + colIndex * 26}" y="${24 + rowIndex * 22}" width="24" height="20" rx="3" ry="3" fill="${fill}" stroke="#cbd5e1"></rect>
+          <text x="${56 + colIndex * 26}" y="${38 + rowIndex * 22}" text-anchor="middle" font-size="7" fill="#0f172a">${formatNumber(value)}</text>
+        `;
+
+        if (rowIndex < colIndex) {
+          if (rowSample.group === colSample.group) {
+            within.push(value);
+          } else {
+            between.push(value);
+          }
+        }
+      });
+    });
+
+    const axisLabels = samples.map((sample, index) => `
+      <text x="${56 + index * 26}" y="18" text-anchor="middle" font-size="7" fill="#334155">${sample.name.replace(" ", "")}</text>
+      <text x="38" y="${37 + index * 22}" text-anchor="end" font-size="7" fill="#334155">${sample.name.replace(" ", "")}</text>
+    `).join("");
+
+    betaHeatmapChart.innerHTML = `
+      <svg viewBox="0 0 155 118" width="100%" role="img" aria-label="Pairwise beta-diversity heatmap">
+        <text x="0" y="10" font-size="8" fill="#334155">Pairwise sample dissimilarity matrix</text>
+        ${axisLabels}
+        ${heatmapCells}
+      </svg>
+    `;
+
+    const meanWithin = within.reduce((sum, value) => sum + value, 0) / within.length;
+    const meanBetween = between.reduce((sum, value) => sum + value, 0) / between.length;
+    betaSummary.textContent = `Mean within-group ${metric} distance = ${formatNumber(meanWithin)}; mean between-group distance = ${formatNumber(meanBetween)}. As the treatment shift grows, between-group distances separate first, which is exactly what you look for in a PCoA/NMDS + PERMANOVA workflow.`;
+  }
+
+  alphaRichnessInput.addEventListener("input", renderAlpha);
+  alphaDominanceInput.addEventListener("input", renderAlpha);
+  betaShiftInput.addEventListener("input", renderBeta);
+  betaMetricInput.addEventListener("change", renderBeta);
+
+  renderAlpha();
+  renderBeta();
+});
+</script>
 :::
 
 ## What files to start from
