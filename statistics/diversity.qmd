@@ -1,6 +1,6 @@
 ---
 title: "Ecological Diversity"
-subtitle: "Interactive alpha- and beta-diversity intuition from bioBakery outputs"
+subtitle: "Interactive alpha and beta diversity intuition from bioBakery outputs"
 ---
 
 This page shows a beginner-friendly way to calculate **alpha diversity** (within-sample diversity) and **beta diversity** (between-sample dissimilarity) from the tables produced by the bioBakery ecosystem.
@@ -285,9 +285,12 @@ document.addEventListener("DOMContentLoaded", function () {
     "#1976d2", "#2e7d32", "#c62828", "#7e57c2", "#ef6c00", "#00897b",
     "#5d4037", "#546e7a", "#f9a825", "#8e24aa", "#3949ab", "#6d4c41"
   ];
-  const baselineProfile = normalize([0.34, 0.22, 0.18, 0.14, 0.08, 0.04]);
+  const SIX_TAXON_BASELINE_PROFILE = normalize([0.34, 0.22, 0.18, 0.14, 0.08, 0.04]);
   const PRESENCE_THRESHOLD = 0.08;
   const AITCHISON_DISPLAY_SCALE = 5;
+  const COORDINATE_JITTER = 0.02;
+  const NMDS_TARGET_OFFSET = 0.25;
+  const NMDS_TARGET_SPAN = 1.15;
   const metricLabels = {
     bray: "Bray-Curtis",
     jaccard: "Jaccard",
@@ -362,9 +365,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function renderSharedBaseline() {
     baselineChart.innerHTML = `
-      <svg viewBox="0 0 320 122" width="100%" role="img" aria-label="Shared baseline community that connects the alpha- and beta-diversity examples">
+      <svg viewBox="0 0 320 122" width="100%" role="img" aria-label="Shared baseline community that connects the alpha and beta diversity examples">
         <text x="30" y="16" font-size="10" fill="#334155" font-weight="700">Baseline reference community (T1-T6)</text>
-        ${stackedBarSegments(baselineProfile, { x: 30, y: 24, width: 260, height: 20 })}
+        ${stackedBarSegments(SIX_TAXON_BASELINE_PROFILE, { x: 30, y: 24, width: 260, height: 20 })}
         <text x="30" y="58" font-size="8.5" fill="#475569">These same baseline data characteristics feed both graphics below.</text>
         <line x1="160" y1="48" x2="160" y2="70" stroke="#94a3b8" stroke-width="1.4"></line>
         <line x1="160" y1="70" x2="82" y2="70" stroke="#94a3b8" stroke-width="1.4"></line>
@@ -395,7 +398,7 @@ document.addEventListener("DOMContentLoaded", function () {
     alphaCompositionChart.innerHTML = `
       <svg viewBox="0 0 100 104" width="100%" role="img" aria-label="Baseline and current single-sample composition for the alpha-diversity example">
         <text x="4" y="12" font-size="7.5" fill="#334155">Baseline reference profile</text>
-        ${stackedBarSegments(baselineProfile, { x: 4, y: 18, width: 92, height: 18 })}
+        ${stackedBarSegments(SIX_TAXON_BASELINE_PROFILE, { x: 4, y: 18, width: 92, height: 18 })}
         <line x1="50" y1="37" x2="50" y2="48" stroke="#94a3b8" stroke-width="0.7" stroke-dasharray="2 2"></line>
         <text x="4" y="57" font-size="7.5" fill="#334155">Current single-sample composition</text>
         ${stackedBarSegments(composition, { x: 4, y: 63, width: 92, height: 18 })}
@@ -419,13 +422,13 @@ document.addEventListener("DOMContentLoaded", function () {
     const treatmentSignal = [-0.16, -0.10, -0.03, 0.08, 0.11, 0.10];
 
     return [
-      { name: "Baseline", group: "Baseline", values: baselineProfile },
-      { name: "Control 1", group: "Control", values: shiftedProfile(baselineProfile, [0.01, -0.01, 0.00, 0.00, 0.01, -0.01], 0.35, [0.005, -0.002, -0.001, 0.002, -0.001, -0.003]) },
-      { name: "Control 2", group: "Control", values: shiftedProfile(baselineProfile, [-0.01, 0.01, 0.00, 0.01, -0.01, 0.00], 0.35, [-0.003, 0.004, -0.002, 0.002, 0.001, -0.002]) },
-      { name: "Control 3", group: "Control", values: shiftedProfile(baselineProfile, [0.00, -0.01, 0.01, -0.01, 0.01, 0.00], 0.35, [0.001, -0.002, 0.003, -0.002, 0.001, -0.001]) },
-      { name: "Treatment 1", group: "Treatment", values: shiftedProfile(baselineProfile, treatmentSignal, shiftStrength, [0.002, -0.003, 0.001, 0.002, -0.001, -0.001]) },
-      { name: "Treatment 2", group: "Treatment", values: shiftedProfile(baselineProfile, treatmentSignal, shiftStrength * 1.08, [-0.002, 0.002, -0.001, 0.001, 0.003, -0.001]) },
-      { name: "Treatment 3", group: "Treatment", values: shiftedProfile(baselineProfile, treatmentSignal, shiftStrength * 0.92, [0.001, -0.001, 0.000, -0.002, 0.003, -0.001]) }
+      { name: "Baseline", group: "Baseline", values: SIX_TAXON_BASELINE_PROFILE },
+      { name: "Control 1", group: "Control", values: shiftedProfile(SIX_TAXON_BASELINE_PROFILE, [0.01, -0.01, 0.00, 0.00, 0.01, -0.01], 0.35, [0.005, -0.002, -0.001, 0.002, -0.001, -0.003]) },
+      { name: "Control 2", group: "Control", values: shiftedProfile(SIX_TAXON_BASELINE_PROFILE, [-0.01, 0.01, 0.00, 0.01, -0.01, 0.00], 0.35, [-0.003, 0.004, -0.002, 0.002, 0.001, -0.002]) },
+      { name: "Control 3", group: "Control", values: shiftedProfile(SIX_TAXON_BASELINE_PROFILE, [0.00, -0.01, 0.01, -0.01, 0.01, 0.00], 0.35, [0.001, -0.002, 0.003, -0.002, 0.001, -0.001]) },
+      { name: "Treatment 1", group: "Treatment", values: shiftedProfile(SIX_TAXON_BASELINE_PROFILE, treatmentSignal, shiftStrength, [0.002, -0.003, 0.001, 0.002, -0.001, -0.001]) },
+      { name: "Treatment 2", group: "Treatment", values: shiftedProfile(SIX_TAXON_BASELINE_PROFILE, treatmentSignal, shiftStrength * 1.08, [-0.002, 0.002, -0.001, 0.001, 0.003, -0.001]) },
+      { name: "Treatment 3", group: "Treatment", values: shiftedProfile(SIX_TAXON_BASELINE_PROFILE, treatmentSignal, shiftStrength * 0.92, [0.001, -0.001, 0.000, -0.002, 0.003, -0.001]) }
     ];
   }
 
@@ -566,8 +569,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     return centered.map((point, index) => [
-      point[0] / maxAbs + 0.02 * Math.cos(index),
-      point[1] / maxAbs + 0.02 * Math.sin(index)
+      point[0] / maxAbs + COORDINATE_JITTER * Math.cos(index),
+      point[1] / maxAbs + COORDINATE_JITTER * Math.sin(index)
     ]);
   }
 
@@ -617,7 +620,7 @@ document.addEventListener("DOMContentLoaded", function () {
     pairs.sort((left, right) => left.distance - right.distance);
     const denominator = Math.max(1, pairs.length - 1);
     pairs.forEach((pair, index) => {
-      pair.target = 0.25 + (index / denominator) * 1.15;
+      pair.target = NMDS_TARGET_OFFSET + (index / denominator) * NMDS_TARGET_SPAN;
     });
     return pairs;
   }
@@ -873,7 +876,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }).join("");
 
     betaOrdinationChart.innerHTML = `
-      <svg viewBox="0 0 340 235" width="100%" role="img" aria-label="High-dimensional beta-diversity ordination with baseline, control, and treatment samples">
+      <svg viewBox="0 0 340 235" width="100%" role="img" aria-label="High-dimensional beta diversity ordination with baseline, control, and treatment samples">
         <text x="12" y="16" font-size="10" fill="#334155" font-weight="700">${ordinationLabels[ordination]} view of the same high-dimensional community shift</text>
         <text x="12" y="30" font-size="8" fill="#475569">Distance metric: ${metricLabels[metric]}. Dashed trajectories connect the shared baseline data characteristics to each derived sample.</text>
         ${axisX}
