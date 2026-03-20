@@ -47,7 +47,7 @@ website:
             href: tools/qiime2.qmd
       - text: "Statistics"
         menu:
-          - text: "Diversity"
+          - text: "Ecological Diversity"
             href: statistics/diversity.qmd
           - text: "Relative Abundance"
             href: statistics/relative-abundance.qmd
