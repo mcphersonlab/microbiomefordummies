@@ -1093,15 +1093,16 @@ document.addEventListener("DOMContentLoaded", function () {
   [
     alphaRichnessInput,
     alphaDominanceInput,
+    alphaFocusMetricInput,
     betaShiftInput,
     betaVariabilityInput,
     betaSamplesInput,
     betaPresenceInput
   ].forEach((input) => {
-    input.addEventListener("input", scheduleRenderAll);
+    const eventName = input.tagName === "SELECT" ? "change" : "input";
+    input.addEventListener(eventName, scheduleRenderAll);
   });
 
-  alphaFocusMetricInput.addEventListener("change", renderAll);
   betaMetricInput.addEventListener("change", renderAll);
   betaOrdinationInput.addEventListener("change", renderAll);
 
