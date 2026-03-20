@@ -1090,6 +1090,10 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+  function controlRenderEvent(input) {
+    return input instanceof HTMLSelectElement ? "change" : "input";
+  }
+
   [
     alphaRichnessInput,
     alphaDominanceInput,
@@ -1099,8 +1103,7 @@ document.addEventListener("DOMContentLoaded", function () {
     betaSamplesInput,
     betaPresenceInput
   ].forEach((input) => {
-    const eventName = input.tagName === "SELECT" ? "change" : "input";
-    input.addEventListener(eventName, scheduleRenderAll);
+    input.addEventListener(controlRenderEvent(input), scheduleRenderAll);
   });
 
   betaMetricInput.addEventListener("change", scheduleRenderAll);
