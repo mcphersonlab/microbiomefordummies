@@ -2,7 +2,7 @@
 
 A beginner-friendly Quarto website covering microbiome bioinformatic tools, focusing on the [Biobakery](https://huttenhower.sph.harvard.edu/tools/) suite developed by the Huttenhower and Segata labs.
 
-🌐 **Live site:** [https://jacobkmcpherson.github.io/microbiometoolsfordummies/](https://jacobkmcpherson.github.io/microbiometoolsfordummies/)
+🌐 **Live site:** [https://mcphersonlab.github.io/microbiomefordummies/](https://mcphersonlab.github.io/microbiomefordummies/)
 
 ## Tools Covered
 

@@ -21,7 +21,8 @@ The mini-lab below is **interactive and intentionally synthetic**: it is there t
 ::: {=html}
 <style>
 #ecological-diversity-lab {
-  margin: 1.5rem 0 2rem;
+  width: min(100%, 1100px);
+  margin: 1.5rem auto 2rem;
 }
 
 .eco-diversity-grid {
@@ -36,6 +37,7 @@ The mini-lab below is **interactive and intentionally synthetic**: it is there t
   padding: 1rem 1.1rem 1.2rem;
   background: #fff;
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+  min-width: 0;
 }
 
 .eco-card h3 {
@@ -96,6 +98,18 @@ The mini-lab below is **interactive and intentionally synthetic**: it is there t
   border-radius: 0.8rem;
   padding: 0.75rem;
   background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  max-width: 32rem;
+  margin: 0 auto;
+}
+
+#alpha-composition-chart svg,
+#beta-centroid-chart svg,
+#beta-heatmap-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  margin: 0 auto;
 }
 
 .eco-beta-summary {

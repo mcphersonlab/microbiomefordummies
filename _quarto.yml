@@ -5,6 +5,7 @@ project:
 website:
   title: "Microbiome Tools for Dummies"
   description: "A beginner-friendly guide to microbiome bioinformatic tools, focusing on the Huttenhower/Segata Biobakery suite."
+  site-url: https://mcphersonlab.github.io/microbiomefordummies/
   navbar:
     left:
       - href: index.qmd
@@ -59,7 +60,7 @@ website:
             href: microbiome/intestinal.qmd
     right:
       - icon: github
-        href: https://github.com/JacobKMcPherson/microbiometoolsfordummies
+        href: https://github.com/mcphersonlab/microbiomefordummies
   sidebar:
     style: "docked"
     search: true
