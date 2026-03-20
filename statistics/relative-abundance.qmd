@@ -34,13 +34,13 @@ For family-level bars, it usually looks cleaner to use **lighter shades within e
 
 ## Interactive taxonomic bar-chart explorer
 
-The interactive explorer below now uses a **longitudinal control-versus-intervention design** with matched **baseline** and **post-intervention** samples. You can change taxonomic level, switch the statistical contrast, and watch both the stacked bars and the significance layer update together.
+The interactive explorer below now uses a **longitudinal control-versus-experimental design** with triplicate subjects at **time -3**, **Pre- (time 0)**, and **time +4**. You can change taxonomic level, inspect the sample-code key, and watch both the stacked bars and the integrated comparison framework update together.
 
-My recommended visualization idea is the **taxa-preserving significance strip**:
+My recommended visualization idea is the **taxa-preserving comparison framework**:
 
 - the stacked bars keep taxa-specific color as the primary encoding
-- a second aligned panel shows **LEfSe-like signed effect size** for the currently selected longitudinal contrast
-- significant taxa get a bold point and `q` label, but they **keep the same taxon color** instead of switching to a significance palette
+- a second aligned panel keeps the four core longitudinal comparisons visible at the same time
+- significant cells keep their `q` labels, but taxa **keep the same taxon color** instead of switching to a significance palette
 
 That way you get the best part of LEfSe-style interpretation without losing the phylogenetic color logic of the bar chart itself.
 
@@ -139,9 +139,141 @@ That way you get the best part of LEfSe-style interpretation without losing the 
   font-size: 0.92rem;
 }
 
+.ra-sample-key {
+  margin-top: 0.85rem;
+  color: #334155;
+  font-size: 0.9rem;
+}
+
+.ra-sample-key code {
+  font-size: 0.86rem;
+}
+
 .ra-summary {
   margin-top: 0.9rem;
   color: #334155;
+}
+
+.ra-framework-overview {
+  display: grid;
+  gap: 0.6rem;
+  margin-bottom: 0.85rem;
+}
+
+.ra-framework-step {
+  border: 1px solid #d8dee4;
+  border-radius: 0.8rem;
+  background: #f8fafc;
+  padding: 0.7rem 0.8rem;
+}
+
+.ra-framework-step strong {
+  display: block;
+  color: #0f172a;
+  margin-bottom: 0.15rem;
+}
+
+.ra-framework-step span {
+  display: block;
+  color: #475569;
+  font-size: 0.86rem;
+}
+
+.ra-framework-step em {
+  color: #0f766e;
+  font-style: normal;
+  font-weight: 600;
+}
+
+.ra-framework-scroll {
+  overflow-x: auto;
+}
+
+.ra-framework-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 620px;
+  font-size: 0.84rem;
+}
+
+.ra-framework-table th,
+.ra-framework-table td {
+  padding: 0.55rem 0.45rem;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: top;
+}
+
+.ra-framework-table th {
+  color: #334155;
+  font-weight: 700;
+  text-align: left;
+}
+
+.ra-framework-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.ra-taxon-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.ra-framework-cell {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.ra-framework-state {
+  font-weight: 600;
+  color: #475569;
+}
+
+.ra-framework-state--significant {
+  color: #9f1239;
+}
+
+.ra-framework-metric,
+.ra-framework-enriched {
+  color: #475569;
+}
+
+.ra-call-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border: 1px solid #d8dee4;
+  background: #f8fafc;
+  color: #334155;
+}
+
+.ra-call-chip--intervention {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.ra-call-chip--watch {
+  border-color: #fde68a;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.ra-call-chip--caution {
+  border-color: #fecaca;
+  background: #fff1f2;
+  color: #9f1239;
+}
+
+.ra-call-chip--quiet {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+  color: #475569;
 }
 
 .ra-replicate-checks {
@@ -197,28 +329,21 @@ document.addEventListener("DOMContentLoaded", function () {
           <option value="species">Species</option>
         </select>
       </label>
-      <label for="ra-contrast-select">
-        Statistical contrast
-        <select id="ra-contrast-select">
-          <option value="baseline_group">Control vs intervention at baseline</option>
-          <option value="post_group" selected>Control vs intervention post-intervention</option>
-          <option value="control_time">Control baseline vs post-intervention</option>
-          <option value="intervention_time">Intervention baseline vs post-intervention</option>
-        </select>
-      </label>
     </div>
 
     <div class="ra-lab-grid">
       <section class="ra-card">
         <h3>Stacked relative-abundance bars</h3>
-        <p class="ra-caption">The same longitudinal cohort is shown at multiple taxonomic levels. Both groups start with matched baseline samples, then only the intervention arm shifts strongly at the post-intervention time point.</p>
+        <p class="ra-caption">The same longitudinal cohort is shown at multiple taxonomic levels. Both groups begin similarly at time -3 and Pre- (time 0), then only the experimental arm shifts strongly by time +4.</p>
         <div id="ra-bar-chart" class="ra-chart-frame" aria-live="polite"></div>
+        <p class="ra-sample-key"><code>C3[-3]</code> means control-group subject-3 at time -3, and <code>E1[+4]</code> means experimental-group subject-1 at time +4. All group-by-time cells are triplicate.</p>
         <div id="ra-legend" class="ra-legend" aria-live="polite"></div>
       </section>
 
       <section class="ra-card">
-        <h3>Taxa-preserving significance strip</h3>
-        <p class="ra-caption">This companion panel behaves like a LEfSe-style effect-size plot, but now you can switch between-group and within-group longitudinal contrasts without losing the taxon colors used in the stacked bars.</p>
+        <h3>Integrated statistical comparison framework</h3>
+        <p class="ra-caption">This companion panel synthesizes Pre- group matching, control stability, experimental response, and time +4 group separation so every taxon is interpreted against the full longitudinal design without losing the taxon colors used in the stacked bars.</p>
+        <div id="ra-framework-overview" class="ra-framework-overview" aria-live="polite"></div>
         <div id="ra-significance-chart" class="ra-chart-frame" aria-live="polite"></div>
         <p id="ra-summary" class="ra-summary"></p>
         <div id="ra-replicate-checks" class="ra-replicate-checks" aria-live="polite"></div>
@@ -227,65 +352,129 @@ document.addEventListener("DOMContentLoaded", function () {
   `;
 
   const levelSelect = document.getElementById("ra-level-select");
-  const contrastSelect = document.getElementById("ra-contrast-select");
   const barChart = document.getElementById("ra-bar-chart");
   const legend = document.getElementById("ra-legend");
+  const frameworkOverview = document.getElementById("ra-framework-overview");
   const significanceChart = document.getElementById("ra-significance-chart");
   const summary = document.getElementById("ra-summary");
   const replicateChecks = document.getElementById("ra-replicate-checks");
   const SIGNIFICANCE_THRESHOLD = 0.05;
 
-  const cohortSamples = [
-    { sample: "CB1", group: "Control", timepoint: "Baseline" },
-    { sample: "CB2", group: "Control", timepoint: "Baseline" },
-    { sample: "CP1", group: "Control", timepoint: "Post" },
-    { sample: "CP2", group: "Control", timepoint: "Post" },
-    { sample: "IB1", group: "Intervention", timepoint: "Baseline" },
-    { sample: "IB2", group: "Intervention", timepoint: "Baseline" },
-    { sample: "IP1", group: "Intervention", timepoint: "Post" },
-    { sample: "IP2", group: "Intervention", timepoint: "Post" }
+  const subjectIds = [1, 2, 3];
+  const timepoints = [
+    { code: "-3", label: "time -3", bandFill: "#dbeafe" },
+    { code: "0", label: "Pre-", bandFill: "#ede9fe" },
+    { code: "+4", label: "time +4", bandFill: "#fee2e2" }
+  ];
+  const groupDefinitions = [
+    { label: "Control", displayLabel: "control-group", samplePrefix: "C", stroke: "#1976d2" },
+    { label: "Experimental", displayLabel: "experimental-group", samplePrefix: "E", stroke: "#c62828" }
   ];
 
-  const sampleBlocks = [
-    { label: "Control baseline", timepoint: "Baseline", startIndex: 0, endIndex: 1 },
-    { label: "Control post", timepoint: "Post", startIndex: 2, endIndex: 3 },
-    { label: "Intervention baseline", timepoint: "Baseline", startIndex: 4, endIndex: 5 },
-    { label: "Intervention post", timepoint: "Post", startIndex: 6, endIndex: 7 }
-  ];
+  const cohortSamples = groupDefinitions.flatMap((groupDefinition) =>
+    timepoints.flatMap((timepoint) =>
+      subjectIds.map((subjectId) => ({
+        sample: `${groupDefinition.samplePrefix}${subjectId}[${timepoint.code}]`,
+        group: groupDefinition.label,
+        groupLabel: groupDefinition.displayLabel,
+        timepoint: timepoint.label,
+        timeCode: timepoint.code,
+        bandFill: timepoint.bandFill,
+        bandStroke: groupDefinition.stroke,
+        description: `${groupDefinition.displayLabel} subject-${subjectId} at ${timepoint.label === "Pre-" ? "Pre- (time 0)" : `time ${timepoint.code}`}`
+      }))
+    )
+  );
 
-  const groupBlocks = [
-    { label: "Control", startIndex: 0, endIndex: 3 },
-    { label: "Intervention", startIndex: 4, endIndex: 7 }
-  ];
+  const sampleBlocks = groupDefinitions.flatMap((groupDefinition, groupIndex) =>
+    timepoints.map((timepoint, timeIndex) => {
+      const startIndex = groupIndex * timepoints.length * subjectIds.length + timeIndex * subjectIds.length;
+      return {
+        label: timepoint.label,
+        startIndex,
+        endIndex: startIndex + subjectIds.length - 1
+      };
+    })
+  );
+
+  const groupBlocks = groupDefinitions.map((groupDefinition, groupIndex) => {
+    const startIndex = groupIndex * timepoints.length * subjectIds.length;
+    return {
+      label: groupDefinition.displayLabel,
+      startIndex,
+      endIndex: startIndex + timepoints.length * subjectIds.length - 1
+    };
+  });
 
   const contrasts = {
     baseline_group: {
-      label: "Control vs intervention at baseline",
-      leftLabel: "Control baseline",
-      rightLabel: "Intervention baseline",
-      description: "Both groups should remain statistically similar before the intervention starts."
+      label: "Control vs experimental at Pre-",
+      leftLabel: "Control Pre-",
+      rightLabel: "Experimental Pre-",
+      description: "Both groups should remain statistically similar at Pre- (time 0) before the intervention takes hold."
     },
     post_group: {
-      label: "Control vs intervention post-intervention",
-      leftLabel: "Control post",
-      rightLabel: "Intervention post",
-      description: "This is the main between-group post-intervention contrast."
+      label: "Control vs experimental at time +4",
+      leftLabel: "Control +4",
+      rightLabel: "Experimental +4",
+      description: "This is the main between-group contrast after the intervention window."
     },
     control_time: {
-      label: "Control baseline vs post-intervention",
-      leftLabel: "Control baseline",
-      rightLabel: "Control post",
-      description: "This asks whether the control arm drifted over time without the intervention."
+      label: "Control Pre- vs time +4",
+      leftLabel: "Control Pre-",
+      rightLabel: "Control +4",
+      description: "This asks whether the control-group arm drifted over time without the intervention."
     },
     intervention_time: {
-      label: "Intervention baseline vs post-intervention",
-      leftLabel: "Intervention baseline",
-      rightLabel: "Intervention post",
-      description: "This asks which taxa changed longitudinally inside the intervention arm itself."
+      label: "Experimental Pre- vs time +4",
+      leftLabel: "Experimental Pre-",
+      rightLabel: "Experimental +4",
+      description: "This asks which taxa changed longitudinally inside the experimental arm itself."
     }
   };
 
+  const comparisonFramework = [
+    {
+      key: "baseline_group",
+      label: "1. Pre- group match",
+      emphasis: "Expect non-significant",
+      detail: "Control-group and experimental-group should still match at time 0."
+    },
+    {
+      key: "control_time",
+      label: "2. Control stability",
+      emphasis: "Expect non-significant",
+      detail: "Control-group drift from Pre- to time +4 should stay small."
+    },
+    {
+      key: "intervention_time",
+      label: "3. Experimental response",
+      emphasis: "Look for significance",
+      detail: "Experimental-group Pre- to time +4 captures the within-arm intervention signal."
+    },
+    {
+      key: "post_group",
+      label: "4. Time +4 separation",
+      emphasis: "Look for significance",
+      detail: "Control-group and experimental-group should separate by time +4."
+    }
+  ];
+
   const cmp = (effect, q, enriched) => ({ effect, q, enriched });
+
+  const average = (left, right) => Number(((left + right) / 2).toFixed(1));
+
+  function expandTriplicateScores(scores) {
+    const [controlPreA, controlPreB, controlPostA, controlPostB, experimentalPreA, experimentalPreB, experimentalPostA, experimentalPostB] = scores;
+    return [
+      controlPreA, average(controlPreA, controlPreB), controlPreB,
+      average(controlPreA, controlPreB), controlPreA, controlPreB,
+      controlPostA, average(controlPostA, controlPostB), controlPostB,
+      experimentalPreA, average(experimentalPreA, experimentalPreB), experimentalPreB,
+      average(experimentalPreA, experimentalPreB), experimentalPreA, experimentalPreB,
+      experimentalPostA, average(experimentalPostA, experimentalPostB), experimentalPostB
+    ];
+  }
 
   const levels = {
     phylum: {
@@ -358,10 +547,12 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       ],
       replicateChecks: [
-        { label: "Control baseline replicates", q: 0.830 },
-        { label: "Control post replicates", q: 0.770 },
-        { label: "Intervention baseline replicates", q: 0.810 },
-        { label: "Intervention post replicates", q: 0.680 }
+        { label: "Control-group time -3 triplicates", q: 0.870 },
+        { label: "Control-group Pre- triplicates", q: 0.830 },
+        { label: "Control-group time +4 triplicates", q: 0.770 },
+        { label: "Experimental-group time -3 triplicates", q: 0.850 },
+        { label: "Experimental-group Pre- triplicates", q: 0.810 },
+        { label: "Experimental-group time +4 triplicates", q: 0.680 }
       ]
     },
     family: {
@@ -445,10 +636,12 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       ],
       replicateChecks: [
-        { label: "Control baseline replicates", q: 0.790 },
-        { label: "Control post replicates", q: 0.720 },
-        { label: "Intervention baseline replicates", q: 0.840 },
-        { label: "Intervention post replicates", q: 0.610 }
+        { label: "Control-group time -3 triplicates", q: 0.840 },
+        { label: "Control-group Pre- triplicates", q: 0.790 },
+        { label: "Control-group time +4 triplicates", q: 0.720 },
+        { label: "Experimental-group time -3 triplicates", q: 0.860 },
+        { label: "Experimental-group Pre- triplicates", q: 0.840 },
+        { label: "Experimental-group time +4 triplicates", q: 0.610 }
       ]
     },
     genus: {
@@ -532,10 +725,12 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       ],
       replicateChecks: [
-        { label: "Control baseline replicates", q: 0.810 },
-        { label: "Control post replicates", q: 0.700 },
-        { label: "Intervention baseline replicates", q: 0.820 },
-        { label: "Intervention post replicates", q: 0.600 }
+        { label: "Control-group time -3 triplicates", q: 0.850 },
+        { label: "Control-group Pre- triplicates", q: 0.810 },
+        { label: "Control-group time +4 triplicates", q: 0.700 },
+        { label: "Experimental-group time -3 triplicates", q: 0.840 },
+        { label: "Experimental-group Pre- triplicates", q: 0.820 },
+        { label: "Experimental-group time +4 triplicates", q: 0.600 }
       ]
     },
     species: {
@@ -619,13 +814,21 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       ],
       replicateChecks: [
-        { label: "Control baseline replicates", q: 0.760 },
-        { label: "Control post replicates", q: 0.680 },
-        { label: "Intervention baseline replicates", q: 0.780 },
-        { label: "Intervention post replicates", q: 0.570 }
+        { label: "Control-group time -3 triplicates", q: 0.820 },
+        { label: "Control-group Pre- triplicates", q: 0.760 },
+        { label: "Control-group time +4 triplicates", q: 0.680 },
+        { label: "Experimental-group time -3 triplicates", q: 0.810 },
+        { label: "Experimental-group Pre- triplicates", q: 0.780 },
+        { label: "Experimental-group time +4 triplicates", q: 0.570 }
       ]
     }
   };
+
+  Object.values(levels).forEach((level) => {
+    level.taxa.forEach((taxon) => {
+      taxon.scores = expandTriplicateScores(taxon.scores);
+    });
+  });
 
   function xForSample(index, chartLeft, barWidth, gap) {
     return chartLeft + index * (barWidth + gap);
@@ -643,20 +846,88 @@ document.addEventListener("DOMContentLoaded", function () {
         };
   }
 
-  function renderLevel(levelName, contrastName) {
-    const level = levels[levelName];
-    const contrast = contrasts[contrastName];
-    const maxEffect = 3.6;
-    const SIG_BASE_HEIGHT = 48;
-    const SIG_ROW_HEIGHT = 28;
+  function formatEffect(effect) {
+    return `${effect > 0 ? "+" : ""}${effect.toFixed(1)}`;
+  }
 
-    const svgWidth = 460;
-    const svgHeight = 246;
-    const chartLeft = 46;
+  function normalizeComparisonLabel(label) {
+    return label
+      .replaceAll("Intervention", "Experimental")
+      .replaceAll("Control baseline", "Control Pre-")
+      .replaceAll("Experimental baseline", "Experimental Pre-")
+      .replaceAll("Control post", "Control +4")
+      .replaceAll("Experimental post", "Experimental +4");
+  }
+
+  function formatEnrichedSource(label) {
+    return `${normalizeComparisonLabel(label)} enriched`;
+  }
+
+  function classifyTaxon(taxon) {
+    const preMatch = taxon.comparisons.baseline_group.q >= SIGNIFICANCE_THRESHOLD;
+    const controlStable = taxon.comparisons.control_time.q >= SIGNIFICANCE_THRESHOLD;
+    const experimentalResponse = taxon.comparisons.intervention_time.q < SIGNIFICANCE_THRESHOLD;
+    const postSeparation = taxon.comparisons.post_group.q < SIGNIFICANCE_THRESHOLD;
+
+    if (preMatch && controlStable && experimentalResponse && postSeparation) {
+      return {
+        label: "Intervention-linked",
+        detail: `${formatEnrichedSource(taxon.comparisons.intervention_time.enriched)} by time +4`,
+        chipClass: "ra-call-chip ra-call-chip--intervention"
+      };
+    }
+
+    if (!preMatch) {
+      return {
+        label: "Pre-existing difference",
+        detail: "Groups already differ at Pre-",
+        chipClass: "ra-call-chip ra-call-chip--caution"
+      };
+    }
+
+    if (!controlStable && experimentalResponse) {
+      return {
+        label: "Temporal confounding",
+        detail: "Time drift complicates the intervention readout",
+        chipClass: "ra-call-chip ra-call-chip--caution"
+      };
+    }
+
+    if (experimentalResponse || postSeparation) {
+      return {
+        label: "Partial longitudinal signal",
+        detail: "Only part of the full framework is significant",
+        chipClass: "ra-call-chip ra-call-chip--watch"
+      };
+    }
+
+    return {
+      label: "No integrated signal",
+      detail: "No contrast passes the full framework",
+      chipClass: "ra-call-chip ra-call-chip--quiet"
+    };
+  }
+
+  function renderFrameworkCell(comparison) {
+    const significant = comparison.q < SIGNIFICANCE_THRESHOLD;
+    return `
+      <div class="ra-framework-cell">
+        <span class="ra-framework-state ${significant ? "ra-framework-state--significant" : ""}">${significant ? "significant" : "non-significant"}</span>
+        <span class="ra-framework-metric">${formatEffect(comparison.effect)} · q=${comparison.q.toFixed(3)}</span>
+        <span class="ra-framework-enriched">${normalizeComparisonLabel(comparison.enriched)}</span>
+      </div>
+    `;
+  }
+
+  function renderLevel(levelName) {
+    const level = levels[levelName];
+    const svgWidth = 560;
+    const svgHeight = 268;
+    const chartLeft = 42;
     const chartTop = 22;
-    const chartBottom = 182;
-    const barWidth = 30;
-    const gap = 10;
+    const chartBottom = 188;
+    const barWidth = 20;
+    const gap = 6;
     const chartWidth = cohortSamples.length * (barWidth + gap) - gap;
 
     const bars = cohortSamples.map((sampleMeta, sampleIndex) => {
@@ -668,12 +939,13 @@ document.addEventListener("DOMContentLoaded", function () {
         return `<rect x="${xForSample(sampleIndex, chartLeft, barWidth, gap)}" y="${currentY}" width="${barWidth}" height="${height}" fill="${taxon.color}" rx="3" ry="3"></rect>`;
       }).join("");
 
-      const bandFill = sampleMeta.timepoint === "Baseline" ? "#dbeafe" : "#fee2e2";
-      const bandStroke = sampleMeta.group === "Control" ? "#1976d2" : "#c62828";
       return `
-        <rect x="${xForSample(sampleIndex, chartLeft, barWidth, gap)}" y="${chartBottom + 8}" width="${barWidth}" height="18" fill="${bandFill}" stroke="${bandStroke}" stroke-width="1" rx="4" ry="4"></rect>
-        ${segments}
-        <text x="${xForSample(sampleIndex, chartLeft, barWidth, gap) + barWidth / 2}" y="${chartBottom + 20}" text-anchor="middle" font-size="9" fill="#0f172a">${sampleMeta.sample}</text>
+        <g>
+          <title>${sampleMeta.description}</title>
+          <rect x="${xForSample(sampleIndex, chartLeft, barWidth, gap)}" y="${chartBottom + 8}" width="${barWidth}" height="18" fill="${sampleMeta.bandFill}" stroke="${sampleMeta.bandStroke}" stroke-width="1" rx="4" ry="4"></rect>
+          ${segments}
+          <text x="${xForSample(sampleIndex, chartLeft, barWidth, gap) + barWidth / 2}" y="${chartBottom + 20}" text-anchor="middle" font-size="7.2" fill="#0f172a">${sampleMeta.sample}</text>
+        </g>
       `;
     }).join("");
 
@@ -681,13 +953,12 @@ document.addEventListener("DOMContentLoaded", function () {
       const xStart = xForSample(block.startIndex, chartLeft, barWidth, gap);
       const xEnd = xForSample(block.endIndex, chartLeft, barWidth, gap) + barWidth;
       const xCenter = (xStart + xEnd) / 2;
-      const shortLabel = block.timepoint === "Baseline" ? "Baseline" : "Post";
       const separator = blockIndex < sampleBlocks.length - 1
-        ? `<line x1="${xEnd + gap / 2}" y1="${chartTop}" x2="${xEnd + gap / 2}" y2="${chartBottom + 34}" stroke="#cbd5e1" stroke-dasharray="3 3"></line>`
+        ? `<line x1="${xEnd + gap / 2}" y1="${chartTop}" x2="${xEnd + gap / 2}" y2="${chartBottom + 38}" stroke="#cbd5e1" stroke-dasharray="3 3"></line>`
         : "";
       return `
         ${separator}
-        <text x="${xCenter}" y="${chartBottom + 38}" text-anchor="middle" font-size="9" fill="#475569">${shortLabel}</text>
+        <text x="${xCenter}" y="${chartBottom + 38}" text-anchor="middle" font-size="8.4" fill="#475569">${block.label}</text>
       `;
     }).join("");
 
@@ -695,8 +966,8 @@ document.addEventListener("DOMContentLoaded", function () {
       const xStart = xForSample(block.startIndex, chartLeft, barWidth, gap);
       const xEnd = xForSample(block.endIndex, chartLeft, barWidth, gap) + barWidth;
       return `
-        <line x1="${xStart}" y1="${chartBottom + 48}" x2="${xEnd}" y2="${chartBottom + 48}" stroke="#94a3b8" stroke-width="1.4"></line>
-        <text x="${(xStart + xEnd) / 2}" y="${chartBottom + 61}" text-anchor="middle" font-size="10" fill="#334155">${block.label}</text>
+        <line x1="${xStart}" y1="${chartBottom + 50}" x2="${xEnd}" y2="${chartBottom + 50}" stroke="#94a3b8" stroke-width="1.4"></line>
+        <text x="${(xStart + xEnd) / 2}" y="${chartBottom + 64}" text-anchor="middle" font-size="9.5" fill="#334155">${block.label}</text>
       `;
     }).join("");
 
@@ -710,7 +981,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     barChart.innerHTML = `
       <svg viewBox="0 0 ${svgWidth} ${svgHeight}" width="100%" role="img" aria-label="Interactive stacked relative abundance bar chart">
-        <text x="0" y="12" font-size="9" fill="#334155">${levelName.charAt(0).toUpperCase() + levelName.slice(1)}-level relative abundance across longitudinal control and intervention cohorts</text>
+        <text x="0" y="12" font-size="9" fill="#334155">${levelName.charAt(0).toUpperCase() + levelName.slice(1)}-level relative abundance across longitudinal control-group and experimental-group cohorts</text>
         ${yTicks}
         <line x1="${chartLeft}" y1="${chartTop}" x2="${chartLeft}" y2="${chartBottom}" stroke="#94a3b8" stroke-width="1"></line>
         <line x1="${chartLeft}" y1="${chartBottom}" x2="${chartLeft + chartWidth}" y2="${chartBottom}" stroke="#94a3b8" stroke-width="1"></line>
@@ -722,7 +993,8 @@ document.addEventListener("DOMContentLoaded", function () {
     `;
 
     legend.innerHTML = level.taxa.map((taxon) => {
-      const significant = taxon.comparisons[contrastName].q < SIGNIFICANCE_THRESHOLD ? " • significant in selected contrast" : "";
+      const frameworkCall = classifyTaxon(taxon);
+      const significant = frameworkCall.label === "Intervention-linked" ? " • passes integrated framework" : "";
       return `
         <div class="ra-legend-item">
           <span class="ra-legend-swatch" style="background:${taxon.color}"></span>
@@ -731,40 +1003,56 @@ document.addEventListener("DOMContentLoaded", function () {
       `;
     }).join("");
 
-    const sigChartHeight = SIG_BASE_HEIGHT + level.taxa.length * SIG_ROW_HEIGHT;
-    const zeroX = 150;
-    const scale = 110 / maxEffect;
-    const significanceRows = level.taxa.map((taxon, index) => {
-      const comparison = taxon.comparisons[contrastName];
-      const y = 34 + index * SIG_ROW_HEIGHT;
-      const signedEffect = comparison.effect;
-      const effectWidth = Math.abs(signedEffect) * scale;
-      const x = signedEffect >= 0 ? zeroX : zeroX - effectWidth;
-      const pointX = signedEffect >= 0 ? zeroX + effectWidth : zeroX - effectWidth;
-      const qLabel = comparison.q < SIGNIFICANCE_THRESHOLD ? `q=${comparison.q.toFixed(3)}` : "ns";
-      const point = comparison.q < SIGNIFICANCE_THRESHOLD
-        ? `<circle cx="${pointX}" cy="${y}" r="4.5" fill="#0f172a"></circle>`
-        : `<circle cx="${pointX}" cy="${y}" r="4.5" fill="white" stroke="#64748b" stroke-width="1.2"></circle>`;
-      return `
-        <text x="0" y="${y + 3}" font-size="9" fill="#0f172a">${taxon.name}</text>
-        <rect x="${x}" y="${y - 8}" width="${effectWidth}" height="16" fill="${taxon.color}" opacity="${comparison.q < SIGNIFICANCE_THRESHOLD ? 0.95 : 0.45}" rx="4" ry="4"></rect>
-        ${point}
-        <text x="${signedEffect >= 0 ? 270 : 34}" y="${y + 3}" font-size="8" fill="#475569">${qLabel}</text>
-      `;
-    }).join("");
+    frameworkOverview.innerHTML = comparisonFramework.map((item) => `
+      <div class="ra-framework-step">
+        <strong>${item.label}</strong>
+        <span><em>${item.emphasis}</em></span>
+        <span>${item.detail}</span>
+      </div>
+    `).join("");
 
     significanceChart.innerHTML = `
-      <svg viewBox="0 0 320 ${sigChartHeight}" width="100%" role="img" aria-label="Taxa preserving significance strip">
-        <text x="0" y="12" font-size="9" fill="#334155">${contrast.label}</text>
-        <line x1="${zeroX}" y1="20" x2="${zeroX}" y2="${sigChartHeight - 8}" stroke="#94a3b8" stroke-width="1"></line>
-        <text x="${zeroX - 82}" y="24" font-size="8" fill="#475569">${contrast.leftLabel}</text>
-        <text x="${zeroX + 8}" y="24" font-size="8" fill="#475569">${contrast.rightLabel}</text>
-        ${significanceRows}
-      </svg>
+      <div class="ra-framework-scroll">
+        <table class="ra-framework-table">
+          <thead>
+            <tr>
+              <th scope="col">Taxon</th>
+              <th scope="col">Pre- group match</th>
+              <th scope="col">Control stability</th>
+              <th scope="col">Experimental response</th>
+              <th scope="col">Time +4 separation</th>
+              <th scope="col">Final call</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${level.taxa.map((taxon) => {
+              const frameworkCall = classifyTaxon(taxon);
+              return `
+                <tr>
+                  <td>
+                    <div class="ra-taxon-cell">
+                      <span class="ra-legend-swatch" style="background:${taxon.color}"></span>
+                      <span>${taxon.name}</span>
+                    </div>
+                  </td>
+                  <td>${renderFrameworkCell(taxon.comparisons.baseline_group)}</td>
+                  <td>${renderFrameworkCell(taxon.comparisons.control_time)}</td>
+                  <td>${renderFrameworkCell(taxon.comparisons.intervention_time)}</td>
+                  <td>${renderFrameworkCell(taxon.comparisons.post_group)}</td>
+                  <td>
+                    <span class="${frameworkCall.chipClass}">${frameworkCall.label}</span>
+                    <div class="ra-framework-enriched">${frameworkCall.detail}</div>
+                  </td>
+                </tr>
+              `;
+            }).join("")}
+          </tbody>
+        </table>
+      </div>
     `;
 
     const significantTaxa = level.taxa
-      .filter((taxon) => taxon.comparisons[contrastName].q < SIGNIFICANCE_THRESHOLD && taxon.name !== "Other");
+      .filter((taxon) => classifyTaxon(taxon).label === "Intervention-linked" && taxon.name !== "Other");
     const significantReplicateChecks = level.replicateChecks.filter((check) => check.q < SIGNIFICANCE_THRESHOLD);
     const replicateSummaryText = significantReplicateChecks.length
       ? "One or more same-group / same-time-point replicate checks are significant in this synthetic example, so interpret the contrast-specific signal more cautiously."
@@ -782,27 +1070,25 @@ document.addEventListener("DOMContentLoaded", function () {
     }).join("");
 
     if (significantTaxa.length === 0) {
-      summary.textContent = `${contrast.description} At the ${levelName} level, no taxa reach multiple-testing significance in this selected contrast. ${replicateSummaryText}`;
+      summary.textContent = `This final framework combines Pre- group matching, control stability, experimental response, and time +4 separation. At the ${levelName} level, no taxa satisfy all four criteria at once. ${replicateSummaryText}`;
       return;
     }
 
     const strongestEntry = significantTaxa
-      .map((taxon) => ({ taxon, signedEffect: taxon.comparisons[contrastName].effect }))
-      .sort((a, b) => Math.abs(b.signedEffect) - Math.abs(a.signedEffect))[0];
+      .map((taxon) => ({
+        taxon,
+        combinedEffect: Math.abs(taxon.comparisons.post_group.effect) + Math.abs(taxon.comparisons.intervention_time.effect)
+      }))
+      .sort((a, b) => b.combinedEffect - a.combinedEffect)[0];
     const strongest = strongestEntry.taxon;
-    const strongestComparison = strongest.comparisons[contrastName];
-    summary.textContent = `${contrast.description} At the ${levelName} level, the strongest significant shift is ${strongest.name} (${strongestComparison.enriched}-enriched, LEfSe-like effect ${strongestComparison.effect.toFixed(1)}, q=${strongestComparison.q.toFixed(3)}). ${replicateSummaryText}`;
+    summary.textContent = `This final framework combines Pre- group matching, control stability, experimental response, and time +4 separation. At the ${levelName} level, the clearest intervention-linked taxon is ${strongest.name} (${formatEnrichedSource(strongest.comparisons.intervention_time.enriched)} within the experimental arm, intervention effect ${formatEffect(strongest.comparisons.intervention_time.effect)}, time +4 separation ${formatEffect(strongest.comparisons.post_group.effect)}; q=${strongest.comparisons.intervention_time.q.toFixed(3)} and q=${strongest.comparisons.post_group.q.toFixed(3)}). ${replicateSummaryText}`;
   }
 
   levelSelect.addEventListener("change", function () {
-    renderLevel(levelSelect.value, contrastSelect.value);
+    renderLevel(levelSelect.value);
   });
 
-  contrastSelect.addEventListener("change", function () {
-    renderLevel(levelSelect.value, contrastSelect.value);
-  });
-
-  renderLevel(levelSelect.value, contrastSelect.value);
+  renderLevel(levelSelect.value);
 });
 </script>
 :::
