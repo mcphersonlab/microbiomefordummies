@@ -76,6 +76,12 @@ The mini-lab below is **interactive and intentionally synthetic**: it is there t
   width: 100%;
 }
 
+.eco-control-value {
+  font-size: 0.82rem;
+  color: #475569;
+  font-weight: 500;
+}
+
 .eco-select-label select {
   max-width: 13rem;
 }
@@ -165,7 +171,7 @@ The mini-lab below is **interactive and intentionally synthetic**: it is there t
   border-radius: 999px;
 }
 
-.eco-legend-swatch--treatment {
+.eco-legend-swatch--intervention {
   color: #c62828;
   border-radius: 0.15rem;
 }
@@ -183,25 +189,38 @@ document.addEventListener("DOMContentLoaded", function () {
   const diversityLab = document.getElementById("ecological-diversity-lab");
   diversityLab.innerHTML = `
     <section class="eco-baseline-bridge" aria-labelledby="eco-baseline-heading">
-      <h3 id="eco-baseline-heading">Shared baseline data characteristics</h3>
-      <p class="eco-caption">The same reference community anchors both examples below: alpha diversity compresses one baseline-like sample into richness and evenness metrics, while beta diversity shows how multiple samples move away from that starting composition in high-dimensional space.</p>
+      <h3 id="eco-baseline-heading">Linked alpha-beta source sample</h3>
+      <p class="eco-caption">The alpha controls now build the exact source sample used by the beta-diversity panel. In return, the beta shift control updates the intervention-like preview back inside the alpha panel, so both graphics stay linked instead of behaving like separate demos.</p>
       <div id="eco-baseline-chart" class="eco-chart-frame" aria-live="polite"></div>
+      <p id="eco-link-summary" class="eco-beta-summary" aria-live="polite"></p>
     </section>
 
     <div class="eco-diversity-grid">
       <section class="eco-card" aria-labelledby="alpha-diversity-heading">
         <h3 id="alpha-diversity-heading">Alpha diversity explorer</h3>
-        <p class="eco-caption">Change the number of observed taxa and how dominant the largest taxon is. The chart keeps the shared baseline visible so you can see how one sample’s composition translates into alpha-diversity summaries.</p>
+        <p class="eco-caption">Change the source sample richness and dominance, then choose which alpha-diversity metric to emphasize. The intervention-like preview below is driven by the same beta shift strength used in the ordination panel.</p>
 
         <div class="eco-control-grid">
           <label for="alpha-richness">
             Observed taxa
+            <span id="alpha-richness-display" class="eco-control-value"></span>
             <input id="alpha-richness" type="range" min="3" max="12" step="1" value="6">
           </label>
 
           <label for="alpha-dominance">
             Dominance of the most abundant taxon
+            <span id="alpha-dominance-display" class="eco-control-value"></span>
             <input id="alpha-dominance" type="range" min="0" max="0.85" step="0.01" value="0.35">
+          </label>
+
+          <label class="eco-select-label" for="alpha-focus-metric">
+            Alpha metric to emphasize
+            <select id="alpha-focus-metric">
+              <option value="shannon" selected>Shannon diversity</option>
+              <option value="simpson">Simpson diversity</option>
+              <option value="inverse">Inverse Simpson</option>
+              <option value="evenness">Pielou evenness</option>
+            </select>
           </label>
         </div>
 
@@ -221,20 +240,41 @@ document.addEventListener("DOMContentLoaded", function () {
             <span class="eco-metric-value" id="alpha-simpson-value"></span>
           </div>
           <div class="eco-metric-card">
+            <span class="eco-metric-label">Inverse Simpson</span>
+            <span class="eco-metric-value" id="alpha-inverse-value"></span>
+          </div>
+          <div class="eco-metric-card">
             <span class="eco-metric-label">Pielou evenness</span>
             <span class="eco-metric-value" id="alpha-evenness-value"></span>
           </div>
         </div>
+        <p id="alpha-link-summary" class="eco-beta-summary" aria-live="polite"></p>
       </section>
 
       <section class="eco-card" aria-labelledby="beta-diversity-heading">
         <h3 id="beta-diversity-heading">Beta diversity explorer</h3>
-        <p class="eco-caption">Move the treatment group farther away from the controls, then switch both the <strong>Distance Metric</strong> and the <strong>Ordination and visualization</strong> algorithm to see how the same high-dimensional baseline pattern is summarized.</p>
+        <p class="eco-caption">Use the same alpha-defined source sample, then control how far the intervention group moves, how dispersed each group is, how many samples to simulate, and how Jaccard presence/absence is thresholded.</p>
 
         <div class="eco-control-grid">
           <label for="beta-shift">
-            Group shift strength
+            Intervention shift strength
+            <span id="beta-shift-display" class="eco-control-value"></span>
             <input id="beta-shift" type="range" min="0" max="0.55" step="0.01" value="0.22">
+          </label>
+          <label for="beta-variability">
+            Within-group variability
+            <span id="beta-variability-display" class="eco-control-value"></span>
+            <input id="beta-variability" type="range" min="0.01" max="0.18" step="0.01" value="0.06">
+          </label>
+          <label for="beta-samples">
+            Samples per group
+            <span id="beta-samples-display" class="eco-control-value"></span>
+            <input id="beta-samples" type="range" min="2" max="5" step="1" value="3">
+          </label>
+          <label for="beta-presence-threshold">
+            Jaccard presence threshold
+            <span id="beta-presence-display" class="eco-control-value"></span>
+            <input id="beta-presence-threshold" type="range" min="0.02" max="0.20" step="0.01" value="0.08">
           </label>
           <label class="eco-select-label" for="beta-metric">
             Distance metric
@@ -257,9 +297,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
         <div id="beta-ordination-chart" class="eco-chart-frame"></div>
         <div class="eco-inline-legend" aria-hidden="true">
-          <span class="eco-legend-item"><span class="eco-legend-swatch eco-legend-swatch--baseline"></span>Baseline reference</span>
+          <span class="eco-legend-item"><span class="eco-legend-swatch eco-legend-swatch--baseline"></span>Source sample</span>
           <span class="eco-legend-item"><span class="eco-legend-swatch eco-legend-swatch--control"></span>Control samples</span>
-          <span class="eco-legend-item"><span class="eco-legend-swatch eco-legend-swatch--treatment"></span>Treatment samples</span>
+          <span class="eco-legend-item"><span class="eco-legend-swatch eco-legend-swatch--intervention"></span>Intervention samples</span>
         </div>
         <p id="beta-diversity-summary" class="eco-beta-summary" aria-live="polite"></p>
       </section>
@@ -267,15 +307,28 @@ document.addEventListener("DOMContentLoaded", function () {
   `;
 
   const baselineChart = document.getElementById("eco-baseline-chart");
+  const linkSummary = document.getElementById("eco-link-summary");
   const alphaRichnessInput = document.getElementById("alpha-richness");
   const alphaDominanceInput = document.getElementById("alpha-dominance");
+  const alphaFocusMetricInput = document.getElementById("alpha-focus-metric");
+  const alphaRichnessDisplay = document.getElementById("alpha-richness-display");
+  const alphaDominanceDisplay = document.getElementById("alpha-dominance-display");
   const alphaCompositionChart = document.getElementById("alpha-composition-chart");
   const alphaRichnessValue = document.getElementById("alpha-richness-value");
   const alphaShannonValue = document.getElementById("alpha-shannon-value");
   const alphaSimpsonValue = document.getElementById("alpha-simpson-value");
+  const alphaInverseValue = document.getElementById("alpha-inverse-value");
   const alphaEvennessValue = document.getElementById("alpha-evenness-value");
+  const alphaLinkSummary = document.getElementById("alpha-link-summary");
 
   const betaShiftInput = document.getElementById("beta-shift");
+  const betaVariabilityInput = document.getElementById("beta-variability");
+  const betaSamplesInput = document.getElementById("beta-samples");
+  const betaPresenceInput = document.getElementById("beta-presence-threshold");
+  const betaShiftDisplay = document.getElementById("beta-shift-display");
+  const betaVariabilityDisplay = document.getElementById("beta-variability-display");
+  const betaSamplesDisplay = document.getElementById("beta-samples-display");
+  const betaPresenceDisplay = document.getElementById("beta-presence-display");
   const betaMetricInput = document.getElementById("beta-metric");
   const betaOrdinationInput = document.getElementById("beta-ordination");
   const betaOrdinationChart = document.getElementById("beta-ordination-chart");
@@ -285,8 +338,6 @@ document.addEventListener("DOMContentLoaded", function () {
     "#1976d2", "#2e7d32", "#c62828", "#7e57c2", "#ef6c00", "#00897b",
     "#5d4037", "#546e7a", "#f9a825", "#8e24aa", "#3949ab", "#6d4c41"
   ];
-  const SIX_TAXON_BASELINE_PROFILE = normalize([0.34, 0.22, 0.18, 0.14, 0.08, 0.04]);
-  const PRESENCE_THRESHOLD = 0.08;
   const AITCHISON_DISPLAY_SCALE = 5;
   const COORDINATE_JITTER = 0.02;
   const NMDS_TARGET_OFFSET = 0.25;
@@ -308,6 +359,12 @@ document.addEventListener("DOMContentLoaded", function () {
     tsne: "t-SNE emphasizes local neighborhoods; compact clusters are visual hints rather than effect-size estimates.",
     umap: "UMAP balances local neighborhoods with broader structure, which often keeps group trends visible while preserving nearby samples."
   };
+  const focusMetricLabels = {
+    shannon: "Shannon diversity",
+    simpson: "Simpson diversity",
+    inverse: "Inverse Simpson",
+    evenness: "Pielou evenness"
+  };
 
   const formatNumber = (value) => Number(value).toFixed(2);
 
@@ -316,6 +373,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const simpson = (proportions) =>
     1 - proportions.reduce((sum, value) => sum + value * value, 0);
+
+  function inverseSimpson(proportions) {
+    const denominator = proportions.reduce((sum, value) => sum + value * value, 0);
+    return denominator > 0 ? 1 / denominator : 0;
+  }
 
   function getLabelColor(hexColor) {
     if (!hexColor || typeof hexColor !== "string") {
@@ -338,6 +400,15 @@ document.addEventListener("DOMContentLoaded", function () {
     const maxShare = (1 / richness) + dominance * (1 - 1 / richness);
     const otherShare = (1 - maxShare) / (richness - 1);
     return Array.from({ length: richness }, (_, index) => index === 0 ? maxShare : otherShare);
+  }
+
+  function normalize(values) {
+    const total = values.reduce((sum, value) => sum + value, 0);
+    return values.map((value) => value / total);
+  }
+
+  function currentSourceProfile() {
+    return alphaComposition(Number(alphaRichnessInput.value), Number(alphaDominanceInput.value));
   }
 
   function stackedBarSegments(values, options = {}) {
@@ -363,53 +434,47 @@ document.addEventListener("DOMContentLoaded", function () {
     }).join("");
   }
 
-  function renderSharedBaseline() {
-    baselineChart.innerHTML = `
-      <svg viewBox="0 0 320 122" width="100%" role="img" aria-label="Shared baseline community that connects the alpha and beta diversity examples">
-        <text x="30" y="16" font-size="10" fill="#334155" font-weight="700">Baseline reference community (T1-T6)</text>
-        ${stackedBarSegments(SIX_TAXON_BASELINE_PROFILE, { x: 30, y: 24, width: 260, height: 20 })}
-        <text x="30" y="58" font-size="8.5" fill="#475569">These same baseline data characteristics feed both graphics below.</text>
-        <line x1="160" y1="48" x2="160" y2="70" stroke="#94a3b8" stroke-width="1.4"></line>
-        <line x1="160" y1="70" x2="82" y2="70" stroke="#94a3b8" stroke-width="1.4"></line>
-        <line x1="160" y1="70" x2="238" y2="70" stroke="#94a3b8" stroke-width="1.4"></line>
-        <rect x="18" y="72" width="128" height="34" rx="8" ry="8" fill="#eff6ff" stroke="#bfdbfe"></rect>
-        <rect x="174" y="72" width="128" height="34" rx="8" ry="8" fill="#fef2f2" stroke="#fecaca"></rect>
-        <text x="82" y="88" text-anchor="middle" font-size="8.5" fill="#1e3a8a" font-weight="700">Alpha diversity</text>
-        <text x="82" y="99" text-anchor="middle" font-size="7.5" fill="#1f2937">One sample → richness + evenness</text>
-        <text x="238" y="88" text-anchor="middle" font-size="8.5" fill="#991b1b" font-weight="700">Beta diversity</text>
-        <text x="238" y="99" text-anchor="middle" font-size="7.5" fill="#1f2937">Many samples → distance + ordination</text>
-      </svg>
-    `;
+  function metricsFor(proportions) {
+    const richness = proportions.length;
+    const alphaShannon = shannon(proportions);
+    return {
+      richness,
+      shannon: alphaShannon,
+      simpson: simpson(proportions),
+      inverse: inverseSimpson(proportions),
+      evenness: richness > 1 ? alphaShannon / Math.log(richness) : 0
+    };
   }
 
-  function renderAlpha() {
-    const richness = Number(alphaRichnessInput.value);
-    const dominance = Number(alphaDominanceInput.value);
-    const composition = alphaComposition(richness, dominance);
-    const alphaShannon = shannon(composition);
-    const alphaSimpson = simpson(composition);
-    const alphaEvenness = richness > 1 ? alphaShannon / Math.log(richness) : 0;
-
-    alphaRichnessValue.textContent = String(richness);
-    alphaShannonValue.textContent = formatNumber(alphaShannon);
-    alphaSimpsonValue.textContent = formatNumber(alphaSimpson);
-    alphaEvennessValue.textContent = formatNumber(alphaEvenness);
-
-    alphaCompositionChart.innerHTML = `
-      <svg viewBox="0 0 100 104" width="100%" role="img" aria-label="Baseline and current single-sample composition for the alpha-diversity example">
-        <text x="4" y="12" font-size="7.5" fill="#334155">Baseline reference profile</text>
-        ${stackedBarSegments(SIX_TAXON_BASELINE_PROFILE, { x: 4, y: 18, width: 92, height: 18 })}
-        <line x1="50" y1="37" x2="50" y2="48" stroke="#94a3b8" stroke-width="0.7" stroke-dasharray="2 2"></line>
-        <text x="4" y="57" font-size="7.5" fill="#334155">Current single-sample composition</text>
-        ${stackedBarSegments(composition, { x: 4, y: 63, width: 92, height: 18 })}
-        <text x="4" y="92" font-size="7" fill="#475569">Each segment is one detected taxon; higher dominance lowers evenness even when richness stays constant.</text>
-      </svg>
-    `;
+  function metricValue(metrics, key) {
+    if (key === "richness") {
+      return metrics.richness;
+    }
+    return metrics[key];
   }
 
-  function normalize(values) {
-    const total = values.reduce((sum, value) => sum + value, 0);
-    return values.map((value) => value / total);
+  function buildInterventionSignal(length) {
+    const raw = Array.from({ length }, (_, index) => {
+      const fraction = length === 1 ? 0 : index / (length - 1);
+      if (fraction < 0.34) {
+        return -0.15 + 0.05 * fraction;
+      }
+      if (fraction > 0.66) {
+        return 0.12 + 0.05 * (fraction - 0.66);
+      }
+      return 0.03 * (fraction - 0.5);
+    });
+    const mean = raw.reduce((sum, value) => sum + value, 0) / raw.length;
+    return raw.map((value) => value - mean);
+  }
+
+  function patternedOffset(length, sampleIndex, amplitude, phase) {
+    const raw = Array.from({ length }, (_, index) =>
+      Math.sin((index + 1 + phase) * (sampleIndex + 1) * 0.9) +
+      0.45 * Math.cos((index + 1) * 1.7 + phase)
+    );
+    const mean = raw.reduce((sum, value) => sum + value, 0) / raw.length;
+    return raw.map((value) => (value - mean) * amplitude / length);
   }
 
   function shiftedProfile(base, signal, strength, offset) {
@@ -418,18 +483,49 @@ document.addEventListener("DOMContentLoaded", function () {
     ));
   }
 
-  function buildBetaSamples(shiftStrength) {
-    const treatmentSignal = [-0.16, -0.10, -0.03, 0.08, 0.11, 0.10];
+  function interventionPreviewProfile(baseProfile) {
+    const shiftStrength = Number(betaShiftInput.value);
+    const variability = Number(betaVariabilityInput.value);
+    return shiftedProfile(
+      baseProfile,
+      buildInterventionSignal(baseProfile.length),
+      shiftStrength,
+      patternedOffset(baseProfile.length, 0, variability * 0.7, 1.1)
+    );
+  }
 
-    return [
-      { name: "Baseline", group: "Baseline", values: SIX_TAXON_BASELINE_PROFILE },
-      { name: "Control 1", group: "Control", values: shiftedProfile(SIX_TAXON_BASELINE_PROFILE, [0.01, -0.01, 0.00, 0.00, 0.01, -0.01], 0.35, [0.005, -0.002, -0.001, 0.002, -0.001, -0.003]) },
-      { name: "Control 2", group: "Control", values: shiftedProfile(SIX_TAXON_BASELINE_PROFILE, [-0.01, 0.01, 0.00, 0.01, -0.01, 0.00], 0.35, [-0.003, 0.004, -0.002, 0.002, 0.001, -0.002]) },
-      { name: "Control 3", group: "Control", values: shiftedProfile(SIX_TAXON_BASELINE_PROFILE, [0.00, -0.01, 0.01, -0.01, 0.01, 0.00], 0.35, [0.001, -0.002, 0.003, -0.002, 0.001, -0.001]) },
-      { name: "Treatment 1", group: "Treatment", values: shiftedProfile(SIX_TAXON_BASELINE_PROFILE, treatmentSignal, shiftStrength, [0.002, -0.003, 0.001, 0.002, -0.001, -0.001]) },
-      { name: "Treatment 2", group: "Treatment", values: shiftedProfile(SIX_TAXON_BASELINE_PROFILE, treatmentSignal, shiftStrength * 1.08, [-0.002, 0.002, -0.001, 0.001, 0.003, -0.001]) },
-      { name: "Treatment 3", group: "Treatment", values: shiftedProfile(SIX_TAXON_BASELINE_PROFILE, treatmentSignal, shiftStrength * 0.92, [0.001, -0.001, 0.000, -0.002, 0.003, -0.001]) }
-    ];
+  function buildBetaSamples(baseProfile, shiftStrength, variability, sampleCount) {
+    const interventionSignal = buildInterventionSignal(baseProfile.length);
+    const controlSignal = interventionSignal.map((value) => value * 0.14);
+    const samples = [{ name: "Source", group: "Baseline", values: baseProfile }];
+
+    for (let index = 0; index < sampleCount; index += 1) {
+      samples.push({
+        name: `Control ${index + 1}`,
+        group: "Control",
+        values: shiftedProfile(
+          baseProfile,
+          controlSignal,
+          variability * 0.45,
+          patternedOffset(baseProfile.length, index, 0.02 + variability * 0.42, 0.4)
+        )
+      });
+    }
+
+    for (let index = 0; index < sampleCount; index += 1) {
+      samples.push({
+        name: `Intervention ${index + 1}`,
+        group: "Intervention",
+        values: shiftedProfile(
+          baseProfile,
+          interventionSignal,
+          shiftStrength,
+          patternedOffset(baseProfile.length, index, 0.025 + variability * 0.5, 1.6)
+        )
+      });
+    }
+
+    return samples;
   }
 
   function brayCurtis(a, b) {
@@ -442,12 +538,12 @@ document.addEventListener("DOMContentLoaded", function () {
     return denominator === 0 ? 0 : numerator / denominator;
   }
 
-  function jaccard(a, b) {
+  function jaccard(a, b, presenceThreshold) {
     let intersection = 0;
     let union = 0;
     for (let i = 0; i < a.length; i += 1) {
-      const presentA = a[i] > PRESENCE_THRESHOLD ? 1 : 0;
-      const presentB = b[i] > PRESENCE_THRESHOLD ? 1 : 0;
+      const presentA = a[i] > presenceThreshold ? 1 : 0;
+      const presentB = b[i] > presenceThreshold ? 1 : 0;
       if (presentA || presentB) {
         union += 1;
       }
@@ -471,9 +567,9 @@ document.addEventListener("DOMContentLoaded", function () {
     return Math.sqrt(squared) / AITCHISON_DISPLAY_SCALE;
   }
 
-  function betaDistance(a, b, metric) {
+  function betaDistance(a, b, metric, presenceThreshold) {
     if (metric === "jaccard") {
-      return jaccard(a, b);
+      return jaccard(a, b, presenceThreshold);
     }
     if (metric === "aitchison") {
       return clrEuclidean(a, b);
@@ -574,10 +670,10 @@ document.addEventListener("DOMContentLoaded", function () {
     ]);
   }
 
-  function distanceMatrix(samples, metric) {
+  function distanceMatrix(samples, metric, presenceThreshold) {
     return samples.map((rowSample, rowIndex) =>
       samples.map((colSample, colIndex) =>
-        rowIndex === colIndex ? 0 : betaDistance(rowSample.values, colSample.values, metric)
+        rowIndex === colIndex ? 0 : betaDistance(rowSample.values, colSample.values, metric, presenceThreshold)
       )
     );
   }
@@ -821,31 +917,91 @@ document.addEventListener("DOMContentLoaded", function () {
       return `<path d="M ${point.x} ${point.y - 8} L ${point.x + 8} ${point.y} L ${point.x} ${point.y + 8} L ${point.x - 8} ${point.y} Z" fill="white" stroke="${pointColor}" stroke-width="2"></path>`;
     }
 
-    if (sample.group === "Treatment") {
+    if (sample.group === "Intervention") {
       return `<rect x="${point.x - 6}" y="${point.y - 6}" width="12" height="12" rx="2" ry="2" fill="white" stroke="${pointColor}" stroke-width="2"></rect>`;
     }
 
     return `<circle cx="${point.x}" cy="${point.y}" r="6" fill="white" stroke="${pointColor}" stroke-width="2"></circle>`;
   }
 
+  function renderSharedBaseline() {
+    const baseProfile = currentSourceProfile();
+    const sampleCount = Number(betaSamplesInput.value);
+    baselineChart.innerHTML = `
+      <svg viewBox="0 0 320 124" width="100%" role="img" aria-label="Shared source community that connects the alpha and beta diversity examples">
+        <text x="30" y="16" font-size="10" fill="#334155" font-weight="700">Current source sample (T1-T${baseProfile.length})</text>
+        ${stackedBarSegments(baseProfile, { x: 30, y: 24, width: 260, height: 20 })}
+        <text x="30" y="58" font-size="8.5" fill="#475569">This single composition now feeds both panels below.</text>
+        <line x1="160" y1="48" x2="160" y2="70" stroke="#94a3b8" stroke-width="1.4"></line>
+        <line x1="160" y1="70" x2="82" y2="70" stroke="#94a3b8" stroke-width="1.4"></line>
+        <line x1="160" y1="70" x2="238" y2="70" stroke="#94a3b8" stroke-width="1.4"></line>
+        <rect x="18" y="72" width="128" height="34" rx="8" ry="8" fill="#eff6ff" stroke="#bfdbfe"></rect>
+        <rect x="174" y="72" width="128" height="34" rx="8" ry="8" fill="#fef2f2" stroke="#fecaca"></rect>
+        <text x="82" y="88" text-anchor="middle" font-size="8.5" fill="#1e3a8a" font-weight="700">Alpha diversity</text>
+        <text x="82" y="99" text-anchor="middle" font-size="7.5" fill="#1f2937">One sample → richness + evenness</text>
+        <text x="238" y="88" text-anchor="middle" font-size="8.5" fill="#991b1b" font-weight="700">Beta diversity</text>
+        <text x="238" y="99" text-anchor="middle" font-size="7.5" fill="#1f2937">${sampleCount} control + ${sampleCount} intervention samples</text>
+      </svg>
+    `;
+    linkSummary.textContent = `Right now the alpha controls define a ${baseProfile.length}-taxon source sample that becomes the anchor for every point in the beta-diversity ordination below.`;
+  }
+
+  function renderAlpha() {
+    const baseProfile = currentSourceProfile();
+    const previewProfile = interventionPreviewProfile(baseProfile);
+    const baseMetrics = metricsFor(baseProfile);
+    const previewMetrics = metricsFor(previewProfile);
+    const focusMetric = alphaFocusMetricInput.value;
+
+    alphaRichnessDisplay.textContent = `${alphaRichnessInput.value} taxa`;
+    alphaDominanceDisplay.textContent = `${formatNumber(alphaDominanceInput.value)} of the sample in T1`;
+    alphaRichnessValue.textContent = String(baseMetrics.richness);
+    alphaShannonValue.textContent = formatNumber(baseMetrics.shannon);
+    alphaSimpsonValue.textContent = formatNumber(baseMetrics.simpson);
+    alphaInverseValue.textContent = formatNumber(baseMetrics.inverse);
+    alphaEvennessValue.textContent = formatNumber(baseMetrics.evenness);
+
+    alphaCompositionChart.innerHTML = `
+      <svg viewBox="0 0 100 110" width="100%" role="img" aria-label="Current source sample and intervention-like preview for the alpha-diversity example">
+        <text x="4" y="12" font-size="7.5" fill="#334155">Current shared source sample</text>
+        ${stackedBarSegments(baseProfile, { x: 4, y: 18, width: 92, height: 18 })}
+        <line x1="50" y1="37" x2="50" y2="48" stroke="#94a3b8" stroke-width="0.7" stroke-dasharray="2 2"></line>
+        <text x="4" y="57" font-size="7.5" fill="#334155">Intervention-like preview from beta shift</text>
+        ${stackedBarSegments(previewProfile, { x: 4, y: 63, width: 92, height: 18 })}
+        <text x="4" y="94" font-size="7" fill="#475569">The beta shift slider now changes this preview too, so the alpha and beta examples stay connected.</text>
+      </svg>
+    `;
+
+    alphaLinkSummary.textContent = `${focusMetricLabels[focusMetric]} changes from ${formatNumber(metricValue(baseMetrics, focusMetric))} in the shared source sample to ${formatNumber(metricValue(previewMetrics, focusMetric))} in the intervention-like preview generated by the current beta settings.`;
+  }
+
   function renderBeta() {
+    const baseProfile = currentSourceProfile();
     const shiftStrength = Number(betaShiftInput.value);
+    const variability = Number(betaVariabilityInput.value);
+    const sampleCount = Number(betaSamplesInput.value);
+    const presenceThreshold = Number(betaPresenceInput.value);
     const metric = betaMetricInput.value;
     const ordination = betaOrdinationInput.value;
-    const samples = buildBetaSamples(shiftStrength);
-    const distances = distanceMatrix(samples, metric);
+    const samples = buildBetaSamples(baseProfile, shiftStrength, variability, sampleCount);
+    const distances = distanceMatrix(samples, metric, presenceThreshold);
     const projectedPoints = projectToCanvas(ordinationCoords(distances, ordination), 340, 235, 36);
     const baselinePoint = projectedPoints[0];
     const controlPoints = projectedPoints.filter((_, index) => samples[index].group === "Control");
-    const treatmentPoints = projectedPoints.filter((_, index) => samples[index].group === "Treatment");
+    const interventionPoints = projectedPoints.filter((_, index) => samples[index].group === "Intervention");
     const controlCentroid = {
       x: controlPoints.reduce((sum, point) => sum + point.x, 0) / controlPoints.length,
       y: controlPoints.reduce((sum, point) => sum + point.y, 0) / controlPoints.length
     };
-    const treatmentCentroid = {
-      x: treatmentPoints.reduce((sum, point) => sum + point.x, 0) / treatmentPoints.length,
-      y: treatmentPoints.reduce((sum, point) => sum + point.y, 0) / treatmentPoints.length
+    const interventionCentroid = {
+      x: interventionPoints.reduce((sum, point) => sum + point.x, 0) / interventionPoints.length,
+      y: interventionPoints.reduce((sum, point) => sum + point.y, 0) / interventionPoints.length
     };
+
+    betaShiftDisplay.textContent = formatNumber(shiftStrength);
+    betaVariabilityDisplay.textContent = formatNumber(variability);
+    betaSamplesDisplay.textContent = `${sampleCount} samples`;
+    betaPresenceDisplay.textContent = formatNumber(presenceThreshold);
 
     const trajectoryLines = projectedPoints.slice(1).map((point, index) => {
       const sample = samples[index + 1];
@@ -857,9 +1013,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const axisY = `<line x1="36" y1="199" x2="36" y2="30" stroke="#cbd5e1" stroke-width="1"></line>`;
     const centroidAnnotations = `
       <line x1="${baselinePoint.x}" y1="${baselinePoint.y}" x2="${controlCentroid.x}" y2="${controlCentroid.y}" stroke="#1976d2" stroke-width="1.8"></line>
-      <line x1="${baselinePoint.x}" y1="${baselinePoint.y}" x2="${treatmentCentroid.x}" y2="${treatmentCentroid.y}" stroke="#c62828" stroke-width="1.8"></line>
+      <line x1="${baselinePoint.x}" y1="${baselinePoint.y}" x2="${interventionCentroid.x}" y2="${interventionCentroid.y}" stroke="#c62828" stroke-width="1.8"></line>
       <text x="${controlCentroid.x + 8}" y="${controlCentroid.y - 8}" font-size="8" fill="#0f172a">Control centroid</text>
-      <text x="${treatmentCentroid.x + 8}" y="${treatmentCentroid.y - 8}" font-size="8" fill="#0f172a">Treatment centroid</text>
+      <text x="${interventionCentroid.x + 8}" y="${interventionCentroid.y - 8}" font-size="8" fill="#0f172a">Intervention centroid</text>
     `;
 
     const points = samples.map((sample, index) => {
@@ -876,9 +1032,9 @@ document.addEventListener("DOMContentLoaded", function () {
     }).join("");
 
     betaOrdinationChart.innerHTML = `
-      <svg viewBox="0 0 340 235" width="100%" role="img" aria-label="High-dimensional beta diversity ordination with baseline, control, and treatment samples">
-        <text x="12" y="16" font-size="10" fill="#334155" font-weight="700">${ordinationLabels[ordination]} view of the same high-dimensional community shift</text>
-        <text x="12" y="30" font-size="8" fill="#475569">Distance metric: ${metricLabels[metric]}. Dashed trajectories connect the shared baseline data characteristics to each derived sample.</text>
+      <svg viewBox="0 0 340 235" width="100%" role="img" aria-label="High-dimensional beta diversity ordination with source, control, and intervention samples">
+        <text x="12" y="16" font-size="10" fill="#334155" font-weight="700">${ordinationLabels[ordination]} view of the linked alpha-defined source sample</text>
+        <text x="12" y="30" font-size="8" fill="#475569">Distance metric: ${metricLabels[metric]}. Dashed trajectories connect the shared source sample to each simulated cohort sample.</text>
         ${axisX}
         ${axisY}
         <text x="296" y="214" font-size="8" fill="#475569">${ordinationLabels[ordination]} 1</text>
@@ -890,7 +1046,7 @@ document.addEventListener("DOMContentLoaded", function () {
     `;
 
     const nonBaselineSamples = samples.filter((sample) => sample.group !== "Baseline");
-    const nonBaselineDistances = distanceMatrix(nonBaselineSamples, metric);
+    const nonBaselineDistances = distanceMatrix(nonBaselineSamples, metric, presenceThreshold);
     const within = [];
     const between = [];
 
@@ -909,18 +1065,51 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const meanWithin = within.reduce((sum, value) => sum + value, 0) / within.length;
     const meanBetween = between.reduce((sum, value) => sum + value, 0) / between.length;
-    betaSummary.textContent = `${metricLabels[metric]} + ${ordinationLabels[ordination]}: mean within-group distance = ${formatNumber(meanWithin)} and mean between-group distance = ${formatNumber(meanBetween)}. ${ordinationDescriptions[ordination]}`;
+    const thresholdNote = metric === "jaccard"
+      ? ` Presence threshold = ${formatNumber(presenceThreshold)}.`
+      : "";
+    betaSummary.textContent = `${metricLabels[metric]} + ${ordinationLabels[ordination]} using the current alpha-defined source sample: mean within-group distance = ${formatNumber(meanWithin)} and mean between-group distance = ${formatNumber(meanBetween)}.${thresholdNote} ${ordinationDescriptions[ordination]}`;
   }
 
-  alphaRichnessInput.addEventListener("input", renderAlpha);
-  alphaDominanceInput.addEventListener("input", renderAlpha);
-  betaShiftInput.addEventListener("input", renderBeta);
-  betaMetricInput.addEventListener("change", renderBeta);
-  betaOrdinationInput.addEventListener("change", renderBeta);
+  let scheduledRenderFrame = null;
 
-  renderSharedBaseline();
-  renderAlpha();
-  renderBeta();
+  function renderAll() {
+    renderSharedBaseline();
+    renderAlpha();
+    renderBeta();
+  }
+
+  function scheduleRenderAll() {
+    if (scheduledRenderFrame !== null) {
+      window.cancelAnimationFrame(scheduledRenderFrame);
+    }
+
+    scheduledRenderFrame = window.requestAnimationFrame(() => {
+      scheduledRenderFrame = null;
+      renderAll();
+    });
+  }
+
+  function determineInputEventType(input) {
+    return input instanceof HTMLSelectElement ? "change" : "input";
+  }
+
+  [
+    alphaRichnessInput,
+    alphaDominanceInput,
+    alphaFocusMetricInput,
+    betaShiftInput,
+    betaVariabilityInput,
+    betaSamplesInput,
+    betaPresenceInput
+  ].forEach((input) => {
+    input.addEventListener(determineInputEventType(input), scheduleRenderAll);
+  });
+
+  betaMetricInput.addEventListener("change", scheduleRenderAll);
+  betaOrdinationInput.addEventListener("change", scheduleRenderAll);
+
+  renderAll();
 });
 </script>
 :::
