@@ -16,7 +16,7 @@ For taxonomic diversity, most people start with a **species-level MetaPhlAn tabl
 
 ## Interactive ecological diversity explainer
 
-The mini-lab below is **interactive and intentionally synthetic**: it is there to help you build intuition before you run the R code farther down the page on your own tables.
+The mini-lab below is **interactive and intentionally synthetic**: it is there to help you build intuition before you run the R code further down the page on your own tables.
 
 ::: {=html}
 <style>
@@ -198,6 +198,8 @@ document.addEventListener("DOMContentLoaded", function () {
     "#1976d2", "#2e7d32", "#c62828", "#7e57c2", "#ef6c00", "#00897b",
     "#5d4037", "#546e7a", "#f9a825", "#8e24aa", "#3949ab", "#6d4c41"
   ];
+  const PRESENCE_THRESHOLD = 0.08;
+  const AITCHISON_DISPLAY_SCALE = 5;
 
   const formatNumber = (value) => Number(value).toFixed(2);
 
@@ -293,8 +295,8 @@ document.addEventListener("DOMContentLoaded", function () {
     let intersection = 0;
     let union = 0;
     for (let i = 0; i < a.length; i += 1) {
-      const presentA = a[i] > 0.08 ? 1 : 0;
-      const presentB = b[i] > 0.08 ? 1 : 0;
+      const presentA = a[i] > PRESENCE_THRESHOLD ? 1 : 0;
+      const presentB = b[i] > PRESENCE_THRESHOLD ? 1 : 0;
       if (presentA || presentB) {
         union += 1;
       }
@@ -315,7 +317,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const clrA = clr(a);
     const clrB = clr(b);
     const squared = clrA.reduce((sum, value, index) => sum + Math.pow(value - clrB[index], 2), 0);
-    return Math.sqrt(squared) / 5;
+    return Math.sqrt(squared) / AITCHISON_DISPLAY_SCALE;
   }
 
   function betaDistance(a, b, metric) {

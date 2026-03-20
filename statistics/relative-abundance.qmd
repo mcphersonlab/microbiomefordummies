@@ -34,7 +34,7 @@ For family-level bars, it usually looks cleaner to use **lighter shades within e
 
 ## Interactive taxonomic bar-chart explorer
 
-The interactive demo below lets you **change taxonomic level** and watch both the stacked bars and the significance layer update together.
+The interactive explorer below lets you **change taxonomic level** and watch both the stacked bars and the significance layer update together.
 
 My recommended visualization idea is the **taxa-preserving significance strip**:
 
@@ -231,6 +231,8 @@ document.addEventListener("DOMContentLoaded", function () {
   function renderLevel(levelName) {
     const level = levels[levelName];
     const maxEffect = 3.6;
+    const SIG_BASE_HEIGHT = 48;
+    const SIG_ROW_HEIGHT = 28;
 
     const svgWidth = 420;
     const svgHeight = 230;
@@ -293,11 +295,11 @@ document.addEventListener("DOMContentLoaded", function () {
       `;
     }).join("");
 
-    const sigChartHeight = 48 + level.taxa.length * 28;
+    const sigChartHeight = SIG_BASE_HEIGHT + level.taxa.length * SIG_ROW_HEIGHT;
     const zeroX = 150;
     const scale = 110 / maxEffect;
     const significanceRows = level.taxa.map((taxon, index) => {
-      const y = 34 + index * 28;
+      const y = 34 + index * SIG_ROW_HEIGHT;
       const signedEffect = taxon.enriched === "High fiber" ? taxon.effect : -taxon.effect;
       const effectWidth = Math.abs(signedEffect) * scale;
       const x = signedEffect >= 0 ? zeroX : zeroX - effectWidth;
