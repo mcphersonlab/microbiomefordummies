@@ -382,6 +382,12 @@ document.addEventListener("DOMContentLoaded", function () {
       </section>
 
       <section class="ra-card ra-card--full-row">
+        <h3>Pre-intervention vs post-intervention volcano plot</h3>
+        <p class="ra-caption">This synthetic volcano view keeps pre-intervention-enriched taxa on the negative side and post-intervention-enriched taxa on the positive side while using the same taxon colors as the stacked bars.</p>
+        <div id="ra-volcano-plot" class="ra-chart-frame ra-chart-frame--wide" aria-live="polite"></div>
+      </section>
+
+      <section class="ra-card ra-card--full-row">
         <h3>Statistical results across the full framework</h3>
         <p class="ra-caption">The full statistical readout sits in a single row below the overview cards so you can compare every taxon against the same longitudinal decision framework without stretching the top layout.</p>
         <div id="ra-significance-chart" class="ra-chart-frame ra-chart-frame--wide" aria-live="polite"></div>
@@ -398,6 +404,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const barChart = document.getElementById("ra-bar-chart");
   const legend = document.getElementById("ra-legend");
   const significanceStrip = document.getElementById("ra-significance-strip");
+  const volcanoPlot = document.getElementById("ra-volcano-plot");
   const significanceChart = document.getElementById("ra-significance-chart");
   const summary = document.getElementById("ra-summary");
   const replicateChecks = document.getElementById("ra-replicate-checks");
@@ -896,6 +903,10 @@ document.addEventListener("DOMContentLoaded", function () {
     return `${normalizeComparisonLabel(label)} enriched`;
   }
 
+  function deriveSyntheticPValue(q) {
+    return Math.max(Math.min(q * 0.5, 0.99), 0.0005);
+  }
+
   function classifyTaxon(taxon) {
     const preMatch = taxon.comparisons.baseline_group.q >= SIGNIFICANCE_THRESHOLD;
     const controlStable = taxon.comparisons.control_time.q >= SIGNIFICANCE_THRESHOLD;
@@ -1070,6 +1081,85 @@ document.addEventListener("DOMContentLoaded", function () {
         <text x="${zeroX - 82}" y="24" font-size="8" fill="#475569">${contrast.leftLabel}</text>
         <text x="${zeroX + 8}" y="24" font-size="8" fill="#475569">${contrast.rightLabel}</text>
         ${significanceRows}
+      </svg>
+    `;
+
+    const volcanoComparisonKey = "intervention_time";
+    const volcanoSvgWidth = 720;
+    const volcanoSvgHeight = 320;
+    const volcanoLeft = 72;
+    const volcanoRight = 30;
+    const volcanoTop = 32;
+    const volcanoBottom = 258;
+    const volcanoWidth = volcanoSvgWidth - volcanoLeft - volcanoRight;
+    const volcanoHeight = volcanoBottom - volcanoTop;
+    const normalizedEffectLimit = 0.5;
+    const volcanoPoints = level.taxa.map((taxon) => {
+      const comparison = taxon.comparisons[volcanoComparisonKey] || taxon.comparisons.post_group;
+      const pValue = deriveSyntheticPValue(comparison.q);
+      const normalizedEffect = Math.max(-normalizedEffectLimit, Math.min(normalizedEffectLimit, (comparison.effect / maxEffect) * normalizedEffectLimit));
+      const negativeLogP = -Math.log10(pValue);
+      return {
+        taxon,
+        comparison,
+        pValue,
+        normalizedEffect,
+        negativeLogP
+      };
+    });
+    const maxNegativeLogP = Math.max(1.6, ...volcanoPoints.map((point) => point.negativeLogP));
+    const xForEffect = (effect) => volcanoLeft + ((effect + normalizedEffectLimit) / (normalizedEffectLimit * 2)) * volcanoWidth;
+    const yForLogP = (value) => volcanoBottom - (value / maxNegativeLogP) * volcanoHeight;
+    const volcanoXTicks = [-0.5, -0.25, 0, 0.25, 0.5].map((tick) => {
+      const x = xForEffect(tick);
+      return `
+        <line x1="${x}" y1="${volcanoBottom}" x2="${x}" y2="${volcanoBottom + 6}" stroke="#94a3b8" stroke-width="1"></line>
+        <text x="${x}" y="${volcanoBottom + 18}" text-anchor="middle" font-size="8" fill="#475569">${tick.toFixed(2).replace(/\\.00$/, ".0").replace(/0$/, "")}</text>
+      `;
+    }).join("");
+    const volcanoYTicks = [0, 1, 2, 3].filter((tick) => tick <= Math.ceil(maxNegativeLogP)).map((tick) => {
+      const y = yForLogP(tick);
+      return `
+        <line x1="${volcanoLeft}" y1="${y}" x2="${volcanoLeft + volcanoWidth}" y2="${y}" stroke="#e2e8f0" stroke-width="1"></line>
+        <text x="${volcanoLeft - 10}" y="${y + 3}" text-anchor="end" font-size="8" fill="#475569">${tick}</text>
+      `;
+    }).join("");
+    const significanceThresholdY = yForLogP(-Math.log10(0.05));
+    const volcanoLabels = volcanoPoints
+      .filter((point) => point.comparison.q < SIGNIFICANCE_THRESHOLD && point.taxon.name !== "Other")
+      .map((point, index) => {
+        const x = xForEffect(point.normalizedEffect);
+        const y = yForLogP(point.negativeLogP) - (index % 2 === 0 ? 10 : -18);
+        return `<text x="${x + (point.normalizedEffect >= 0 ? 8 : -8)}" y="${y}" text-anchor="${point.normalizedEffect >= 0 ? "start" : "end"}" font-size="8" fill="#334155">${point.taxon.name}</text>`;
+      }).join("");
+    const volcanoPointMarks = volcanoPoints.map((point) => {
+      const x = xForEffect(point.normalizedEffect);
+      const y = yForLogP(point.negativeLogP);
+      const significant = point.comparison.q < SIGNIFICANCE_THRESHOLD;
+      return `
+        <g>
+          <title>${point.taxon.name}: normalized effect ${point.normalizedEffect.toFixed(2)}, p=${point.pValue.toFixed(4)}, q=${point.comparison.q.toFixed(3)}</title>
+          <circle cx="${x}" cy="${y}" r="${significant ? 6 : 4.5}" fill="${point.taxon.color}" fill-opacity="${significant ? 0.95 : 0.7}" stroke="${significant ? "#0f172a" : "#64748b"}" stroke-width="${significant ? 1.2 : 0.8}"></circle>
+        </g>
+      `;
+    }).join("");
+
+    volcanoPlot.innerHTML = `
+      <svg viewBox="0 0 ${volcanoSvgWidth} ${volcanoSvgHeight}" width="100%" role="img" aria-label="Pre-intervention versus post-intervention volcano plot">
+        <text x="0" y="12" font-size="9" fill="#334155">${levelName.charAt(0).toUpperCase() + levelName.slice(1)}-level experimental Pre- vs time +4 volcano plot</text>
+        ${volcanoYTicks}
+        <line x1="${volcanoLeft}" y1="${volcanoTop}" x2="${volcanoLeft}" y2="${volcanoBottom}" stroke="#94a3b8" stroke-width="1"></line>
+        <line x1="${volcanoLeft}" y1="${volcanoBottom}" x2="${volcanoLeft + volcanoWidth}" y2="${volcanoBottom}" stroke="#94a3b8" stroke-width="1"></line>
+        <line x1="${volcanoLeft}" y1="${significanceThresholdY}" x2="${volcanoLeft + volcanoWidth}" y2="${significanceThresholdY}" stroke="#c2410c" stroke-dasharray="4 4"></line>
+        <line x1="${xForEffect(0)}" y1="${volcanoTop}" x2="${xForEffect(0)}" y2="${volcanoBottom}" stroke="#cbd5e1" stroke-dasharray="3 3"></line>
+        <text x="${volcanoLeft - 52}" y="${volcanoTop + 20}" transform="rotate(-90 ${volcanoLeft - 52} ${volcanoTop + 20})" font-size="8" fill="#334155">-log10 p value</text>
+        <text x="${volcanoLeft + volcanoWidth / 2}" y="${volcanoBottom + 34}" text-anchor="middle" font-size="8" fill="#334155">Effect size</text>
+        <text x="${xForEffect(-0.5)}" y="${volcanoBottom + 48}" text-anchor="start" font-size="8" fill="#475569">Pre-intervention</text>
+        <text x="${xForEffect(0.5)}" y="${volcanoBottom + 48}" text-anchor="end" font-size="8" fill="#475569">Post-intervention</text>
+        <text x="${volcanoLeft + volcanoWidth - 4}" y="${significanceThresholdY - 6}" text-anchor="end" font-size="8" fill="#c2410c">p = 0.05</text>
+        ${volcanoXTicks}
+        ${volcanoPointMarks}
+        ${volcanoLabels}
       </svg>
     `;
 
