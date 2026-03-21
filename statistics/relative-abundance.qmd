@@ -903,6 +903,8 @@ document.addEventListener("DOMContentLoaded", function () {
     return `${normalizeComparisonLabel(label)} enriched`;
   }
 
+  // The page only stores synthetic q-values for each contrast, so derive a bounded display-only
+  // p-value from the same ranking to support the requested volcano-plot geometry.
   function deriveSyntheticPValue(q) {
     return Math.max(Math.min(q * 0.5, 0.99), 0.0005);
   }
@@ -1114,7 +1116,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const x = xForEffect(tick);
       return `
         <line x1="${x}" y1="${volcanoBottom}" x2="${x}" y2="${volcanoBottom + 6}" stroke="#94a3b8" stroke-width="1"></line>
-        <text x="${x}" y="${volcanoBottom + 18}" text-anchor="middle" font-size="8" fill="#475569">${tick.toFixed(2).replace(/\\.00$/, ".0").replace(/0$/, "")}</text>
+        <text x="${x}" y="${volcanoBottom + 18}" text-anchor="middle" font-size="8" fill="#475569">${tick.toFixed(2).replace(/\.00$/, ".0").replace(/0$/, "")}</text>
       `;
     }).join("");
     const volcanoYTicks = [0, 1, 2, 3].filter((tick) => tick <= Math.ceil(maxNegativeLogP)).map((tick) => {
@@ -1146,7 +1148,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     volcanoPlot.innerHTML = `
       <svg viewBox="0 0 ${volcanoSvgWidth} ${volcanoSvgHeight}" width="100%" role="img" aria-label="Pre-intervention versus post-intervention volcano plot">
-        <text x="0" y="12" font-size="9" fill="#334155">${levelName.charAt(0).toUpperCase() + levelName.slice(1)}-level experimental Pre- vs time +4 volcano plot</text>
+        <text x="0" y="12" font-size="9" fill="#334155">${levelName.charAt(0).toUpperCase() + levelName.slice(1)}-level experimental pre-intervention vs post-intervention volcano plot</text>
         ${volcanoYTicks}
         <line x1="${volcanoLeft}" y1="${volcanoTop}" x2="${volcanoLeft}" y2="${volcanoBottom}" stroke="#94a3b8" stroke-width="1"></line>
         <line x1="${volcanoLeft}" y1="${volcanoBottom}" x2="${volcanoLeft + volcanoWidth}" y2="${volcanoBottom}" stroke="#94a3b8" stroke-width="1"></line>
