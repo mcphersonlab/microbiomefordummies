@@ -903,17 +903,57 @@ document.addEventListener("DOMContentLoaded", function () {
     return `${normalizeComparisonLabel(label)} enriched`;
   }
 
+  function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+  }
+
   // The page only stores synthetic q-values for each contrast, so derive an approximate
   // bounded display-only p-value from them to support the requested volcano-plot geometry.
+  // Multiplying by 0.5 simply creates a synthetic display value smaller than q for the y-axis,
+  // while the 0.99 upper bound prevents a collapsed zero-height cloud and the 0.0005 lower
+  // bound prevents runaway -log10 spikes from tiny synthetic values.
   function deriveSyntheticPValue(q) {
-    return Math.max(Math.min(q * 0.5, 0.99), 0.0005);
+    return clamp(q * 0.5, 0.0005, 0.99);
   }
 
   function formatVolcanoTickLabel(value) {
     if (value === 0) {
       return "0";
     }
-    return value.toFixed(2).replace(/\.00$/, ".0").replace(/0$/, "");
+    return value.toFixed(2).replace(/(\.\d)0$/, "$1");
+  }
+
+  function escapeSvgText(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function placeVolcanoLabels(labels, minY, maxY, separation) {
+    if (labels.length === 0) {
+      return [];
+    }
+
+    const placed = labels
+      .slice()
+      .sort((left, right) => left.preferredY - right.preferredY)
+      .map((label) => ({ ...label }));
+
+    placed[0].resolvedY = clamp(placed[0].preferredY, minY, maxY);
+    for (let index = 1; index < placed.length; index += 1) {
+      const minimumY = placed[index - 1].resolvedY + separation;
+      placed[index].resolvedY = clamp(placed[index].preferredY, minimumY, maxY);
+    }
+
+    for (let index = placed.length - 2; index >= 0; index -= 1) {
+      const maximumY = placed[index + 1].resolvedY - separation;
+      placed[index].resolvedY = clamp(placed[index].resolvedY, minY, maximumY);
+    }
+
+    return placed;
   }
 
   function classifyTaxon(taxon) {
@@ -1103,14 +1143,17 @@ document.addEventListener("DOMContentLoaded", function () {
     const volcanoWidth = volcanoSvgWidth - volcanoLeft - volcanoRight;
     const volcanoHeight = volcanoBottom - volcanoTop;
     const normalizedEffectLimit = 0.5;
+    const volcanoLabelSeparation = 14;
     const volcanoLabelOffsetUp = 10;
     const volcanoLabelOffsetDown = -18;
+    const volcanoLabelBottomMargin = 12;
+    const volcanoEffectDenominator = Math.abs(maxEffect) > Number.EPSILON ? maxEffect : 1;
     const volcanoPoints = level.taxa.map((taxon) => {
       // Fall back to the between-group time +4 contrast if the synthetic pre/post comparison
       // is missing so the plot still renders a late-intervention effect for that taxon.
       const comparison = taxon.comparisons[volcanoComparisonKey] || taxon.comparisons.post_group;
       const pValue = deriveSyntheticPValue(comparison.q);
-      const normalizedEffect = Math.max(-normalizedEffectLimit, Math.min(normalizedEffectLimit, (comparison.effect / maxEffect) * normalizedEffectLimit));
+      const normalizedEffect = clamp((comparison.effect / volcanoEffectDenominator) * normalizedEffectLimit, -normalizedEffectLimit, normalizedEffectLimit);
       const negativeLogP = -Math.log10(pValue);
       return {
         taxon,
@@ -1120,6 +1163,8 @@ document.addEventListener("DOMContentLoaded", function () {
         negativeLogP
       };
     });
+    // Keep at least ~-log10(0.025) of headroom so the plot has readable vertical spread even
+    // for levels where none of the synthetic p-values are especially small.
     const maxNegativeLogP = Math.max(1.6, ...volcanoPoints.map((point) => point.negativeLogP));
     const xForEffect = (effect) => volcanoLeft + ((effect + normalizedEffectLimit) / (normalizedEffectLimit * 2)) * volcanoWidth;
     const yForLogP = (value) => volcanoBottom - (value / maxNegativeLogP) * volcanoHeight;
@@ -1130,7 +1175,7 @@ document.addEventListener("DOMContentLoaded", function () {
         <text x="${x}" y="${volcanoBottom + 18}" text-anchor="middle" font-size="8" fill="#475569">${formatVolcanoTickLabel(tick)}</text>
       `;
     }).join("");
-    const volcanoYTicks = [0, 1, 2, 3].filter((tick) => tick <= Math.ceil(maxNegativeLogP)).map((tick) => {
+    const volcanoYTicks = Array.from({ length: Math.ceil(maxNegativeLogP) + 1 }, (_, index) => index).map((tick) => {
       const y = yForLogP(tick);
       return `
         <line x1="${volcanoLeft}" y1="${y}" x2="${volcanoLeft + volcanoWidth}" y2="${y}" stroke="#e2e8f0" stroke-width="1"></line>
@@ -1138,20 +1183,43 @@ document.addEventListener("DOMContentLoaded", function () {
       `;
     }).join("");
     const significanceThresholdY = yForLogP(-Math.log10(0.05));
-    const volcanoLabels = volcanoPoints
+    const initialVolcanoLabels = volcanoPoints
       .filter((point) => point.comparison.q < SIGNIFICANCE_THRESHOLD && point.taxon.name !== "Other")
       .map((point, index) => {
         const x = xForEffect(point.normalizedEffect);
-        const y = yForLogP(point.negativeLogP) - (index % 2 === 0 ? volcanoLabelOffsetUp : volcanoLabelOffsetDown);
-        return `<text x="${x + (point.normalizedEffect >= 0 ? 8 : -8)}" y="${y}" text-anchor="${point.normalizedEffect >= 0 ? "start" : "end"}" font-size="8" fill="#334155">${point.taxon.name}</text>`;
-      }).join("");
+        const side = point.normalizedEffect >= 0 ? "positive" : "negative";
+        // Alternate the initial label offset above/below nearby points before enforcing
+        // a minimum separation on each side of the plot to reduce visible overlap.
+        const preferredY = yForLogP(point.negativeLogP) - (index % 2 === 0 ? volcanoLabelOffsetUp : volcanoLabelOffsetDown);
+        return {
+          point,
+          x,
+          side,
+          preferredY
+        };
+      });
+    const volcanoLabelBounds = {
+      minY: volcanoTop,
+      maxY: volcanoBottom - volcanoLabelBottomMargin
+    };
+    const resolvedVolcanoLabels = ["negative", "positive"].flatMap((side) =>
+      placeVolcanoLabels(
+        initialVolcanoLabels.filter((label) => label.side === side),
+        volcanoLabelBounds.minY,
+        volcanoLabelBounds.maxY,
+        volcanoLabelSeparation
+      )
+    );
+    const volcanoLabels = resolvedVolcanoLabels.map((label) =>
+      `<text x="${label.x + (label.point.normalizedEffect >= 0 ? 8 : -8)}" y="${label.resolvedY}" text-anchor="${label.point.normalizedEffect >= 0 ? "start" : "end"}" font-size="8" fill="#334155">${escapeSvgText(label.point.taxon.name)}</text>`
+    ).join("");
     const volcanoPointMarks = volcanoPoints.map((point) => {
       const x = xForEffect(point.normalizedEffect);
       const y = yForLogP(point.negativeLogP);
       const significant = point.comparison.q < SIGNIFICANCE_THRESHOLD;
       return `
         <g>
-          <title>${point.taxon.name}: normalized effect ${point.normalizedEffect.toFixed(2)}, p=${point.pValue.toFixed(4)}, q=${point.comparison.q.toFixed(3)}</title>
+          <title>${escapeSvgText(point.taxon.name)}: normalized effect ${point.normalizedEffect.toFixed(2)}, p=${point.pValue.toFixed(4)}, q=${point.comparison.q.toFixed(3)}</title>
           <circle cx="${x}" cy="${y}" r="${significant ? 6 : 4.5}" fill="${point.taxon.color}" fill-opacity="${significant ? 0.95 : 0.7}" stroke="${significant ? "#0f172a" : "#64748b"}" stroke-width="${significant ? 1.2 : 0.8}"></circle>
         </g>
       `;
