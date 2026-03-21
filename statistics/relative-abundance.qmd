@@ -903,10 +903,17 @@ document.addEventListener("DOMContentLoaded", function () {
     return `${normalizeComparisonLabel(label)} enriched`;
   }
 
-  // The page only stores synthetic q-values for each contrast, so derive a bounded display-only
-  // p-value from the same ranking to support the requested volcano-plot geometry.
+  // The page only stores synthetic q-values for each contrast, so derive an approximate
+  // bounded display-only p-value from them to support the requested volcano-plot geometry.
   function deriveSyntheticPValue(q) {
     return Math.max(Math.min(q * 0.5, 0.99), 0.0005);
+  }
+
+  function formatVolcanoTickLabel(value) {
+    if (value === 0) {
+      return "0";
+    }
+    return value.toFixed(2).replace(/\.00$/, ".0").replace(/0$/, "");
   }
 
   function classifyTaxon(taxon) {
@@ -1096,7 +1103,11 @@ document.addEventListener("DOMContentLoaded", function () {
     const volcanoWidth = volcanoSvgWidth - volcanoLeft - volcanoRight;
     const volcanoHeight = volcanoBottom - volcanoTop;
     const normalizedEffectLimit = 0.5;
+    const volcanoLabelOffsetUp = 10;
+    const volcanoLabelOffsetDown = -18;
     const volcanoPoints = level.taxa.map((taxon) => {
+      // Fall back to the between-group time +4 contrast if the synthetic pre/post comparison
+      // is missing so the plot still renders a late-intervention effect for that taxon.
       const comparison = taxon.comparisons[volcanoComparisonKey] || taxon.comparisons.post_group;
       const pValue = deriveSyntheticPValue(comparison.q);
       const normalizedEffect = Math.max(-normalizedEffectLimit, Math.min(normalizedEffectLimit, (comparison.effect / maxEffect) * normalizedEffectLimit));
@@ -1116,7 +1127,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const x = xForEffect(tick);
       return `
         <line x1="${x}" y1="${volcanoBottom}" x2="${x}" y2="${volcanoBottom + 6}" stroke="#94a3b8" stroke-width="1"></line>
-        <text x="${x}" y="${volcanoBottom + 18}" text-anchor="middle" font-size="8" fill="#475569">${tick.toFixed(2).replace(/\.00$/, ".0").replace(/0$/, "")}</text>
+        <text x="${x}" y="${volcanoBottom + 18}" text-anchor="middle" font-size="8" fill="#475569">${formatVolcanoTickLabel(tick)}</text>
       `;
     }).join("");
     const volcanoYTicks = [0, 1, 2, 3].filter((tick) => tick <= Math.ceil(maxNegativeLogP)).map((tick) => {
@@ -1131,7 +1142,7 @@ document.addEventListener("DOMContentLoaded", function () {
       .filter((point) => point.comparison.q < SIGNIFICANCE_THRESHOLD && point.taxon.name !== "Other")
       .map((point, index) => {
         const x = xForEffect(point.normalizedEffect);
-        const y = yForLogP(point.negativeLogP) - (index % 2 === 0 ? 10 : -18);
+        const y = yForLogP(point.negativeLogP) - (index % 2 === 0 ? volcanoLabelOffsetUp : volcanoLabelOffsetDown);
         return `<text x="${x + (point.normalizedEffect >= 0 ? 8 : -8)}" y="${y}" text-anchor="${point.normalizedEffect >= 0 ? "start" : "end"}" font-size="8" fill="#334155">${point.taxon.name}</text>`;
       }).join("");
     const volcanoPointMarks = volcanoPoints.map((point) => {
