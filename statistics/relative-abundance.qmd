@@ -409,6 +409,12 @@ document.addEventListener("DOMContentLoaded", function () {
   const summary = document.getElementById("ra-summary");
   const replicateChecks = document.getElementById("ra-replicate-checks");
   const SIGNIFICANCE_THRESHOLD = 0.05;
+  const MIN_DISPLAY_P_VALUE = 0.0005;
+  const MAX_DISPLAY_P_VALUE = 0.999;
+  const MIN_LDA_POOLED_SPREAD = 0.35;
+  const LDA_SEPARATION_SCALING = 9;
+  const MAX_SIGNED_LDA_SCORE = 4;
+  const MAX_EXACT_WILCOXON_N = 16;
 
   const subjectIds = [1, 2, 3];
   const timepoints = [
@@ -910,10 +916,10 @@ document.addEventListener("DOMContentLoaded", function () {
   // The page only stores synthetic q-values for each contrast, so derive an approximate
   // bounded display-only p-value from them to support the requested volcano-plot geometry.
   // Multiplying by 0.5 simply creates a synthetic display value smaller than q for the y-axis,
-  // while the 0.99 upper bound prevents a collapsed zero-height cloud and the 0.0005 lower
-  // bound prevents runaway -log10 spikes from tiny synthetic values.
+  // while the upper bound prevents a collapsed zero-height cloud and the lower bound prevents
+  // runaway -log10 spikes from tiny synthetic values.
   function deriveSyntheticPValue(q) {
-    return clamp(q * 0.5, 0.0005, 0.99);
+    return clamp(q * 0.5, MIN_DISPLAY_P_VALUE, MAX_DISPLAY_P_VALUE);
   }
 
   function formatVolcanoTickLabel(value) {
@@ -921,6 +927,10 @@ document.addEventListener("DOMContentLoaded", function () {
       return "0";
     }
     return value.toFixed(2).replace(/(\.\d)0$/, "$1");
+  }
+
+  function formatSignedLdaScore(value) {
+    return `${value >= 0 ? "+" : ""}${value.toFixed(1)}`;
   }
 
   function escapeSvgText(value) {
@@ -954,6 +964,164 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     return placed;
+  }
+
+  function mean(values) {
+    return values.reduce((total, value) => total + value, 0) / values.length;
+  }
+
+  function averageRanks(values) {
+    const ranked = values
+      .map((value, index) => ({ value, index }))
+      .sort((left, right) => left.value - right.value);
+
+    const ranks = new Array(values.length);
+    let start = 0;
+    while (start < ranked.length) {
+      let end = start + 1;
+      while (end < ranked.length && ranked[end].value === ranked[start].value) {
+        end += 1;
+      }
+      const averageRank = (start + 1 + end) / 2;
+      for (let rankIndex = start; rankIndex < end; rankIndex += 1) {
+        ranks[ranked[rankIndex].index] = averageRank;
+      }
+      start = end;
+    }
+
+    return ranks;
+  }
+
+  function sampleIndicesFor(groupLabel, timeCode) {
+    return cohortSamples.flatMap((sampleMeta, sampleIndex) =>
+      sampleMeta.group === groupLabel && sampleMeta.timeCode === timeCode ? [sampleIndex] : []
+    );
+  }
+
+  function valuesForTaxonSamples(taxon, groupLabel, timeCode) {
+    return sampleIndicesFor(groupLabel, timeCode).map((sampleIndex) => taxon.scores[sampleIndex]);
+  }
+
+  function errorFunction(value) {
+    const sign = value < 0 ? -1 : 1;
+    const absoluteValue = Math.abs(value);
+    const approximationFactor = 1 / (1 + 0.3275911 * absoluteValue);
+    const polynomial = (((((1.061405429 * approximationFactor) - 1.453152027) * approximationFactor) + 1.421413741) * approximationFactor - 0.284496736) * approximationFactor + 0.254829592;
+    return sign * (1 - polynomial * approximationFactor * Math.exp(-(absoluteValue ** 2)));
+  }
+
+  function chiSquareSurvivalDf1(statistic) {
+    return clamp(1 - errorFunction(Math.sqrt(Math.max(statistic, 0) / 2)), MIN_DISPLAY_P_VALUE, MAX_DISPLAY_P_VALUE);
+  }
+
+  function normalCdf(value) {
+    return 0.5 * (1 + errorFunction(value / Math.sqrt(2)));
+  }
+
+  function computeKruskalWallisPValue(groups) {
+    const flattened = groups.flatMap((groupValues, groupIndex) =>
+      groupValues.map((value) => ({ value, groupIndex }))
+    );
+    const ranks = averageRanks(flattened.map((entry) => entry.value));
+    const totalCount = flattened.length;
+    const tieCounts = flattened.reduce((counts, entry) => {
+      counts[entry.value] = (counts[entry.value] || 0) + 1;
+      return counts;
+    }, {});
+    const tieCorrectionDenominator = totalCount ** 3 - totalCount;
+    const tieCorrection = tieCorrectionDenominator > 0
+      ? 1 - (Object.values(tieCounts).reduce((total, count) => total + (count ** 3 - count), 0) / tieCorrectionDenominator)
+      : 1;
+    const rankSums = groups.map(() => 0);
+
+    flattened.forEach((entry, entryIndex) => {
+      rankSums[entry.groupIndex] += ranks[entryIndex];
+    });
+
+    const statisticBase = groups.reduce((total, groupValues, groupIndex) =>
+      total + ((rankSums[groupIndex] ** 2) / groupValues.length), 0
+    );
+    const statistic = ((12 / (totalCount * (totalCount + 1))) * statisticBase) - (3 * (totalCount + 1));
+    return chiSquareSurvivalDf1(tieCorrection > Number.EPSILON ? statistic / tieCorrection : statistic);
+  }
+
+  function computeWilcoxonSignedRankPValue(preValues, postValues) {
+    const differences = postValues
+      .map((postValue, index) => postValue - preValues[index])
+      .filter((difference) => Math.abs(difference) > Number.EPSILON);
+
+    if (differences.length === 0) {
+      return 1;
+    }
+
+    const ranks = averageRanks(differences.map((difference) => Math.abs(difference)));
+    const observedPositiveRankSum = differences.reduce((total, difference, index) =>
+      total + (difference > 0 ? ranks[index] : 0), 0
+    );
+    const totalRankSum = ranks.reduce((total, rank) => total + rank, 0);
+
+    if (differences.length > MAX_EXACT_WILCOXON_N) {
+      const expectedPositiveRankSum = totalRankSum / 2;
+      const rankVariance = (differences.length * (differences.length + 1) * ((2 * differences.length) + 1)) / 24;
+      const zScore = (observedPositiveRankSum - expectedPositiveRankSum) / Math.sqrt(Math.max(rankVariance, Number.EPSILON));
+      return clamp(2 * (1 - normalCdf(Math.abs(zScore))), MIN_DISPLAY_P_VALUE, 1);
+    }
+
+    const observedStatistic = Math.min(observedPositiveRankSum, totalRankSum - observedPositiveRankSum);
+    const combinationCount = 2 ** differences.length;
+    let asExtremeCount = 0;
+
+    for (let mask = 0; mask < combinationCount; mask += 1) {
+      const positiveRankSum = ranks.reduce((total, rank, rankIndex) =>
+        total + (((mask >> rankIndex) & 1) === 1 ? rank : 0), 0
+      );
+      const statistic = Math.min(positiveRankSum, totalRankSum - positiveRankSum);
+      if (statistic <= observedStatistic + Number.EPSILON) {
+        asExtremeCount += 1;
+      }
+    }
+
+    return clamp(asExtremeCount / combinationCount, MIN_DISPLAY_P_VALUE, 1);
+  }
+
+  function computeSignedLdaLogScore(preValues, postValues) {
+    const preMean = mean(preValues);
+    const postMean = mean(postValues);
+    const pooledSpread = Math.sqrt(
+      (
+        preValues.reduce((total, value) => total + ((value - preMean) ** 2), 0) +
+        postValues.reduce((total, value) => total + ((value - postMean) ** 2), 0)
+      ) / Math.max(preValues.length + postValues.length - 2, 1)
+    );
+    // Convert standardized separation into a bounded signed score on a 0-4 scale so the
+    // volcano plot can mimic LEfSe's signed LDA magnitude without overwhelming point sizes.
+    const separation = Math.abs(postMean - preMean) / Math.max(pooledSpread, MIN_LDA_POOLED_SPREAD);
+    const magnitude = clamp(Math.log10(1 + (separation * LDA_SEPARATION_SCALING)) * MAX_SIGNED_LDA_SCORE, 0, MAX_SIGNED_LDA_SCORE);
+    return (postMean >= preMean ? 1 : -1) * magnitude;
+  }
+
+  function computeLefseLikeMetrics(taxon) {
+    const experimentalPreValues = valuesForTaxonSamples(taxon, "Experimental", "0");
+    const experimentalPostValues = valuesForTaxonSamples(taxon, "Experimental", "+4");
+    const kruskalP = computeKruskalWallisPValue([experimentalPreValues, experimentalPostValues]);
+    const wilcoxonP = computeWilcoxonSignedRankPValue(experimentalPreValues, experimentalPostValues);
+    const subjectDeltas = experimentalPostValues.map((postValue, index) => postValue - experimentalPreValues[index]);
+    const nonZeroSigns = subjectDeltas.filter((delta) => Math.abs(delta) > Number.EPSILON).map((delta) => Math.sign(delta));
+    const subclassDirectionPass = nonZeroSigns.length > 0 && nonZeroSigns.every((sign) => sign === nonZeroSigns[0]);
+    const signedLda = computeSignedLdaLogScore(experimentalPreValues, experimentalPostValues);
+
+    return {
+      kruskalP,
+      wilcoxonP,
+      subclassDirectionPass,
+      signedLda
+    };
+  }
+
+  function shouldLabelVolcanoPoint(point) {
+    return point.pValue < SIGNIFICANCE_THRESHOLD
+      && point.lefseMetrics.subclassDirectionPass
+      && point.taxon.name !== "Other";
   }
 
   function classifyTaxon(taxon) {
@@ -1152,7 +1320,8 @@ document.addEventListener("DOMContentLoaded", function () {
       // Fall back to the between-group time +4 contrast if the synthetic pre/post comparison
       // is missing so the plot still renders a late-intervention effect for that taxon.
       const comparison = taxon.comparisons[volcanoComparisonKey] || taxon.comparisons.post_group;
-      const pValue = deriveSyntheticPValue(comparison.q);
+      const lefseMetrics = computeLefseLikeMetrics(taxon);
+      const pValue = lefseMetrics.kruskalP;
       const normalizedEffect = clamp((comparison.effect / volcanoEffectDenominator) * normalizedEffectLimit, -normalizedEffectLimit, normalizedEffectLimit);
       const negativeLogP = -Math.log10(pValue);
       return {
@@ -1160,7 +1329,8 @@ document.addEventListener("DOMContentLoaded", function () {
         comparison,
         pValue,
         normalizedEffect,
-        negativeLogP
+        negativeLogP,
+        lefseMetrics
       };
     });
     // Keep at least ~-log10(0.025) of headroom so the plot has readable vertical spread even
@@ -1184,7 +1354,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }).join("");
     const significanceThresholdY = yForLogP(-Math.log10(0.05));
     const initialVolcanoLabels = volcanoPoints
-      .filter((point) => point.comparison.q < SIGNIFICANCE_THRESHOLD && point.taxon.name !== "Other")
+      .filter((point) => shouldLabelVolcanoPoint(point))
       .map((point, index) => {
         const x = xForEffect(point.normalizedEffect);
         const side = point.normalizedEffect >= 0 ? "positive" : "negative";
@@ -1210,20 +1380,44 @@ document.addEventListener("DOMContentLoaded", function () {
         volcanoLabelSeparation
       )
     );
-    const volcanoLabels = resolvedVolcanoLabels.map((label) =>
-      `<text x="${label.x + (label.point.normalizedEffect >= 0 ? 8 : -8)}" y="${label.resolvedY}" text-anchor="${label.point.normalizedEffect >= 0 ? "start" : "end"}" font-size="8" fill="#334155">${escapeSvgText(label.point.taxon.name)}</text>`
-    ).join("");
+    const volcanoLabels = resolvedVolcanoLabels.map((label) => {
+      const labelText = `${label.point.taxon.name} · LDA ${formatSignedLdaScore(label.point.lefseMetrics.signedLda)}`;
+      return `<text x="${label.x + (label.point.normalizedEffect >= 0 ? 8 : -8)}" y="${label.resolvedY}" text-anchor="${label.point.normalizedEffect >= 0 ? "start" : "end"}" font-size="8" fill="#334155">${escapeSvgText(labelText)}</text>`;
+    }).join("");
     const volcanoPointMarks = volcanoPoints.map((point) => {
       const x = xForEffect(point.normalizedEffect);
       const y = yForLogP(point.negativeLogP);
       const significant = point.comparison.q < SIGNIFICANCE_THRESHOLD;
+      const pointRadius = 3.8 + Math.abs(point.lefseMetrics.signedLda);
       return `
         <g>
-          <title>${escapeSvgText(point.taxon.name)}: normalized effect ${point.normalizedEffect.toFixed(2)}, p=${point.pValue.toFixed(4)}, q=${point.comparison.q.toFixed(3)}</title>
-          <circle cx="${x}" cy="${y}" r="${significant ? 6 : 4.5}" fill="${point.taxon.color}" fill-opacity="${significant ? 0.95 : 0.7}" stroke="${significant ? "#0f172a" : "#64748b"}" stroke-width="${significant ? 1.2 : 0.8}"></circle>
+          <title>${escapeSvgText(point.taxon.name)}: effect ${point.normalizedEffect.toFixed(2)}, Kruskal-Wallis p=${point.pValue.toFixed(4)}, Wilcoxon subclass p=${point.lefseMetrics.wilcoxonP.toFixed(3)}, signed LDA ${point.lefseMetrics.signedLda.toFixed(2)}, q=${point.comparison.q.toFixed(3)}</title>
+          <circle
+            cx="${x}"
+            cy="${y}"
+            r="${pointRadius.toFixed(1)}"
+            fill="${point.taxon.color}"
+            fill-opacity="${significant ? 0.95 : 0.7}"
+            stroke="${point.lefseMetrics.subclassDirectionPass ? "#0f172a" : "#94a3b8"}"
+            stroke-width="${point.lefseMetrics.subclassDirectionPass ? 1.4 : 1}"
+            stroke-dasharray="${point.lefseMetrics.subclassDirectionPass ? "none" : "2 2"}"
+          ></circle>
         </g>
       `;
     }).join("");
+    const volcanoLegendX = volcanoLeft + volcanoWidth - 182;
+    const volcanoLegendY = volcanoTop + 8;
+    const volcanoLegend = `
+      <g transform="translate(${volcanoLegendX} ${volcanoLegendY})">
+        <rect x="0" y="0" width="174" height="64" rx="8" ry="8" fill="rgba(255,255,255,0.92)" stroke="#cbd5e1"></rect>
+        <text x="10" y="14" font-size="8" font-weight="700" fill="#0f172a">LEfSe-inspired overlay</text>
+        <circle cx="18" cy="28" r="5.8" fill="#94a3b8" stroke="#0f172a" stroke-width="1.4"></circle>
+        <text x="30" y="31" font-size="7.6" fill="#334155">Step 2 Wilcoxon subclass direction agrees</text>
+        <circle cx="18" cy="44" r="5.8" fill="#94a3b8" stroke="#94a3b8" stroke-width="1" stroke-dasharray="2 2"></circle>
+        <text x="30" y="47" font-size="7.6" fill="#334155">Mixed subclass direction</text>
+        <text x="10" y="59" font-size="7.6" fill="#334155">Step 3 |signed LDA| increases point size</text>
+      </g>
+    `;
 
     volcanoPlot.innerHTML = `
       <svg viewBox="0 0 ${volcanoSvgWidth} ${volcanoSvgHeight}" width="100%" role="img" aria-label="Pre-intervention versus post-intervention volcano plot">
@@ -1237,8 +1431,9 @@ document.addEventListener("DOMContentLoaded", function () {
         <text x="${volcanoLeft + volcanoWidth / 2}" y="${volcanoBottom + 34}" text-anchor="middle" font-size="8" fill="#334155">Effect size</text>
         <text x="${xForEffect(-0.5)}" y="${volcanoBottom + 48}" text-anchor="start" font-size="8" fill="#475569">Pre-intervention</text>
         <text x="${xForEffect(0.5)}" y="${volcanoBottom + 48}" text-anchor="end" font-size="8" fill="#475569">Post-intervention</text>
-        <text x="${volcanoLeft + volcanoWidth - 4}" y="${significanceThresholdY - 6}" text-anchor="end" font-size="8" fill="#c2410c">p = 0.05</text>
+        <text x="${volcanoLeft + volcanoWidth - 4}" y="${significanceThresholdY - 6}" text-anchor="end" font-size="8" fill="#c2410c">Step 1 Kruskal-Wallis threshold = ${SIGNIFICANCE_THRESHOLD.toFixed(2)}</text>
         ${volcanoXTicks}
+        ${volcanoLegend}
         ${volcanoPointMarks}
         ${volcanoLabels}
       </svg>
@@ -1624,3 +1819,159 @@ Then pass `labels = legend_labels` into `scale_fill_manual()`. This is simple, b
 - [Ecological Diversity tutorial](diversity.qmd)
 - [Intestinal microbiome tree](../microbiome/intestinal.qmd)
 - [MaAsLin2 tutorial](../tools/maaslin2.qmd)
+
+---
+
+## Tutorial: generate the LEfSe-inspired volcano plot
+
+The interactive volcano plot above keeps the **requested axes** (`Effect size` from `-0.5` to `+0.5`, and `-log10 p value` on the y-axis), but now layers in a **LEfSe-inspired three-step workflow** based on *Segata et al. 2011, Metagenomic biomarker discovery and explanation*:
+
+1. **Step 1 — Kruskal-Wallis** compares the experimental-arm **Pre-** vs **time +4** abundances and supplies the plotted `p` value.
+2. **Step 2 — Wilcoxon on subclasses** treats the three paired subjects as subclasses and checks whether their within-subject direction is consistent.
+3. **Step 3 — signed LDA log-score** converts the standardized class separation into a signed score that controls point size.
+
+Because this page is a small synthetic teaching example, the code below is intentionally **LEfSe-inspired rather than a full LEfSe reimplementation**, but it shows the browser-side logic used to generate the new plot.
+
+```js
+const MIN_DISPLAY_P_VALUE = 0.0005;
+const MIN_LDA_POOLED_SPREAD = 0.35;
+const LDA_SEPARATION_SCALING = 9;
+const MAX_SIGNED_LDA_SCORE = 4;
+
+function averageRanks(values) {
+  const ranked = values
+    .map((value, index) => ({ value, index }))
+    .sort((left, right) => left.value - right.value);
+
+  const ranks = new Array(values.length);
+  let start = 0;
+  while (start < ranked.length) {
+    let end = start + 1;
+    while (end < ranked.length && ranked[end].value === ranked[start].value) {
+      end += 1;
+    }
+    const averageRank = (start + 1 + end) / 2;
+    for (let rankIndex = start; rankIndex < end; rankIndex += 1) {
+      ranks[ranked[rankIndex].index] = averageRank;
+    }
+    start = end;
+  }
+  return ranks;
+}
+
+function computeKruskalWallisPValue(groups) {
+  const flattened = groups.flatMap((groupValues, groupIndex) =>
+    groupValues.map((value) => ({ value, groupIndex }))
+  );
+  const ranks = averageRanks(flattened.map((entry) => entry.value));
+  const totalCount = flattened.length;
+  const tieCounts = flattened.reduce((counts, entry) => {
+    counts[entry.value] = (counts[entry.value] || 0) + 1;
+    return counts;
+  }, {});
+  const rankSums = groups.map(() => 0);
+
+  flattened.forEach((entry, entryIndex) => {
+    rankSums[entry.groupIndex] += ranks[entryIndex];
+  });
+
+  const statisticBase = groups.reduce((total, groupValues, groupIndex) =>
+    total + ((rankSums[groupIndex] ** 2) / groupValues.length), 0
+  );
+  const statistic = ((12 / (totalCount * (totalCount + 1))) * statisticBase) - (3 * (totalCount + 1));
+  const tieCorrectionDenominator = totalCount ** 3 - totalCount;
+  const tieCorrection = tieCorrectionDenominator > 0
+    ? 1 - (Object.values(tieCounts).reduce((total, count) => total + (count ** 3 - count), 0) / tieCorrectionDenominator)
+    : 1;
+  return Math.max(
+    MIN_DISPLAY_P_VALUE,
+    chiSquareSurvivalDf1(tieCorrection > Number.EPSILON ? statistic / tieCorrection : statistic)
+  );
+}
+
+function computeWilcoxonSignedRankPValue(preValues, postValues) {
+  const differences = postValues
+    .map((postValue, index) => postValue - preValues[index])
+    .filter((difference) => Math.abs(difference) > Number.EPSILON);
+  if (differences.length === 0) {
+    return 1;
+  }
+  const ranks = averageRanks(differences.map((difference) => Math.abs(difference)));
+  const observedPositiveRankSum = differences.reduce((total, difference, index) =>
+    total + (difference > 0 ? ranks[index] : 0), 0
+  );
+  const totalRankSum = ranks.reduce((total, rank) => total + rank, 0);
+  const observedStatistic = Math.min(observedPositiveRankSum, totalRankSum - observedPositiveRankSum);
+
+  let asExtremeCount = 0;
+  for (let mask = 0; mask < 2 ** differences.length; mask += 1) {
+    const positiveRankSum = ranks.reduce((total, rank, rankIndex) =>
+      total + (((mask >> rankIndex) & 1) === 1 ? rank : 0), 0
+    );
+    const statistic = Math.min(positiveRankSum, totalRankSum - positiveRankSum);
+    if (statistic <= observedStatistic + Number.EPSILON) {
+      asExtremeCount += 1;
+    }
+  }
+
+  return asExtremeCount / (2 ** differences.length);
+}
+
+function computeSignedLdaLogScore(preValues, postValues) {
+  const preMean = mean(preValues);
+  const postMean = mean(postValues);
+  const pooledSpread = Math.sqrt(
+    (
+      preValues.reduce((total, value) => total + ((value - preMean) ** 2), 0) +
+      postValues.reduce((total, value) => total + ((value - postMean) ** 2), 0)
+    ) / Math.max(preValues.length + postValues.length - 2, 1)
+  );
+  const separation = Math.abs(postMean - preMean) / Math.max(pooledSpread, MIN_LDA_POOLED_SPREAD);
+  const magnitude = clamp(
+    Math.log10(1 + (separation * LDA_SEPARATION_SCALING)) * MAX_SIGNED_LDA_SCORE,
+    0,
+    MAX_SIGNED_LDA_SCORE
+  );
+  return (postMean >= preMean ? 1 : -1) * magnitude;
+}
+
+const volcanoPoints = level.taxa.map((taxon) => {
+  const experimentalPreValues = valuesForTaxonSamples(taxon, "Experimental", "0");
+  const experimentalPostValues = valuesForTaxonSamples(taxon, "Experimental", "+4");
+  const kruskalP = computeKruskalWallisPValue([experimentalPreValues, experimentalPostValues]);
+  const wilcoxonP = computeWilcoxonSignedRankPValue(experimentalPreValues, experimentalPostValues);
+  const signedLda = computeSignedLdaLogScore(experimentalPreValues, experimentalPostValues);
+  const subclassSigns = experimentalPostValues
+    .map((postValue, index) => Math.sign(postValue - experimentalPreValues[index]));
+  const firstNonZeroSign = subclassSigns.find((value) => value !== 0);
+  const subclassDirectionPass = firstNonZeroSign === undefined
+    ? false
+    : subclassSigns.every((sign) => sign === 0 || sign === firstNonZeroSign);
+  const normalizedEffect = clamp((taxon.comparisons.intervention_time.effect / maxEffect) * 0.5, -0.5, 0.5);
+
+  return {
+    taxon,
+    x: normalizedEffect,
+    y: -Math.log10(kruskalP),
+    wilcoxonP,
+    signedLda,
+    subclassDirectionPass
+  };
+});
+
+const circles = volcanoPoints.map((point) => `
+  <circle
+    cx="${xForEffect(point.x)}"
+    cy="${yForLogP(point.y)}"
+    r="${3.8 + Math.abs(point.signedLda)}"
+    fill="${point.taxon.color}"
+    stroke="${point.subclassDirectionPass ? "#0f172a" : "#94a3b8"}"
+  ></circle>
+`);
+```
+
+In the live figure:
+
+- **vertical position** is the Step 1 Kruskal-Wallis result,
+- **outline style** summarizes the Step 2 subclass-consistency check,
+- **point size** reflects the Step 3 signed LDA-like score.
