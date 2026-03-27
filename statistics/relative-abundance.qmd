@@ -411,11 +411,14 @@ document.addEventListener("DOMContentLoaded", function () {
   const SIGNIFICANCE_THRESHOLD = 0.05;
   const MIN_DISPLAY_P_VALUE = 0.0005;
   const MAX_DISPLAY_P_VALUE = 0.999;
-  const MIN_LDA_POOLED_SPREAD = 0.35;
-  const LDA_SEPARATION_SCALING = 9;
-  const MAX_SIGNED_LDA_SCORE = 4;
-  const MAX_EXACT_WILCOXON_N = 16;
-  const VOLCANO_LOG2FC_PSEUDOCOUNT = 0.01;
+  const VOLCANO_LOG2FC_PSEUDOCOUNT = 0.01; // Prevents log2FC from blowing up if a mean abundance reaches zero.
+  const VOLCANO_TICK_STEP_FINE = 0.5;
+  const VOLCANO_TICK_STEP_MEDIUM = 1;
+  const VOLCANO_TICK_STEP_COARSE = 2;
+  const VOLCANO_TICK_LIMIT_FINE = 1.5;
+  const VOLCANO_TICK_LIMIT_MEDIUM = 3;
+  const VOLCANO_TICK_DECIMAL_PLACES = 2;
+  const VOLCANO_TICK_ROUNDING_FACTOR = 10 ** VOLCANO_TICK_DECIMAL_PLACES;
 
   const subjectIds = [1, 2, 3];
   const timepoints = [
@@ -972,9 +975,34 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function computeLog2FoldChange(preValues, postValues) {
+    // The interactive cohort always has triplicate Pre- and time +4 values, but return a
+    // neutral fold change if a future teaching dataset omits one side of the comparison.
+    if (preValues.length === 0 || postValues.length === 0) {
+      return 0;
+    }
+    const preMean = mean(preValues);
+    const postMean = mean(postValues);
     return Math.log2(
-      (mean(postValues) + VOLCANO_LOG2FC_PSEUDOCOUNT) /
-      (mean(preValues) + VOLCANO_LOG2FC_PSEUDOCOUNT)
+      (postMean + VOLCANO_LOG2FC_PSEUDOCOUNT) /
+      (preMean + VOLCANO_LOG2FC_PSEUDOCOUNT)
+    );
+  }
+
+  function computeVolcanoXAxisLimit(values) {
+    const maxAbsoluteValue = Math.max(...values.map((value) => Math.abs(value)));
+    // Round the symmetric x-axis limit to simple half-step labels while keeping a minimum span of 1.
+    return Math.max(1, Math.ceil(maxAbsoluteValue * 2) / 2);
+  }
+
+  function buildVolcanoXTicks(limit) {
+    const tickStep = limit <= VOLCANO_TICK_LIMIT_FINE
+      ? VOLCANO_TICK_STEP_FINE
+      : limit <= VOLCANO_TICK_LIMIT_MEDIUM
+        ? VOLCANO_TICK_STEP_MEDIUM
+        : VOLCANO_TICK_STEP_COARSE;
+    const tickCount = Math.round((limit * 2) / tickStep);
+    return Array.from({ length: tickCount + 1 }, (_, index) =>
+      Math.round((-limit + (index * tickStep)) * VOLCANO_TICK_ROUNDING_FACTOR) / VOLCANO_TICK_ROUNDING_FACTOR
     );
   }
 
@@ -1022,10 +1050,6 @@ document.addEventListener("DOMContentLoaded", function () {
     return clamp(1 - errorFunction(Math.sqrt(Math.max(statistic, 0) / 2)), MIN_DISPLAY_P_VALUE, MAX_DISPLAY_P_VALUE);
   }
 
-  function normalCdf(value) {
-    return 0.5 * (1 + errorFunction(value / Math.sqrt(2)));
-  }
-
   function computeKruskalWallisPValue(groups) {
     const flattened = groups.flatMap((groupValues, groupIndex) =>
       groupValues.map((value) => ({ value, groupIndex }))
@@ -1051,79 +1075,6 @@ document.addEventListener("DOMContentLoaded", function () {
     );
     const statistic = ((12 / (totalCount * (totalCount + 1))) * statisticBase) - (3 * (totalCount + 1));
     return chiSquareSurvivalDf1(tieCorrection > Number.EPSILON ? statistic / tieCorrection : statistic);
-  }
-
-  function computeWilcoxonSignedRankPValue(preValues, postValues) {
-    const differences = postValues
-      .map((postValue, index) => postValue - preValues[index])
-      .filter((difference) => Math.abs(difference) > Number.EPSILON);
-
-    if (differences.length === 0) {
-      return 1;
-    }
-
-    const ranks = averageRanks(differences.map((difference) => Math.abs(difference)));
-    const observedPositiveRankSum = differences.reduce((total, difference, index) =>
-      total + (difference > 0 ? ranks[index] : 0), 0
-    );
-    const totalRankSum = ranks.reduce((total, rank) => total + rank, 0);
-
-    if (differences.length > MAX_EXACT_WILCOXON_N) {
-      const expectedPositiveRankSum = totalRankSum / 2;
-      const rankVariance = (differences.length * (differences.length + 1) * ((2 * differences.length) + 1)) / 24;
-      const zScore = (observedPositiveRankSum - expectedPositiveRankSum) / Math.sqrt(Math.max(rankVariance, Number.EPSILON));
-      return clamp(2 * (1 - normalCdf(Math.abs(zScore))), MIN_DISPLAY_P_VALUE, 1);
-    }
-
-    const observedStatistic = Math.min(observedPositiveRankSum, totalRankSum - observedPositiveRankSum);
-    const combinationCount = 2 ** differences.length;
-    let asExtremeCount = 0;
-
-    for (let mask = 0; mask < combinationCount; mask += 1) {
-      const positiveRankSum = ranks.reduce((total, rank, rankIndex) =>
-        total + (((mask >> rankIndex) & 1) === 1 ? rank : 0), 0
-      );
-      const statistic = Math.min(positiveRankSum, totalRankSum - positiveRankSum);
-      if (statistic <= observedStatistic + Number.EPSILON) {
-        asExtremeCount += 1;
-      }
-    }
-
-    return clamp(asExtremeCount / combinationCount, MIN_DISPLAY_P_VALUE, 1);
-  }
-
-  function computeSignedLdaLogScore(preValues, postValues) {
-    const preMean = mean(preValues);
-    const postMean = mean(postValues);
-    const pooledSpread = Math.sqrt(
-      (
-        preValues.reduce((total, value) => total + ((value - preMean) ** 2), 0) +
-        postValues.reduce((total, value) => total + ((value - postMean) ** 2), 0)
-      ) / Math.max(preValues.length + postValues.length - 2, 1)
-    );
-    // Convert standardized separation into a bounded signed score on a 0-4 scale for any
-    // later LEfSe-style overlay work without overwhelming point sizes.
-    const separation = Math.abs(postMean - preMean) / Math.max(pooledSpread, MIN_LDA_POOLED_SPREAD);
-    const magnitude = clamp(Math.log10(1 + (separation * LDA_SEPARATION_SCALING)) * MAX_SIGNED_LDA_SCORE, 0, MAX_SIGNED_LDA_SCORE);
-    return (postMean >= preMean ? 1 : -1) * magnitude;
-  }
-
-  function computeLefseLikeMetrics(taxon) {
-    const experimentalPreValues = valuesForTaxonSamples(taxon, "Experimental", "0");
-    const experimentalPostValues = valuesForTaxonSamples(taxon, "Experimental", "+4");
-    const kruskalP = computeKruskalWallisPValue([experimentalPreValues, experimentalPostValues]);
-    const wilcoxonP = computeWilcoxonSignedRankPValue(experimentalPreValues, experimentalPostValues);
-    const subjectDeltas = experimentalPostValues.map((postValue, index) => postValue - experimentalPreValues[index]);
-    const nonZeroSigns = subjectDeltas.filter((delta) => Math.abs(delta) > Number.EPSILON).map((delta) => Math.sign(delta));
-    const subclassDirectionPass = nonZeroSigns.length > 0 && nonZeroSigns.every((sign) => sign === nonZeroSigns[0]);
-    const signedLda = computeSignedLdaLogScore(experimentalPreValues, experimentalPostValues);
-
-    return {
-      kruskalP,
-      wilcoxonP,
-      subclassDirectionPass,
-      signedLda
-    };
   }
 
   function shouldLabelVolcanoPoint(point) {
@@ -1339,14 +1290,10 @@ document.addEventListener("DOMContentLoaded", function () {
     // Keep at least ~-log10(0.025) of headroom so the plot has readable vertical spread even
     // for levels where none of the synthetic p-values are especially small.
     const maxNegativeLogP = Math.max(1.6, ...volcanoPoints.map((point) => point.negativeLogP));
-    const volcanoXLimit = Math.max(1, Math.ceil(Math.max(...volcanoPoints.map((point) => Math.abs(point.log2FoldChange))) * 2) / 2);
-    const volcanoTickStep = volcanoXLimit <= 1.5 ? 0.5 : volcanoXLimit <= 3 ? 1 : 2;
+    const volcanoXLimit = computeVolcanoXAxisLimit(volcanoPoints.map((point) => point.log2FoldChange));
     const xForLog2FoldChange = (value) => volcanoLeft + ((value + volcanoXLimit) / (volcanoXLimit * 2)) * volcanoWidth;
     const yForLogP = (value) => volcanoBottom - (value / maxNegativeLogP) * volcanoHeight;
-    const volcanoXTicks = Array.from(
-      { length: Math.round((volcanoXLimit * 2) / volcanoTickStep) + 1 },
-      (_, index) => Number((-volcanoXLimit + (index * volcanoTickStep)).toFixed(2))
-    ).map((tick) => {
+    const volcanoXTicks = buildVolcanoXTicks(volcanoXLimit).map((tick) => {
       const x = xForLog2FoldChange(tick);
       return `
         <line x1="${x}" y1="${volcanoBottom}" x2="${x}" y2="${volcanoBottom + 6}" stroke="#94a3b8" stroke-width="1"></line>
@@ -1399,7 +1346,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const pointRadius = 4.8;
       return `
         <g>
-          <title>${escapeSvgText(point.taxon.name)}: log2 fold change ${point.log2FoldChange.toFixed(2)}, p=${point.pValue.toFixed(4)}, q=${point.comparison.q.toFixed(3)}</title>
+          <title>${escapeSvgText(point.taxon.name)}: log2 fold change ${point.log2FoldChange.toFixed(2)}, p=${point.pValue.toFixed(4)}, q=${point.comparison.q.toFixed(4)}</title>
           <circle
             cx="${x}"
             cy="${y}"
@@ -1826,6 +1773,7 @@ The interactive volcano plot above now uses a **standard volcano layout**:
 Because this page is a small synthetic teaching example, the browser-side code below focuses on the standard volcano geometry. A LEfSe-style follow-up comparison can be layered in later if we decide to add that analysis.
 
 ```js
+const SIGNIFICANCE_THRESHOLD = 0.05;
 const MIN_DISPLAY_P_VALUE = 0.0005;
 const VOLCANO_LOG2FC_PSEUDOCOUNT = 0.01;
 
@@ -1881,6 +1829,9 @@ function computeKruskalWallisPValue(groups) {
 }
 
 function computeLog2FoldChange(preValues, postValues) {
+  if (preValues.length === 0 || postValues.length === 0) {
+    return 0;
+  }
   const preMean = mean(preValues);
   const postMean = mean(postValues);
   return Math.log2(
@@ -1908,7 +1859,7 @@ const circles = volcanoPoints.map((point) => `
     cy="${yForLogP(point.y)}"
     r="4.8"
     fill="${point.taxon.color}"
-    stroke="${point.y >= -Math.log10(0.05) ? "#0f172a" : "#94a3b8"}"
+    stroke="${point.y >= -Math.log10(SIGNIFICANCE_THRESHOLD) ? "#0f172a" : "#94a3b8"}"
   ></circle>
 `);
 ```
